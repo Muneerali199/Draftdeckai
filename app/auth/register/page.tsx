@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import {
   Sparkles,
   Zap,
@@ -27,37 +28,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-// Email domain validation function
-const validateEmailDomain = (email: string) => {
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain) return { isValid: false, message: '' };
-
-  const TRUSTED_DOMAINS = [
-    'gmail.com', 'googlemail.com', 'outlook.com', 'hotmail.com', 'live.com', 'yahoo.com',
-    'icloud.com', 'me.com', 'mac.com', 'aol.com', 'protonmail.com', 'proton.me',
-    'zoho.com', 'mail.com', 'gmx.com', 'yandex.com', 'tutanota.com'
-  ];
-
-  if (TRUSTED_DOMAINS.includes(domain)) {
-    return { isValid: true, message: 'Trusted email provider' };
-  }
-
-  if (domain.endsWith('.edu') || domain.endsWith('.ac.uk') || domain.endsWith('.edu.au') || 
-      domain.endsWith('.edu.cn') || domain.endsWith('.edu.in')) {
-    return { isValid: true, message: 'Educational email' };
-  }
-
-  if (/^\d+@qq\.com$/.test(email) || /^\d{10,}@/.test(email)) {
-    return { isValid: false, message: 'Please use a valid email (not all numbers)' };
-  }
-
-  return { isValid: false, message: 'Please use Gmail, Outlook, Yahoo or another recognized email provider' };
-};
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailValidation, setEmailValidation] = useState({ isValid: false, message: '' });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,8 +39,11 @@ export default function Register() {
   const [mounted, setMounted] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string>("");
   const router = useRouter();
   const { toast } = useToast();
+  const supabase = createClient();
 
   // Animation mount effect
   useEffect(() => {
@@ -87,14 +64,6 @@ export default function Register() {
     setPasswordStrength(calculateStrength(password));
   }, [password]);
 
-  // Email validation effect
-  useEffect(() => {
-    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailValidation(validateEmailDomain(email));
-    } else {
-      setEmailValidation({ isValid: false, message: '' });
-    }
-  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,12 +103,15 @@ export default function Register() {
       }
 
       toast({
-        title: "Account created successfully! âœ¨",
-        description: result.message || "You can now sign in with your credentials.",
+        title: "Account created successfully! ✨",
+        description:
+          result.message ||
+          "Please check your email to verify your account before signing in.",
       });
 
-      // Redirect to sign-in page
-      router.push("/auth/signin");
+      // Persist success state and show verification instructions instead of redirecting
+      setSubmittedEmail(email);
+      setSuccess(true);
     } catch (error: any) {
       // Enhanced error handling for Supabase registration
       let userMessage = "Failed to create account. Please try again.";
@@ -194,6 +166,72 @@ export default function Register() {
     confirmPassword.trim() &&
     password === confirmPassword &&
     password.length >= 6;
+
+  // Success view: show verification instructions
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-8">
+        <div className="absolute inset-0 mesh-gradient opacity-20 animate-pulse-glow"></div>
+        <div className={`w-full max-w-md mx-4 relative z-10 transition-all duration-1000 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className="glass-effect p-6 sm:p-8 rounded-2xl shadow-2xl border border-yellow-400/20 relative overflow-hidden group backdrop-blur-xl">
+            <div className="relative z-10 space-y-6">
+              <div className="text-center">
+                <h1 className="modern-display text-2xl sm:text-3xl font-bold mb-2 text-shadow-professional">
+                  Verify Your Email
+                </h1>
+                <p className="modern-body text-muted-foreground text-sm sm:text-base">
+                  We sent a verification link to <span className="font-medium">{submittedEmail}</span>.
+                  Please check your inbox and confirm your email to complete signup.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  className="w-full bolt-gradient text-white font-semibold py-4 rounded-xl"
+                  onClick={async () => {
+                    try {
+                      const { error } = await supabase.auth.resend({ type: "signup", email: submittedEmail });
+                      if (error) throw error;
+                      toast({
+                        title: "Verification Email Resent",
+                        description: "Check your inbox (and spam folder) for the new link.",
+                      });
+                    } catch (err: any) {
+                      toast({
+                        title: "Couldn’t resend email",
+                        description: err.message || "Please try again in a moment.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Resend Verification Email
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSuccess(false);
+                  }}
+                >
+                  Change Email
+                </Button>
+              </div>
+
+              <div className="text-center text-xs text-muted-foreground">
+                <p>If you don’t see the email, check your spam or promotions folder.</p>
+                <p>Make sure your Supabase project allows redirects from your current domain.</p>
+              </div>
+
+              <div className="text-center">
+                <Link href="/auth/signin" className="text-sm font-medium bolt-gradient-text">Back to Sign In</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-8">
@@ -610,6 +648,21 @@ export default function Register() {
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Email verification notice */}
+              <div
+                className={`transition-all duration-500 delay-650 ${
+                  mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                }`}
+              >
+                <div className="glass-effect p-3 rounded-lg border border-yellow-400/20 flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Email verification is required. After you sign up, we’ll send you a
+                    verification link. Please confirm your email before signing in.
+                  </p>
+                </div>
               </div>
 
               {/* Enhanced submit button with advanced animations */}

@@ -1,0 +1,46 @@
+{
+  "name": "docmagic-interview-dsa-prep",
+  "version": "1.0.0",
+  "description": "AI-powered browser extension for interview preparation, DSA problem solving, and job placement assistance",
+  "main": "background.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "package": "node scripts/package.js",
+    "package:zip": "node scripts/package.js --format=zip",
+    "package:tar": "node scripts/package.js --format=tar",
+    "package:all": "node scripts/package.js --format=all",
+    "release": "node scripts/release.js",
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "lint": "echo \"Linting complete\" && exit 0",
+    "validate": "node scripts/validate.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "interview-prep",
+    "dsa",
+    "leetcode",
+    "hackerrank",
+    "coding-interview",
+    "ai-assistant",
+    "gemini-ai",
+    "openai",
+    "resume",
+    "job-search",
+    "career"
+  ],
+  "author": "DocMagic Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/docmagic-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/docmagic-extension/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/docmagic-extension#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

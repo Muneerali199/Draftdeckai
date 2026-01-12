@@ -1,0 +1,167 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extension version: $VERSION"
+      
+      - name: Install dependencies (if needed)
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+          fi
+      
+      - name: Validate extension
+        run: |
+          if [ -f "scripts/validate.js" ]; then
+            node scripts/validate.js
+          fi
+      
+      - name: Create dist directory
+        run: mkdir -p dist
+      
+      - name: Create ZIP archive
+        run: |
+          zip -r dist/docmagic-extension-v${{ steps.version.outputs.version }}.zip \
+            manifest.json \
+            background.js \
+            content.js \
+            popup.html \
+            popup.js \
+            settings.html \
+            settings.js \
+            styles.css \
+            content.css \
+            settings.css \
+            config.js \
+            voice-handler.js \
+            voice-interview.js \
+            interviewer-mode.js \
+            mcp-server.js \
+            mcp-config.json \
+            snippet-library.js \
+            company-prep.js \
+            job-hunter.js \
+            analytics-dashboard.js \
+            icons/ \
+            README.md \
+            LICENSE \
+            -x "*.md" \
+            -x "*test*" \
+            -x "*debug*" \
+            -x "*FIX*" \
+            -x "*GUIDE*"
+      
+      - name: Create TAR.GZ archive
+        run: |
+          tar -czf dist/docmagic-extension-v${{ steps.version.outputs.version }}.tar.gz \
+            --exclude="*.md" \
+            --exclude="*test*" \
+            --exclude="*debug*" \
+            --exclude="*FIX*" \
+            --exclude="*GUIDE*" \
+            --exclude="node_modules" \
+            --exclude=".git" \
+            --exclude="dist" \
+            --exclude="scripts" \
+            manifest.json \
+            *.js \
+            *.html \
+            *.css \
+            *.json \
+            icons/ \
+            README.md \
+            LICENSE
+      
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+          cat checksums.txt
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: DocMagic Extension v${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 DocMagic Interview & DSA Prep Extension v${{ steps.version.outputs.version }}
+            
+            ### 📥 Installation
+            
+            1. Download either the ZIP or TAR.GZ file below
+            2. Extract the archive
+            3. Open Chrome/Edge and go to `chrome://extensions/`
+            4. Enable **Developer Mode**
+            5. Click **Load unpacked**
+            6. Select the extracted `extension` folder
+            
+            ### ✨ What's New
+            
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+            
+            ### 🔒 Checksums
+            
+            See `checksums.txt` for file integrity verification.
+            
+            ### 📚 Documentation
+            
+            - [README](README.md) - Full documentation
+            - [Setup Guide](README.md#setup--configuration) - Getting started
+            - [Troubleshooting](README.md#troubleshooting) - Common issues
+          draft: false
+          prerelease: false
+      
+      - name: Upload ZIP asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/docmagic-extension-v${{ steps.version.outputs.version }}.zip
+          asset_name: docmagic-extension-v${{ steps.version.outputs.version }}.zip
+          asset_content_type: application/zip
+      
+      - name: Upload TAR.GZ asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/docmagic-extension-v${{ steps.version.outputs.version }}.tar.gz
+          asset_name: docmagic-extension-v${{ steps.version.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+      
+      - name: Upload checksums
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain

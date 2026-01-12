@@ -52,6 +52,26 @@ export default function SignIn() {
       });
 
       if (error) {
+        // If email not confirmed, attempt to resend verification and show friendly message
+        if (/email\s*not\s*confirmed|confirm\s*your\s*email/i.test(error.message || '')) {
+          try {
+            await supabase.auth.resend({ type: 'signup', email });
+            toast({
+              title: 'Please verify your email',
+              description:
+                'We resent the verification link to your inbox. Confirm your email, then sign in.',
+            });
+            return;
+          } catch (resendErr: any) {
+            toast({
+              title: 'Email not verified',
+              description:
+                resendErr?.message || 'Please check your inbox for the verification email.',
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
         throw error;
       }
 
