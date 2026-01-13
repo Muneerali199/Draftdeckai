@@ -18,6 +18,7 @@ import {
   History,
   Coins,
   Crown,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -387,6 +388,12 @@ export function SiteHeader() {
                 >
                   <Crown className="mr-2 h-4 w-4 text-yellow-500" />
                   <span className="font-medium">Upgrade Plan</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20">
+                  <Link href="/profile#referral" className="flex items-center">
+                    <Gift className="mr-2 h-4 w-4 text-green-500" />
+                    <span className="font-medium">Refer & Earn Credits</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

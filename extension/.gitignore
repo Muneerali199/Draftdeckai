@@ -1,0 +1,52 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.zip
+*.tar.gz
+*.crx
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Extension development
+*.pem
+web-ext-artifacts/
+
+# Test files (if added later)
+coverage/
+.nyc_output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Sensitive data
+**/api_keys.txt
+**/secrets.json
+
+# Documentation drafts
+*DRAFT*
+*WIP*

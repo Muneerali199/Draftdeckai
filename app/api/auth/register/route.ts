@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRoute } from '@/lib/supabase/server';
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendVerificationEmail } from "@/lib/email";
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { validateAndSanitize, registrationSchema, detectSqlInjection, sanitizeInput } from '@/lib/validation';
 
 // This route handles user registration
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
 
     // Validate and sanitize input
     const { name, email, password } = validateAndSanitize(registrationSchema, rawBody);
+    const referralCode = rawBody.referralCode ? String(rawBody.referralCode).toUpperCase().trim() : null;
 
     // Additional security checks
     if (detectSqlInjection(name) || detectSqlInjection(email)) {
@@ -25,14 +27,37 @@ export async function POST(request: Request) {
 
     const supabase = await createRoute();
 
-    // Sign up with Supabase Auth (no email confirmation required)
+    // Sign up with Supabase Auth. If email confirmations are enabled,
+    // Supabase will create the user but not start a session until the email is verified.
+    // Ensure the verification link redirects back to our callback route.
+    const origin = (() => {
+      try {
+        const url = new URL((request as any).url);
+        return url.origin;
+      } catch {
+        return process.env.NEXT_PUBLIC_SITE_URL || '';
+      }
+    })();
+
+    // Build the redirect URL with referral code if present
+    // Simplified redirect URL to ensure it matches Supabase whitelist
+    // We rely on user_metadata to pass the referral code
+    const redirectUrl = origin 
+      ? `${origin}/auth/callback`
+      : undefined;
+
+    console.log('[Register] Attempting signup for:', sanitizedEmail);
+    console.log('[Register] Redirect URL:', redirectUrl);
+
     const { data, error } = await supabase.auth.signUp({
       email: sanitizedEmail,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           name: sanitizedName,
-          email: sanitizedEmail
+          email: sanitizedEmail,
+          referral_code: referralCode // Store in metadata for OAuth flows
         }
       }
     });
@@ -40,12 +65,61 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Signup error:', error);
 
-      // Handle specific error cases
-      if (error.message.includes('already registered')) {
-        return new Response(
-          JSON.stringify({ error: 'An account with this email already exists' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
+      // If the user already exists (possibly unverified), attempt to resend verification email
+      if (
+        error.status === 422 ||
+        error.code === 'user_already_exists' ||
+        /already registered|already exists/i.test(error.message || '')
+      ) {
+        try {
+          const origin = (() => {
+            try {
+              const url = new URL((request as any).url);
+              return url.origin;
+            } catch {
+              return process.env.NEXT_PUBLIC_SITE_URL || '';
+            }
+          })();
+
+          const resend = await supabase.auth.resend({
+            type: 'signup',
+            email: sanitizedEmail,
+            options: {
+              emailRedirectTo: origin ? `${origin}/auth/callback?type=signup` : undefined,
+            },
+          });
+
+          if (resend.error) {
+            // If resend fails, inform the client accordingly
+            return new Response(
+              JSON.stringify({
+                error:
+                  resend.error.message ||
+                  'This email is already registered. Please sign in or try resetting your password.',
+              }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+
+          // Treat as success for UX: user must verify email
+          return new Response(
+            JSON.stringify({
+              message:
+                'This email is already registered. If you have not verified yet, we have resent the verification link. Please check your inbox to complete signup.',
+              requiresVerification: true,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        } catch (resendErr: any) {
+          return new Response(
+            JSON.stringify({
+              error:
+                resendErr?.message ||
+                'This email is already registered. Please sign in or reset your password.',
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
       }
 
       return new Response(
@@ -61,18 +135,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send welcome email (non-blocking)
-    try {
-      await sendWelcomeEmail(data.user.email || email, name);
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Don't fail the request if email sending fails
-    }
-
+    // If we're here, the user was created successfully.
+    // Supabase automatically sends the confirmation email if 'Confirm email' is enabled in your dashboard.
+    
     // Return success message
+    const requiresVerification = !data.session; // if confirmations enabled, session will be null
+    const message = requiresVerification
+      ? 'Registration successful! Please check your email to verify your account before signing in.'
+      : 'Registration successful! You can now sign in.';
+
     return new Response(
       JSON.stringify({
-        message: 'Registration successful! You can now sign in.',
+        message,
+        requiresVerification,
         user: {
           id: data.user.id,
           email: data.user.email,
