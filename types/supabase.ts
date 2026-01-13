@@ -124,6 +124,52 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      },
+      templates: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          type: 'resume' | 'presentation' | 'letter' | 'cv'
+          content: Json
+          is_public: boolean
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string | null
+          type: 'resume' | 'presentation' | 'letter' | 'cv'
+          content: Json
+          is_public?: boolean
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          type?: 'resume' | 'presentation' | 'letter' | 'cv'
+          content?: Json
+          is_public?: boolean
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
