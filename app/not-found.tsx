@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
 export default function NotFound() {
@@ -39,9 +40,11 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-10 bg-gradient-to-b from-white to-gray-50 text-gray-800 font-sans">
       <div>
-        <img
+        <Image
           src="/magic-hat.svg"
           alt="Magic Hat Illustration"
+          width={500}
+          height={300}
           className="w-full h-auto mx-auto"
         />
       </div>

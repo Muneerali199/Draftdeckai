@@ -371,7 +371,8 @@ export function HistoryDashboard() {
         );
       
       case "presentation":
-        const slides = item.data?.slides || [];
+        const rawSlides = item.data?.slides;
+        const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
         const firstSlide = slides[0];
         return (
           <div className="h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-50 to-pink-50">

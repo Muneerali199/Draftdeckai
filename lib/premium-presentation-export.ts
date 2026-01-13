@@ -192,14 +192,18 @@ export async function exportPremiumPNG(
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.transform = 'none';
     clone.style.animation = 'none';
+    clone.style.width = '1920px';
+    clone.style.height = '1080px';
+    clone.style.position = 'fixed';
+    clone.style.left = '-10000px';
+    clone.style.top = '0';
+    clone.style.margin = '0';
     
     // Hide UI elements that shouldn't be in export
-    hideUIElementsInExport(clone);
+    hideUIElementsForExport(clone);
     
     // Temporarily append to get computed styles
     document.body.appendChild(clone);
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
     
     try {
       const canvas = await html2canvas(clone, {
@@ -209,6 +213,10 @@ export async function exportPremiumPNG(
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
+        width: 1920,
+        height: 1080,
+        windowWidth: 1920,
+        windowHeight: 1080,
         onclone: (clonedDoc) => {
           // Hide UI elements in the cloned document
           const clonedElement = clonedDoc.body.querySelector('[data-slide-card]') || clonedDoc.body.firstElementChild;
@@ -273,21 +281,36 @@ export async function exportPremiumPDF(
   for (let i = 0; i < slideElements.length; i++) {
     const element = slideElements[i];
     
+    // Clone and enforce standard HD resolution
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.transform = 'none';
+    clone.style.animation = 'none';
+    clone.style.width = '1920px';
+    clone.style.height = '1080px';
+    clone.style.position = 'fixed';
+    clone.style.left = '-10000px';
+    clone.style.top = '0';
+    clone.style.margin = '0';
+    
     // Hide UI elements before capture
-    const hiddenElements = hideUIElementsForExport(element);
+    hideUIElementsForExport(clone);
+    
+    document.body.appendChild(clone);
     
     try {
-      await waitForResources(element);
+      await waitForResources(clone);
       
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas(clone, {
         scale: scale,
         backgroundColor: null,
         logging: false,
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
-        width: element.offsetWidth,
-        height: element.offsetHeight,
+        width: 1920,
+        height: 1080,
+        windowWidth: 1920,
+        windowHeight: 1080,
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -296,14 +319,10 @@ export async function exportPremiumPDF(
         pdf.addPage([1920, 1080], 'landscape');
       }
 
-      // Calculate dimensions to fit 16:9
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'MEDIUM');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 1920, 1080, undefined, 'MEDIUM');
     } finally {
-      // Restore UI elements after capture
-      showUIElementsAfterExport(hiddenElements);
+      // Clean up clone
+      document.body.removeChild(clone);
     }
   }
 
@@ -371,7 +390,7 @@ export async function exportPremiumPPTX(
     });
 
     // Render based on slide type
-    if (slideData.type === 'hero' || slideData.type === 'cover') {
+    if (slideData.type === 'hero' || slideData.type === 'cover' || slideData.type === 'title') {
       renderHeroSlide(slide, pptx, slideData, textColor, accentColor, cardColor);
     } else if (slideData.stats && slideData.stats.length > 0) {
       renderStatsSlide(slide, pptx, slideData, textColor, accentColor, cardColor);

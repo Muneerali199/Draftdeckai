@@ -106,7 +106,7 @@ async function generateWithNebius(prompt: string, pageCount: number) {
   console.log('🔄 Using Nebius/Qwen as fallback...');
   
   const completion = await nebiusClient.chat.completions.create({
-    model: 'Qwen/Qwen3-235B-A22B-Instruct-2507',
+    model: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
     messages: [
       {
         role: 'system',
@@ -315,6 +315,11 @@ export async function POST(request: Request) {
     try {
       console.log('Using Mistral Large for text generation');
       outlines = await generatePresentationText(prompt, validatedPageCount);
+      
+      if (!outlines || outlines.length === 0) {
+        throw new Error('Mistral generated no content');
+      }
+      
       console.log('✅ Generated with Mistral');
     } catch (mistralError: any) {
       console.error('⚠️ Mistral failed:', mistralError.message);
@@ -371,7 +376,7 @@ export async function POST(request: Request) {
     console.log('📊 Step 3: Generating chart data with Mistral AI...');
     
     // Step 3: Generate chart data with Mistral AI (keep this for now)
-    let chartDataList = [];
+    let chartDataList: any[] = [];
     try {
       chartDataList = await generateChartData(outlines, prompt);
       console.log(`✅ Generated ${chartDataList.length} charts`);

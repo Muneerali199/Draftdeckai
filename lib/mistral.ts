@@ -39,8 +39,8 @@ export interface ChartData {
 function createMistralFillerSlide(slideNumber: number, pageCount: number, topic: string) {
   return {
     slideNumber,
-    title: slideNumber === pageCount ? 'Summary' : `Additional Point ${slideNumber}`,
-    type: slideNumber === pageCount ? 'conclusion' : 'content',
+    title: slideNumber === 1 ? `Presentation on ${topic}` : (slideNumber === pageCount ? 'Summary' : `Additional Point ${slideNumber}`),
+    type: slideNumber === 1 ? 'title' : (slideNumber === pageCount ? 'conclusion' : 'content'),
     bulletPoints: ['Supporting detail', 'Further explanation', 'Key takeaway'],
     content: `Additional information related to ${topic}`,
     notes: 'Speaker notes',
@@ -139,7 +139,7 @@ Example for topic "Artificial Intelligence":
 Make each query UNIQUE and HIGHLY RELEVANT to both the presentation topic AND the specific slide!`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-large-latest',
+      model: 'mistral-small-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
       maxTokens: 2000,
@@ -210,7 +210,7 @@ Chart types: "bar", "line", "pie", "doughnut"
 Generate realistic, relevant data that supports the slide content.`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-large-latest',
+      model: 'mistral-small-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       maxTokens: 2000,
@@ -275,7 +275,7 @@ Return ONLY valid JSON:
 Omit "chart" if not applicable.`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-large-latest',
+      model: 'mistral-small-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       maxTokens: 1000,
@@ -333,7 +333,7 @@ Guidelines:
 - Ensure logical flow between slides`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-large-latest',
+      model: 'mistral-small-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       maxTokens: 3000,

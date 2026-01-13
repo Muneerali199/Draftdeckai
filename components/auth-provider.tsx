@@ -26,25 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Helper to send welcome email
-    const sendWelcomeEmail = async (email: string | undefined) => {
-      if (!email) return;
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: email,
-            subject: 'Welcome to DocMagic!',
-            text: 'Thank you for signing up. We are excited to have you on board!',
-            html: '<h2>Welcome to DocMagic!</h2><p>Thank you for signing up. We are excited to have you on board!</p>'
-          })
-        });
-      } catch (err) {
-        console.error('Failed to send welcome email:', err);
-      }
-    };
-
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -80,8 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle different auth events
         if (event === 'SIGNED_IN') {
           console.log('User signed in:', session?.user?.email);
-          // Send welcome email
-          await sendWelcomeEmail(session?.user?.email);
           router.refresh();
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
