@@ -1,21 +1,31 @@
 import nodemailer from 'nodemailer';
 
 // Helper to create a reusable Nodemailer transporter.
-// In development (no EMAIL_HOST provided) it will fallback to Ethereal test account.
+// Supports both EMAIL_* and SMTP_* environment variable naming conventions.
+// In development (no email config provided) it will fallback to Ethereal test account.
 async function createTransporter() {
-  if (process.env.EMAIL_HOST) {
+  // Support both naming conventions
+  const host = process.env.EMAIL_HOST || process.env.SMTP_HOST;
+  const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || '587';
+  const user = process.env.EMAIL_USER || process.env.SMTP_USER;
+  const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@docmagic.com';
+
+  if (host && user && pass) {
+    console.log(`[Email] Using SMTP: ${host}:${port}`);
     return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: false, // true for 465, false for other ports
+      host,
+      port: parseInt(port),
+      secure: parseInt(port) === 465, // true for 465, false for other ports
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user,
+        pass,
       },
     });
   }
 
   // Fallback: create a test account for local development
+  console.log('[Email] No SMTP config found, using Ethereal test account');
   const testAccount = await nodemailer.createTestAccount();
   return nodemailer.createTransport({
     host: 'smtp.ethereal.email',
@@ -29,81 +39,172 @@ async function createTransporter() {
 }
 
 /**
+ * Get the "from" email address from environment variables
+ */
+function getFromAddress(): string {
+  return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'DocMagic <noreply@docmagic.com>';
+}
+
+/**
  * Sends a welcome email to a newly registered user.
  * @param to The recipient email address.
  * @param name Optional recipient name for personalisation.
  * @returns The result from Nodemailer and an optional previewUrl when using Ethereal.
  */
 export async function sendWelcomeEmail(to: string, name?: string) {
-  const transporter = await createTransporter();
+  try {
+    const transporter = await createTransporter();
 
-  const subject = 'Welcome to DocMagic!';
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2>Welcome${name ? `, ${name}` : ''}!</h2>
-      <p>Thank you for joining <strong>DocMagic</strong>, your AI-powered document creation platform.</p>
-      <p>We're excited to help you create professional resumes, presentations, CVs, and letters in seconds.</p>
-      <p>If you have any questions, just reply to this email—we're always happy to help.</p>
-      <p style="margin-top: 30px;">Cheers,<br/>The DocMagic Team</p>
+    const subject = 'Welcome to DocMagic! 🎉';
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#0b1220;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#0f172a;border-radius:16px;padding:40px;border:1px solid #1e293b;">
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:32px;">
+        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#facc15,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DocMagic</h1>
+        <p style="color:#94a3b8;font-size:14px;margin-top:8px;">AI-powered document creation</p>
+      </div>
+      
+      <!-- Content -->
+      <h2 style="color:#ffffff;font-size:22px;margin-bottom:16px;">Welcome${name ? `, ${name}` : ''}! 🎉</h2>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:16px;">
+        Thank you for joining <strong style="color:#facc15;">DocMagic</strong>! You're now ready to create professional documents with AI.
+      </p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:24px;">
+        Create stunning resumes, presentations, cover letters, and diagrams in seconds.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:32px 0;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://docmagic.me'}" 
+           style="display:inline-block;background:linear-gradient(90deg,#facc15,#3b82f6);color:#000;padding:14px 32px;border-radius:12px;font-weight:600;text-decoration:none;font-size:16px;">
+          Start Creating ✨
+        </a>
+      </div>
+      
+      <!-- Footer -->
+      <hr style="border:none;border-top:1px solid #1e293b;margin:32px 0;">
+      <p style="color:#64748b;font-size:12px;text-align:center;">
+        If you have any questions, just reply to this email—we're happy to help!
+      </p>
+      <p style="color:#64748b;font-size:12px;text-align:center;margin-top:16px;">
+        © 2026 DocMagic · docmagic.me
+      </p>
     </div>
-  `;
+  </div>
+</body>
+</html>`;
 
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_FROM || 'noreply@docmagic.com',
-    to,
-    subject,
-    html,
-  });
+    const text = `Welcome${name ? `, ${name}` : ''}!\n\nThank you for joining DocMagic! You're now ready to create professional documents with AI.\n\nCreate stunning resumes, presentations, cover letters, and diagrams in seconds.\n\nVisit: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://docmagic.me'}\n\nCheers,\nThe DocMagic Team`;
 
-  const previewUrl = process.env.EMAIL_HOST ? null : nodemailer.getTestMessageUrl(info);
-  if (previewUrl) {
-    console.log(`Welcome email preview URL: ${previewUrl}`);
+    const info = await transporter.sendMail({
+      from: getFromAddress(),
+      to,
+      subject,
+      html,
+      text,
+    });
+
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`[Email] Welcome email preview URL: ${previewUrl}`);
+    }
+    console.log(`[Email] Welcome email sent to ${to}`);
+    return { info, previewUrl };
+  } catch (error) {
+    console.error('[Email] Failed to send welcome email:', error);
+    throw error;
   }
-  return { info, previewUrl };
-} 
+}
 
 /**
  * Sends a verification email with a custom CTA button.
+ * This is used when you want to send a custom verification email instead of Supabase's default.
  */
 export async function sendVerificationEmail(to: string, confirmationUrl: string, name?: string) {
-  const transporter = await createTransporter();
+  try {
+    const transporter = await createTransporter();
 
-  const safeName = name ? `, ${name}` : '';
-  const subject = 'Verify your email to start using Docmagic';
+    const safeName = name ? `, ${name}` : '';
+    const subject = 'Verify your email to start using DocMagic ✉️';
 
-  const html = `
-<div style="background:#0b1220;padding:40px 16px;font-family:Arial,sans-serif;color:#ffffff">
-  <div style="max-width:520px;margin:auto;background:#0f172a;border-radius:14px;padding:32px">
-    <div style="text-align:center;margin-bottom:28px">
-      <h1 style="margin:0;font-size:26px;background:linear-gradient(90deg,#22c55e,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Docmagic</h1>
-      <p style="color:#94a3b8;font-size:14px;margin-top:6px">AI-powered documents & resumes</p>
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#0b1220;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#0f172a;border-radius:16px;padding:40px;border:1px solid #1e293b;">
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:32px;">
+        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#22c55e,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DocMagic</h1>
+        <p style="color:#94a3b8;font-size:14px;margin-top:8px;">AI-powered document creation</p>
+      </div>
+      
+      <!-- Content -->
+      <h2 style="color:#ffffff;font-size:22px;margin-bottom:16px;">Welcome to DocMagic 👋${safeName}</h2>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:16px;">
+        Thanks for joining <strong style="color:#22c55e;">DocMagic</strong>! You're just one step away from creating powerful resumes and documents with AI.
+      </p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:24px;">
+        Please verify your email address to activate your account.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:32px 0;">
+        <a href="${confirmationUrl}" 
+           style="display:inline-block;background:#22c55e;color:#000;padding:14px 32px;border-radius:12px;font-weight:600;text-decoration:none;font-size:16px;">
+          Verify Email ✓
+        </a>
+      </div>
+      
+      <!-- Alternative Link -->
+      <p style="color:#94a3b8;font-size:13px;text-align:center;margin-top:24px;">
+        Or copy and paste this link into your browser:<br>
+        <a href="${confirmationUrl}" style="color:#38bdf8;word-break:break-all;">${confirmationUrl}</a>
+      </p>
+      
+      <!-- Footer -->
+      <hr style="border:none;border-top:1px solid #1e293b;margin:32px 0;">
+      <p style="color:#64748b;font-size:12px;text-align:center;">
+        If you didn't create a DocMagic account, you can safely ignore this email.
+      </p>
+      <p style="color:#64748b;font-size:12px;text-align:center;margin-top:16px;">
+        © 2026 DocMagic · docmagic.me
+      </p>
     </div>
-    <h2 style="font-size:20px;margin-bottom:12px">Welcome to Docmagic 👋${safeName}</h2>
-    <p style="font-size:15px;line-height:1.6;color:#e5e7eb">Thanks for joining <b>Docmagic</b>. You're just one step away from creating powerful resumes and documents with AI.</p>
-    <p style="font-size:15px;line-height:1.6;color:#e5e7eb">Please verify your email address to activate your account.</p>
-    <div style="text-align:center;margin:30px 0">
-      <a href="${confirmationUrl}" style="display:inline-block;background:#22c55e;color:#000;padding:14px 28px;border-radius:12px;font-weight:600;text-decoration:none;font-size:15px;">Verify Email</a>
-    </div>
-    <p style="font-size:13px;color:#94a3b8">If you didn’t create a Docmagic account, you can safely ignore this email.</p>
-    <hr style="border:none;border-top:1px solid #1f2937;margin:28px 0">
-    <p style="font-size:12px;color:#64748b;text-align:center">© 2026 Docmagic · docmagic.me</p>
   </div>
-</div>`;
+</body>
+</html>`;
 
-  const text = `Welcome to Docmagic${safeName}\n\nPlease verify your email to activate your account:\n${confirmationUrl}\n\nIf you didn’t create a Docmagic account, you can ignore this email.`;
+    const text = `Welcome to DocMagic${safeName}!\n\nThanks for joining DocMagic! You're just one step away from creating powerful resumes and documents with AI.\n\nPlease verify your email to activate your account:\n${confirmationUrl}\n\nIf you didn't create a DocMagic account, you can safely ignore this email.\n\n© 2026 DocMagic`;
 
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_FROM || 'noreply@docmagic.com',
-    to,
-    subject,
-    html,
-    text,
-  });
+    const info = await transporter.sendMail({
+      from: getFromAddress(),
+      to,
+      subject,
+      html,
+      text,
+    });
 
-  const previewUrl = process.env.EMAIL_HOST ? null : nodemailer.getTestMessageUrl(info);
-  if (previewUrl) {
-    console.log(`Verification email preview URL: ${previewUrl}`);
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`[Email] Verification email preview URL: ${previewUrl}`);
+    }
+    console.log(`[Email] Verification email sent to ${to}`);
+    return { info, previewUrl };
+  } catch (error) {
+    console.error('[Email] Failed to send verification email:', error);
+    throw error;
   }
-
-  return { info, previewUrl };
 }

@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/site-header';
+import { ReferralSection } from '@/components/referral-section';
 import { 
   User, 
   Mail, 
@@ -581,6 +582,9 @@ export default function ProfilePage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Referral Program */}
+              <ReferralSection />
 
               {/* Account Information */}
               <Card>

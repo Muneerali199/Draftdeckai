@@ -34,6 +34,7 @@ import {
   Wand2,
   PenTool
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { PRESENTATION_THEMES, getThemeById, PresentationTheme } from '@/lib/presentation-themes';
 import { ThemePreview } from './theme-preview';
 import { OutlineEditor } from './outline-editor';
@@ -41,7 +42,7 @@ import { getProIcon, ProFeatureCard, ProStatCard, ProLogo, ProIconGrid } from '.
 import { AIImageGeneratorModal } from './ai-image-generator';
 
 // Circuit Pattern Component (inline for now)
-const CircuitPattern = ({ color = '#3B82F6' }: { color?: string }) => (
+export const CircuitPattern = ({ color = '#3B82F6' }: { color?: string }) => (
   <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
     <defs>
       <pattern id="circuit" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -53,7 +54,7 @@ const CircuitPattern = ({ color = '#3B82F6' }: { color?: string }) => (
   </svg>
 );
 
-interface Slide {
+export interface Slide {
   slideNumber: number;
   type: string;
   layout?: string;
@@ -111,6 +112,8 @@ type OutlineMode = 'card-by-card' | 'freeform';
 export default function RealTimeGenerator() {
   const [view, setView] = useState<ViewState>('dashboard');
   const [generationMode, setGenerationMode] = useState('presentation');
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
   const supabase = createClient();
   
   // Settings
@@ -135,6 +138,27 @@ export default function RealTimeGenerator() {
   const [artStyle, setArtStyle] = useState('photorealistic');
   const [extraKeywords, setExtraKeywords] = useState('');
 
+  // Loading Animation State
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingSteps = [
+    "Analyzing your topic...",
+    "Brainstorming key ideas...", 
+    "Structuring the narrative...",
+    "Designing slide layouts...",
+    "Polishing the outline..."
+  ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isGeneratingOutline) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev < loadingSteps.length - 1 ? prev + 1 : prev));
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isGeneratingOutline]);
+
   // Export state
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -146,6 +170,43 @@ export default function RealTimeGenerator() {
   // Theme Gallery State
   const [showThemeGallery, setShowThemeGallery] = useState(false);
   const [selectedThemeId, setSelectedThemeId] = useState('peach');
+
+  // Load presentation from history
+  useEffect(() => {
+    async function loadPresentation() {
+      if (!editId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('presentations')
+          .select('*')
+          .eq('id', editId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          const storedData = data.slides || {};
+          // Handle both legacy (Array) and new (Object) formats
+          const loadedSlides = Array.isArray(storedData) ? storedData : (storedData.slides || []);
+          const loadedThemeId = storedData.themeId || 'peach';
+          
+          setSlides(loadedSlides);
+          setTopic(data.title);
+          setSelectedThemeId(loadedThemeId);
+          setPresentationId(data.id);
+          // Switch to presentation view
+          setView('presentation');
+          
+          console.log('✅ Loaded presentation:', data.title);
+        }
+      } catch (error) {
+        console.error('Error loading presentation:', error);
+      }
+    }
+    
+    loadPresentation();
+  }, [editId, supabase]);
+
   const [searchTheme, setSearchTheme] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dark' | 'light' | 'colorful' | 'professional'>('all');
 
@@ -206,6 +267,7 @@ export default function RealTimeGenerator() {
 
   // Save & Share state
   const [isSaving, setIsSaving] = useState(false);
+  const [isPresenting, setIsPresenting] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [presentationId, setPresentationId] = useState<string | null>(null);
@@ -219,40 +281,37 @@ export default function RealTimeGenerator() {
 
   const handleSavePresentation = async () => {
     setIsSaving(true);
+    const supabase = createClient();
+    
     try {
-      // Get auth token from Supabase
-      const { createClient } = await import('@/lib/supabase');
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         alert('Please sign in to save and share presentations');
         setIsSaving(false);
         return;
       }
 
-      const response = await fetch('/api/presentations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('presentations')
+        .insert({
+          user_id: user.id,
           title: topic || 'Untitled Presentation',
-          slides: slides,
-          template: selectedThemeId,
-          prompt: topic,
-          isPublic: true
+          slides: {
+            slides: slides,
+            themeId: selectedThemeId,
+            version: 2
+          },
+          is_public: true
         })
-      });
+        .select()
+        .single();
 
-      if (!response.ok) {
-        throw new Error('Failed to save presentation');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
+      
+      const link = `${window.location.protocol}//${window.location.host}/p/${data.id}`;
+      setShareUrl(link);
       setPresentationId(data.id);
-      setShareUrl(data.shareUrl);
       setShowShareModal(true);
       
       console.log('✅ Presentation saved:', data);
@@ -723,7 +782,7 @@ export default function RealTimeGenerator() {
           },
           body: JSON.stringify({
             prompt: pastedText,
-            pageCount: Math.min(12, Math.max(4, Math.ceil(pastedText.length / 200))),
+            pageCount: Math.min(12, Math.max(1, Math.ceil(pastedText.length / 200))),
             outlineOnly: true
           })
         });
@@ -1048,15 +1107,50 @@ export default function RealTimeGenerator() {
                 ))}
               </div>
 
-              {/* Loading Overlay */}
+              {/* Enhanced Loading Overlay */}
               {isGeneratingOutline && (
-                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-                  <div className="bg-card border border-border rounded-2xl p-8 shadow-2xl max-w-md mx-4">
-                    <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="w-12 h-12 animate-spin text-blue-600 dark:text-blue-400" />
-                      <div className="text-center">
-                        <h3 className="text-lg font-bold mb-2">Generating Outline...</h3>
-                        <p className="text-sm text-muted-foreground">Creating {slideCount} cards for your presentation</p>
+                <div className="fixed inset-0 bg-background/60 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
+                  <div className="bg-card/90 border border-border/50 rounded-3xl p-10 shadow-2xl max-w-md w-full mx-6 backdrop-blur-xl relative overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x"></div>
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+
+                    <div className="flex flex-col items-center gap-8 relative z-10">
+                      <div className="relative w-24 h-24">
+                        <div className="absolute inset-0 border-4 border-muted rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-transparent rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                           <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="text-center space-y-3">
+                        <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 min-h-[2rem] transition-all duration-300">
+                          {loadingSteps[loadingStep]}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Creating {slideCount} expert-crafted cards for <span className="font-semibold text-foreground">"{topic.length > 30 ? topic.substring(0, 30) + '...' : topic}"</span>
+                        </p>
+                      </div>
+
+                      {/* Progress Indicators */}
+                      <div className="w-full space-y-2">
+                        <div className="flex justify-between px-1">
+                          {loadingSteps.map((_, idx) => (
+                            <div 
+                              key={idx}
+                              className={`h-1.5 rounded-full transition-all duration-500 ${
+                                idx <= loadingStep ? 'w-full bg-blue-500' : 'w-2 bg-muted'
+                              } ${idx === loadingStep ? 'ring-2 ring-blue-500/30' : ''}`}
+                              style={{ width: `${100 / loadingSteps.length}%`, margin: '0 2px' }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-muted-foreground px-1 uppercase tracking-wider font-semibold">
+                          <span>Start</span>
+                          <span>Finish</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1401,6 +1495,40 @@ export default function RealTimeGenerator() {
           theme={currentTheme}
         />
 
+        {/* Presentation Full Screen Overlay */}
+        {isPresenting && (
+          <div className="fixed inset-0 z-[200] bg-black text-white">
+            <div className="snap-y snap-mandatory h-[100dvh] w-full overflow-y-scroll scroll-smooth">
+              {slides.map((slide, idx) => (
+                 <div key={idx} className="h-[100dvh] w-full snap-start snap-always flex items-center justify-center p-4">
+                   <div 
+                     className="aspect-video w-full max-h-[90vh] shadow-2xl mx-auto"
+                     style={{ maxWidth: 'calc(90vh * 16 / 9)' }}
+                   >
+                     <SlideCard 
+                       slide={slide} 
+                       theme={currentTheme} 
+                       getGradientClass={getGradientClass}
+                     />
+                   </div>
+                 </div>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setIsPresenting(false)}
+              className="fixed bottom-12 left-1/2 -translate-x-1/2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold shadow-2xl z-[9999] flex items-center gap-3 transition-transform hover:scale-105 border-2 border-white/20"
+            >
+              <X className="w-6 h-6" />
+              <span className="text-lg">Exit Presentation</span>
+            </button>
+
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs pointer-events-none animate-pulse">
+              Scroll to navigate slides ↓
+            </div>
+          </div>
+        )}
+
         {/* VIEW 4: PRESENTATION */}
         {view === 'presentation' && (
           <div className="max-w-6xl mx-auto px-6 py-8">
@@ -1426,6 +1554,15 @@ export default function RealTimeGenerator() {
                     >
                       <Palette className="w-4 h-4" />
                       <span className="hidden sm:inline">Theme</span>
+                    </button>
+
+                    {/* Present Button */}
+                    <button
+                      onClick={() => setIsPresenting(true)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-card hover:bg-muted border border-border rounded-xl font-medium transition-all"
+                    >
+                      <Presentation className="w-4 h-4" />
+                      <span className="hidden sm:inline">Present</span>
                     </button>
 
                     {/* Save & Share Button */}
@@ -1511,10 +1648,20 @@ export default function RealTimeGenerator() {
 
             <div ref={slideContainerRef} className="space-y-6 sm:space-y-8 md:space-y-12">
               {slides.length === 0 && isStreaming && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                  <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 animate-spin text-blue-600 dark:text-blue-400 mb-4" />
-                  <h3 className="text-2xl font-bold professional-heading mb-2">Generating Your Presentation</h3>
-                  <p className="text-muted-foreground">Creating slides based on your outline...</p>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in-50 duration-500">
+                  <div className="relative w-24 h-24 mb-8">
+                    <div className="absolute inset-0 border-4 border-muted/50 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                       <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
+                    </div>
+                  </div>
+                  <h3 className="text-3xl font-bold professional-heading mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                    Generating Your Presentation
+                  </h3>
+                  <p className="text-lg text-muted-foreground max-w-md text-center leading-relaxed">
+                    DocMagic is crafting your slides, designing layouts, and writing professional content...
+                  </p>
                 </div>
               )}
               
@@ -1724,14 +1871,14 @@ export default function RealTimeGenerator() {
 }
 
 // Enhanced Slide Card Component with Icons, Diagrams, Images, and Charts
-function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: { 
+export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: { 
   slide: Slide; 
   getGradientClass: (bg?: string) => string; 
   theme: PresentationTheme;
   onUpdate?: (updatedSlide: Slide) => void;
   onAddImage?: () => void;
 }) {
-  const isHero = slide.type === 'hero' || slide.type === 'cover';
+  const isHero = slide.type === 'hero' || slide.type === 'cover' || slide.type === 'title';
   const isFlowchart = slide.type === 'process' || slide.type === 'flowchart';
   const isStats = slide.type === 'stats' || slide.type === 'big-number';
   const isComparison = slide.type === 'comparison' || slide.type === 'before-after';
@@ -1821,6 +1968,24 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
 
   const chartColors = slide.chartData?.colors || [theme.colors.accent, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+  // Heuristic for font size scaling based on content density
+  const getTotalContentLength = () => {
+    let len = (slide.title?.length || 0) + (slide.subtitle?.length || 0) + (slide.content?.length || 0);
+    if (slide.bullets) len += slide.bullets.reduce((acc, b) => acc + b.length, 0);
+    return len;
+  };
+  
+  const contentLen = getTotalContentLength();
+  
+  const titleSize = isHero 
+    ? (contentLen > 300 ? 'text-4xl md:text-5xl' : 'text-5xl md:text-7xl')
+    : (contentLen > 600 ? 'text-2xl md:text-3xl' : contentLen > 400 ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl');
+    
+  const subtitleSize = contentLen > 600 ? 'text-lg md:text-xl' : 'text-2xl md:text-3xl';
+  
+  const bodySize = contentLen > 800 ? 'text-sm' : contentLen > 500 ? 'text-base' : 'text-xl md:text-2xl';
+  const bulletSize = contentLen > 800 ? 'text-sm' : contentLen > 500 ? 'text-base' : 'text-xl md:text-2xl';
+
   return (
     <div 
       className="group relative rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border"
@@ -1856,10 +2021,10 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
       )}
       
       <div 
-        className={`${getGradientClass(slide.design?.background)} p-6 sm:p-8 md:p-12 lg:p-16 aspect-video flex items-center justify-center relative overflow-hidden`}
+        className={`${getGradientClass(slide.design?.background)} aspect-video relative overflow-hidden`}
         style={{ 
           color: textColor,
-          backgroundColor: theme.colors.background // Ensure background color is set
+          backgroundColor: theme.colors.background
         }}
       >
         {/* Premium Decorative Background Elements with Animations */}
@@ -1896,7 +2061,9 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
           SLIDE {slide.slideNumber}
         </div>
 
-        <div className={`max-w-5xl ${isHero ? 'text-center' : 'text-left'} w-full relative z-10`}>
+        <div className="absolute inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="min-h-full w-full p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col items-center justify-center relative z-10">
+            <div className={`max-w-5xl ${isHero ? 'text-center' : 'text-left'} w-full relative z-10`}>
           {/* Icon for slide type */}
           {!isHero && (
             <div 
@@ -1912,7 +2079,7 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
             contentEditable={isEditable}
             suppressContentEditableWarning
             onBlur={(e) => onUpdate?.({ ...slide, title: e.currentTarget.textContent || slide.title })}
-            className={`font-bold mb-8 leading-tight tracking-tight drop-shadow-md ${isHero ? 'text-5xl md:text-7xl' : 'text-4xl md:text-5xl'} ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+            className={`font-bold mb-8 leading-tight tracking-tight drop-shadow-md ${titleSize} ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
             style={{ color: textColor }}
           >
             {slide.title}
@@ -1924,7 +2091,7 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
               contentEditable={isEditable}
               suppressContentEditableWarning
               onBlur={(e) => onUpdate?.({ ...slide, subtitle: e.currentTarget.textContent || slide.subtitle })}
-              className={`text-2xl md:text-3xl mb-10 font-light leading-relaxed drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+              className={`${subtitleSize} mb-10 font-light leading-relaxed drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
               style={{ color: textColor }}
             >
               {slide.subtitle}
@@ -2523,7 +2690,7 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
               contentEditable={isEditable}
               suppressContentEditableWarning
               onBlur={(e) => onUpdate?.({ ...slide, content: e.currentTarget.textContent || slide.content })}
-              className={`text-xl md:text-2xl leading-relaxed font-medium max-w-3xl mx-auto drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+              className={`${bodySize} leading-relaxed font-medium max-w-3xl mx-auto drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
               style={{ color: textColor }}
             >
               {slide.content}
@@ -2565,7 +2732,7 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
                         )}
                       </div>
                       <div className="flex-1 pt-1">
-                        <span className="text-base leading-relaxed font-medium">{parsed.text}</span>
+                        <span className={`${bulletSize} leading-relaxed font-medium`}>{parsed.text}</span>
                       </div>
                     </div>
                   );
@@ -2645,7 +2812,7 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
                       )}
                     </div>
                     <div className="flex-1 pt-2">
-                      <span className="text-xl md:text-2xl font-medium leading-relaxed opacity-95" style={{ color: textColor }}>
+                      <span className={`${bulletSize} font-medium leading-relaxed opacity-95`} style={{ color: textColor }}>
                         {parsed.text}
                       </span>
                     </div>
@@ -2694,6 +2861,8 @@ function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
               {slide.cta} <ArrowLeft className="w-5 h-5 rotate-180" />
             </button>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

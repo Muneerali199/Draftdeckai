@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
     // Validate and sanitize input
     const { name, email, password } = validateAndSanitize(registrationSchema, rawBody);
+    const referralCode = rawBody.referralCode ? String(rawBody.referralCode).toUpperCase().trim() : null;
 
     // Additional security checks
     if (detectSqlInjection(name) || detectSqlInjection(email)) {
@@ -38,14 +39,25 @@ export async function POST(request: Request) {
       }
     })();
 
+    // Build the redirect URL with referral code if present
+    // Simplified redirect URL to ensure it matches Supabase whitelist
+    // We rely on user_metadata to pass the referral code
+    const redirectUrl = origin 
+      ? `${origin}/auth/callback`
+      : undefined;
+
+    console.log('[Register] Attempting signup for:', sanitizedEmail);
+    console.log('[Register] Redirect URL:', redirectUrl);
+
     const { data, error } = await supabase.auth.signUp({
       email: sanitizedEmail,
       password,
       options: {
-        emailRedirectTo: origin ? `${origin}/auth/callback?type=signup` : undefined,
+        emailRedirectTo: redirectUrl,
         data: {
           name: sanitizedName,
-          email: sanitizedEmail
+          email: sanitizedEmail,
+          referral_code: referralCode // Store in metadata for OAuth flows
         }
       }
     });
@@ -123,37 +135,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a confirmation link with service role (for custom verification email)
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KE;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || '';
-
-    if (serviceRoleKey) {
-      try {
-        const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey);
-        const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-          type: 'signup',
-          email: sanitizedEmail,
-          options: {
-            emailRedirectTo: siteUrl ? `${siteUrl.replace(/\/$/, '')}/auth/callback?type=signup` : undefined,
-          },
-        });
-
-        if (linkError) {
-          console.error('Failed to generate verification link:', linkError);
-        } else if (linkData?.action_link) {
-          // Send custom verification email (non-blocking)
-          sendVerificationEmail(sanitizedEmail, linkData.action_link, sanitizedName).catch((err) => {
-            console.error('Failed to send verification email:', err);
-          });
-        }
-      } catch (adminErr) {
-        console.error('Admin generateLink/send verification failed:', adminErr);
-      }
-    } else {
-      console.warn('SUPABASE_SERVICE_ROLE_KEY is missing; custom verification email not sent.');
-    }
-
-    // Return success message (reflect email verification requirement)
+    // If we're here, the user was created successfully.
+    // Supabase automatically sends the confirmation email if 'Confirm email' is enabled in your dashboard.
+    
+    // Return success message
     const requiresVerification = !data.session; // if confirmations enabled, session will be null
     const message = requiresVerification
       ? 'Registration successful! Please check your email to verify your account before signing in.'
