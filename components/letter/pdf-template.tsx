@@ -57,26 +57,43 @@ interface LetterPdfProps {
     };
 }
 
-// Helper to render text with Bold formatting (**text**)
+// This is a simple parser that toggles bold on encountering `**` markers.
+// Note: It does not implement full markdown semantics (e.g., nested bold),
+// but avoids fragile regex-based splitting.
 const renderStyledText = (text: string) => {
     if (!text) return null;
-
-    // Split by bold markers (**...**)
-    // matches: (**bold**) | (normal)
-    const parts = text.split(/(\*\*.*?\*\*)/g);
-
-    return parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-            // Render bold content without markers
-            return (
-                <Text key={index} style={styles.bold}>
-                    {part.slice(2, -2)}
-                </Text>
-            );
+    const elements: React.ReactElement[] = [];
+    let buffer = '';
+    let isBold = false;
+    let key = 0;
+    for (let i = 0; i < text.length; i++) {
+        // Detect bold marker `**`
+        if (text[i] === '*' && text[i + 1] === '*') {
+            // Flush current buffer as a Text node with the current style
+            if (buffer) {
+                elements.push(
+                    <Text key={key++} style={isBold ? styles.bold : undefined}>
+                        {buffer}
+                    </Text>
+                );
+                buffer = '';
+            }
+            // Toggle bold state and skip the second '*'
+            isBold = !isBold;
+            i++; // Skip next '*'
+        } else {
+            buffer += text[i];
         }
-        // Return normal text
-        return <Text key={index}>{part}</Text>;
-    });
+    }
+    // Flush any remaining buffer
+    if (buffer) {
+        elements.push(
+            <Text key={key++} style={isBold ? styles.bold : undefined}>
+                {buffer}
+            </Text>
+        );
+    }
+    return elements;
 };
 
 // Helper to parse content into blocks (paragraphs and lists)
