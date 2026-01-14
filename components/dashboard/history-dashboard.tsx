@@ -83,7 +83,7 @@ function getDocumentDescription(doc: any): string {
     case 'resume':
       return content.resumeData?.name || content.name || 'Resume';
     case 'presentation':
-      const slides = content.slides || content.outlines || [];
+      const slides = Array.isArray(content.slides) ? content.slides : (content.outlines || content.slides || []);
       return `${slides.length || 0} slides`;
     case 'diagram':
       return content.type || 'Diagram';
@@ -93,6 +93,68 @@ function getDocumentDescription(doc: any): string {
       return doc.type || 'Document';
   }
 }
+
+const PresentationPreview = ({ slides, title }: { slides: any[], title: string }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (!isHovered || slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isHovered, slides.length]);
+
+  if (!slides || slides.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center p-4 bg-purple-50">
+        <Presentation className="h-8 w-8 text-purple-400" />
+      </div>
+    );
+  }
+
+  const slide = slides[currentIndex] || slides[0];
+
+  return (
+    <div 
+      className="h-full w-full relative group/slideshow cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setCurrentIndex(0);
+      }}
+    >
+      <div className="h-full flex flex-col p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 transition-colors duration-500">
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-[6px] font-bold uppercase text-purple-600 tracking-wider">
+            Slide {currentIndex + 1} of {slides.length}
+          </div>
+          {isHovered && <Sparkles className="h-2 w-2 text-yellow-500 animate-pulse" />}
+        </div>
+        
+        <div className="font-bold text-[9px] text-gray-800 dark:text-gray-100 mb-1.5 line-clamp-2 leading-tight">
+          {slide.title || title || "Untitled Slide"}
+        </div>
+        
+        <div className="text-[7px] text-gray-600 dark:text-gray-400 line-clamp-[8] leading-normal">
+          {slide.content || (Array.isArray(slide.bullets) ? slide.bullets.join('. ') : slide.description) || "No content preview available"}
+        </div>
+        
+        {/* Progress Dots */}
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 opacity-60">
+          {slides.slice(0, 8).map((_, i) => (
+            <div 
+              key={i} 
+              className={`w-1 h-1 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-3 bg-purple-500' : 'bg-gray-300'}`} 
+            />
+          ))}
+          {slides.length > 8 && <div className="text-[4px] text-gray-400 self-center">...</div>}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export function HistoryDashboard() {
   const [activeTab, setActiveTab] = useState<ContentType | "all">("all");
@@ -349,31 +411,9 @@ export function HistoryDashboard() {
         );
       
       case "presentation":
-        const rawSlides = item.data?.slides;
+        const rawSlides = item.data?.slides || item.data?.content?.slides;
         const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
-        const firstSlide = slides[0];
-        return (
-          <div className="h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-50 to-pink-50">
-            <div className="text-center">
-              <div className="font-bold text-[10px] text-gray-800 mb-1 line-clamp-2">
-                {firstSlide?.title || item.title || "Presentation Title"}
-              </div>
-              <div className="text-[6px] text-gray-500 mb-2">
-                {slides.length} slides
-              </div>
-              <div className="flex justify-center gap-1">
-                {slides.slice(0, 4).map((_: any, i: number) => (
-                  <div key={i} className="w-4 h-3 bg-purple-200 rounded-sm border border-purple-300" />
-                ))}
-                {slides.length > 4 && (
-                  <div className="w-4 h-3 bg-purple-100 rounded-sm border border-purple-200 flex items-center justify-center">
-                    <span className="text-[4px] text-purple-600">+{slides.length - 4}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
+        return <PresentationPreview slides={slides} title={item.title} />;
       
       case "diagram":
         return (
@@ -465,14 +505,14 @@ export function HistoryDashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   if (isLoading) {
