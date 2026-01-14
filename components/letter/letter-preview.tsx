@@ -1,7 +1,8 @@
 import ReactMarkdown from 'react-markdown';
+import { Letter } from '@/types/letter';
 
 interface LetterPreviewProps {
-  letter: any;
+  letter: Letter;
 }
 
 export function LetterPreview({ letter }: LetterPreviewProps) {

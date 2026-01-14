@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Letter } from '@/types/letter';
 
 const styles = StyleSheet.create({
     page: {
@@ -48,13 +49,7 @@ const styles = StyleSheet.create({
 });
 
 interface LetterPdfProps {
-    letter: {
-        from?: { name?: string; address?: string };
-        to?: { name?: string; address?: string };
-        date?: string;
-        subject?: string;
-        content?: string;
-    };
+    letter: Letter;
 }
 
 // This is a simple parser that toggles bold on encountering `**` markers.
