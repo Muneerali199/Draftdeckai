@@ -49,7 +49,6 @@ async function addCredits() {
                     credits_total: 1000,
                     credits_used: 0
                 })
-                .neq('id', '000000') // Dummy filter
                 .select();
 
             if (error) {
