@@ -15,9 +15,7 @@ import {
 } from "@/components/ui/select";
 import { LetterPreview } from "@/components/letter/letter-preview";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Mail as MailIcon, Download, User, MapPin, FileText, Wand2, Copy, Check, Send } from "lucide-react";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { AlertCircle, CheckCircle2, Send, Copy, Download, Mail, Loader2, Sparkles, Wand2, FileText, User, MapPin, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 
@@ -174,33 +172,27 @@ ${letterData.content || ''}
     setIsExporting(true);
 
     try {
-      const element = document.getElementById('letter-preview');
-      if (!element) throw new Error('Letter preview element not found');
+      // Dynamically import @react-pdf/renderer to avoid SSR issues
+      const { pdf } = await import('@react-pdf/renderer');
+      const { LetterPdf } = await import('./pdf-template');
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
+      // Generate filename from subject or use timestamp
+      const filename = letterData.subject
+        ? `${letterData.subject.replace(/[^a-z0-9]/gi, '_').substring(0, 50)}.pdf`
+        : `letter_${Date.now()}.pdf`;
 
-      const imgData = canvas.toDataURL('image/png');
+      // Create PDF blob
+      const blob = await pdf(
+        <LetterPdf letter={letterData} />
+      ).toBlob();
 
-      // A4 dimensions in mm: 210 x 297
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // Calculate ratio to fit the image within the PDF
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`${letterType}-letter.pdf`);
+      // Download the PDF
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Letter exported!",
@@ -400,7 +392,7 @@ ${letterData.content || ''}
 
             <div className="space-y-2">
               <Label htmlFor="fromEmail" className="text-sm font-medium flex items-center gap-2">
-                <MailIcon className="h-4 w-4 text-muted-foreground" />
+                <Mail className="h-4 w-4 text-muted-foreground" />
                 Your Email (For Sending)
               </Label>
               <Input
@@ -511,7 +503,7 @@ ${letterData.content || ''}
         <div className="space-y-4">
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-effect mb-3">
-              <MailIcon className="h-3 w-3 text-blue-500" />
+              <Mail className="h-3 w-3 text-blue-500" />
               <span className="text-xs font-medium">Live Preview</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold bolt-gradient-text">Preview</h2>
@@ -530,7 +522,7 @@ ${letterData.content || ''}
               <CardContent className="py-10 relative z-10">
                 <div className="text-center space-y-4">
                   <div className="relative">
-                    <MailIcon className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                    <Mail className="h-16 w-16 mx-auto text-muted-foreground/50" />
                     <Sparkles className="absolute -top-1 -right-1 h-6 w-6 text-yellow-500 animate-pulse" />
                   </div>
                   <div>
