@@ -48,6 +48,49 @@ function createMistralFillerSlide(slideNumber: number, pageCount: number, topic:
 }
 
 /**
+ * Helper to safely extract and parse JSON from AI response
+ * Handles markdown code blocks, preamble text, and potential truncation
+ */
+function extractAndParseJSON(content: string, context: string = ''): any {
+  if (!content) return null;
+
+  try {
+    // 1. Try parsing directly
+    return JSON.parse(content);
+  } catch (e) {
+    // 2. Extract from Markdown code blocks (```json ... ```)
+    const match = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch (e2) {
+        // Continue to regex extraction
+      }
+    }
+
+    // 3. Extract using brace matching (finding the first { and last })
+    const jsonStart = content.indexOf('{');
+    const jsonEnd = content.lastIndexOf('}');
+
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      const jsonStr = content.substring(jsonStart, jsonEnd + 1);
+      try {
+        return JSON.parse(jsonStr);
+      } catch (e3) {
+        // If standard parsing fails after brace extraction, log the failure for troubleshooting.
+        // Usually the brace extraction allows it to work if it was just surrounded by non-JSON text.
+        console.warn(`JSON parsing failed after extraction for ${context}. Raw:`, jsonStr.substring(0, 100) + '...');
+      }
+    }
+  }
+
+  // Fallback: If we assume the entire content IS the "content" field of a JSON object (rescue mode)
+  // Only valid if we expected a specific structure. For now return null.
+  console.error(`Failed to extract valid JSON from ${context} response. length: ${content.length}`);
+  return null;
+}
+
+/**
  * Generate image descriptions for presentation slides using Mistral AI
  */
 export async function generateImageDescriptions(
@@ -101,9 +144,17 @@ Make each query UNIQUE and HIGHLY RELEVANT to both the presentation topic AND th
     let content = response.choices?.[0]?.message?.content || '[]';
     if (Array.isArray(content)) content = content.join('');
     if (typeof content !== 'string') content = String(content);
+
+    // Safely extract JSON array
+    const extracted = extractAndParseJSON(content, 'generateImageDescriptions');
+    if (extracted && Array.isArray(extracted)) {
+      return extracted;
+    }
+
+    // Fallback regex if helper failed specifically for arrays
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      try { return JSON.parse(jsonMatch[0]); } catch (e) { }
     }
     return [];
   } catch (error) {
@@ -256,7 +307,7 @@ export async function generatePresentationText(
   try {
     // Calculate slide type distribution for optimal variety
     const slideTypeDistribution = getSlideTypeDistribution(pageCount);
-    
+
     const prompt = `You are a WORLD-CLASS presentation designer creating a PREMIUM presentation that's 10X better than Gamma or Canva.
 
 Topic: "${topic}"
@@ -393,23 +444,23 @@ Return ONLY the JSON array. No markdown, no explanation.`;
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       const parsedSlides = JSON.parse(jsonMatch[0]);
-      
+
       // Ensure we have the correct number of slides
       if (parsedSlides.length !== pageCount) {
         console.warn(`⚠️ AI generated ${parsedSlides.length} slides instead of ${pageCount}. Adjusting...`);
-        
+
         // If too many slides, trim to pageCount
         if (parsedSlides.length > pageCount) {
           return parsedSlides.slice(0, pageCount);
         }
-        
+
         // If too few slides, generate professional filler slides
         while (parsedSlides.length < pageCount) {
           const slideNum = parsedSlides.length + 1;
           parsedSlides.push(createProfessionalFillerSlide(slideNum, pageCount, topic));
         }
       }
-      
+
       // Enrich slides with proper structure
       return parsedSlides.map((slide: any, index: number) => enrichSlideData(slide, index + 1, topic));
     }
@@ -425,29 +476,29 @@ Return ONLY the JSON array. No markdown, no explanation.`;
  */
 function getSlideTypeDistribution(pageCount: number): string[] {
   const distribution: string[] = [];
-  
+
   // Always start with hero
   distribution.push('hero');
-  
+
   // Calculate remaining slots
   let remaining = pageCount - 2; // Reserve 1 for hero, 1 for closing
-  
+
   // Add diverse types based on count
   const typeRotation = [
-    'stats', 'feature-grid', 'comparison', 'data-viz', 
+    'stats', 'feature-grid', 'comparison', 'data-viz',
     'process', 'timeline', 'testimonial', 'bullets'
   ];
-  
+
   let typeIndex = 0;
   while (remaining > 0) {
     distribution.push(typeRotation[typeIndex % typeRotation.length]);
     typeIndex++;
     remaining--;
   }
-  
+
   // Always end with closing
   distribution.push('closing');
-  
+
   return distribution.slice(0, pageCount);
 }
 
@@ -456,7 +507,7 @@ function getSlideTypeDistribution(pageCount: number): string[] {
  */
 function createProfessionalFillerSlide(slideNumber: number, pageCount: number, topic: string): any {
   const isClosing = slideNumber === pageCount;
-  
+
   if (isClosing) {
     return {
       slideNumber,
@@ -469,12 +520,12 @@ function createProfessionalFillerSlide(slideNumber: number, pageCount: number, t
       ]
     };
   }
-  
+
   // Cycle through different types for variety
   const types = ['stats', 'feature-grid', 'bullets', 'process'];
   const typeIndex = (slideNumber - 2) % types.length;
   const type = types[typeIndex];
-  
+
   switch (type) {
     case 'stats':
       return {
@@ -549,7 +600,7 @@ function enrichSlideData(slide: any, slideNumber: number, topic: string): any {
     // Add description for outline compatibility
     description: slide.subtitle || slide.content || getSlideDescription(slide, topic)
   };
-  
+
   return enriched;
 }
 
@@ -637,14 +688,14 @@ Provide variety in:
 /**
  * Generate professional letter using Mistral AI
  */
-export async function generateLetterWithMistral({ 
-  prompt, 
-  fromName, 
-  fromAddress, 
-  toName, 
-  toAddress, 
-  letterType 
-}: { 
+export async function generateLetterWithMistral({
+  prompt,
+  fromName,
+  fromAddress,
+  toName,
+  toAddress,
+  letterType
+}: {
   prompt: string;
   fromName: string;
   fromAddress?: string;
@@ -696,6 +747,8 @@ REQUIREMENTS:
 3. Relevant to the specific request and letter type
 4. Appropriate length and detail level
 
+5. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
+
 Return ONLY valid JSON.`;
 
     const response = await mistral.chat.complete({
@@ -708,12 +761,11 @@ Return ONLY valid JSON.`;
     let content = response.choices?.[0]?.message?.content || '{}';
     if (Array.isArray(content)) content = content.join('');
     if (typeof content !== 'string') content = String(content);
-    
-    // Extract JSON from markdown if present
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const letterData = JSON.parse(jsonMatch[0]);
-      
+
+    // Extract JSON using new robust helper
+    const letterData = extractAndParseJSON(content, 'generateLetterWithMistral');
+
+    if (letterData) {
       return {
         from: {
           name: letterData.from?.name || fromName,
@@ -732,8 +784,17 @@ Return ONLY valid JSON.`;
         content: letterData.content || letterData.letter || "Letter content not available."
       };
     }
-    
-    throw new Error('Failed to parse letter response');
+
+    // FALLBACK: If JSON parsing totally fails, assume the entire content is the letter body.
+    // This is better than crashing.
+    console.warn('JSON parsing failed for letter. Using raw content as fallback body.');
+    return {
+      from: { name: fromName, address: fromAddress || "" },
+      to: { name: toName, address: toAddress || "" },
+      date: new Date().toLocaleDateString('en-US'),
+      subject: "Generated Letter", // Generic subject since we couldn't parse it
+      content: content // The raw text from AI
+    };
   } catch (error) {
     console.error('Error generating letter with Mistral:', error);
     throw error;
@@ -743,11 +804,11 @@ Return ONLY valid JSON.`;
 /**
  * Generate diagram using Mistral AI with Mermaid syntax
  */
-export async function generateDiagramWithMistral({ 
-  prompt, 
-  diagramType = 'flowchart' 
-}: { 
-  prompt: string; 
+export async function generateDiagramWithMistral({
+  prompt,
+  diagramType = 'flowchart'
+}: {
+  prompt: string;
   diagramType?: string;
 }) {
   if (!mistral) {
@@ -837,12 +898,12 @@ REQUIREMENTS:
     let content = response.choices?.[0]?.message?.content || '{}';
     if (Array.isArray(content)) content = content.join('');
     if (typeof content !== 'string') content = String(content);
-    
+
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
-    
+
     throw new Error('Failed to parse diagram response');
   } catch (error) {
     console.error('Error generating diagram with Mistral:', error);
@@ -853,15 +914,15 @@ REQUIREMENTS:
 /**
  * Generate cover letter tailored to a job description using Mistral AI
  */
-export async function generateCoverLetterFromJob({ 
-  jobDescription, 
+export async function generateCoverLetterFromJob({
+  jobDescription,
   jobUrl,
-  fromName, 
+  fromName,
   fromEmail,
   fromAddress,
   skills,
-  experience 
-}: { 
+  experience
+}: {
   jobDescription: string;
   jobUrl?: string;
   fromName: string;
@@ -915,6 +976,8 @@ COVER LETTER REQUIREMENTS:
 6. Professional but personable tone
 7. ATS-friendly formatting
 
+8. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
+
 Return ONLY valid JSON.`;
 
     const response = await mistral.chat.complete({
@@ -927,13 +990,33 @@ Return ONLY valid JSON.`;
     let content = response.choices?.[0]?.message?.content || '{}';
     if (Array.isArray(content)) content = content.join('');
     if (typeof content !== 'string') content = String(content);
-    
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+
+    // Use robust extraction
+    const coverLetterData = extractAndParseJSON(content, 'generateCoverLetterFromJob');
+
+    if (coverLetterData) {
+      return coverLetterData;
     }
-    
-    throw new Error('Failed to parse cover letter response');
+
+    // Fallback for cover letter (construct a valid shape from raw text)
+    console.warn('JSON parsing failed for cover letter. Using raw content as fallback.');
+    return {
+      from: {
+        name: fromName,
+        email: fromEmail || "",
+        address: fromAddress || ""
+      },
+      to: {
+        name: "Hiring Manager",
+        company: "Company Name",
+        address: ""
+      },
+      date: new Date().toLocaleDateString('en-US'),
+      subject: "Application for Position",
+      content: content, // Raw text
+      keywordMatch: [],
+      tips: ["Could not extract tips due to parsing error"]
+    };
   } catch (error) {
     console.error('Error generating cover letter with Mistral:', error);
     throw error;

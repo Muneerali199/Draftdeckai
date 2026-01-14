@@ -1,5 +1,8 @@
+import ReactMarkdown from 'react-markdown';
+import { Letter } from '@/types/letter';
+
 interface LetterPreviewProps {
-  letter: any;
+  letter: Letter;
 }
 
 export function LetterPreview({ letter }: LetterPreviewProps) {
@@ -27,12 +30,12 @@ export function LetterPreview({ letter }: LetterPreviewProps) {
           <p className="text-sm text-gray-700 whitespace-pre-line">{from.address}</p>
         )}
       </div>
-      
+
       {/* Date */}
       <div className="mb-8">
         <p className="mb-1">{date}</p>
       </div>
-      
+
       {/* Recipient Information */}
       <div className="mb-8">
         {to.name && (
@@ -42,17 +45,23 @@ export function LetterPreview({ letter }: LetterPreviewProps) {
           <p className="text-sm text-gray-700 whitespace-pre-line">{to.address}</p>
         )}
       </div>
-      
+
       {/* Subject Line */}
       {subject && (
         <div className="mb-6">
           <p className="font-semibold">Subject: {subject}</p>
         </div>
       )}
-      
+
       {/* Letter Content */}
-      <div className="whitespace-pre-line text-gray-800 leading-relaxed">
-        {content}
+      <div className="text-gray-800 leading-relaxed mobile-markdown prose prose-sm max-w-none prose-headings:font-bold prose-p:mb-4 prose-ul:list-disc prose-ul:pl-4 prose-li:mb-1">
+        <ReactMarkdown
+          components={{
+            p: ({ node, ...props }) => <p className="mb-4 whitespace-pre-wrap" {...props} />
+          }}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     </div>
   );

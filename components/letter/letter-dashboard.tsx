@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { sanitizeFilename } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -16,17 +17,17 @@ import {
 } from "@/components/ui/select";
 import { LetterPreview } from "@/components/letter/letter-preview";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Sparkles, 
-  Mail as MailIcon, 
-  Download, 
-  User, 
-  MapPin, 
-  FileText, 
-  Wand2, 
-  Copy, 
-  Check, 
+import {
+  Loader2,
+  Sparkles,
+  Mail as MailIcon,
+  Download,
+  User,
+  MapPin,
+  FileText,
+  Wand2,
+  Copy,
+  Check,
   Send,
   ArrowLeft,
   Briefcase,
@@ -41,9 +42,9 @@ import {
   Clock,
   Users
 } from "lucide-react";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { createClient } from "@/lib/supabase/client";
 
 type StepType = 'dashboard' | 'create' | 'job-url' | 'templates' | 'preview';
 
@@ -76,15 +77,16 @@ export function LetterDashboard() {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailContent, setEmailContent] = useState("");
-  
+
   // Job URL specific state
   const [jobUrl, setJobUrl] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [isExtractingJob, setIsExtractingJob] = useState(false);
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("");
-  
+
   const { toast } = useToast();
+  const supabase = createClient();
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -110,9 +112,25 @@ export function LetterDashboard() {
     setIsGenerating(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           prompt,
           fromName,
@@ -161,9 +179,25 @@ export function LetterDashboard() {
     setIsGenerating(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           jobDescription,
           jobUrl,
@@ -243,27 +277,21 @@ ${letterData.content || ''}
     setIsExporting(true);
 
     try {
-      const element = document.getElementById('letter-preview');
-      if (!element) throw new Error('Letter preview element not found');
+      // Import dynamically to avoid SSR issues if any
+      const { pdf } = await import('@react-pdf/renderer');
+      const { LetterPdf } = await import('@/components/letter/pdf-template');
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
+      const blob = await pdf(<LetterPdf letter={letterData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const sanitizedSubject = sanitizeFilename(letterData.subject, `${letterType}-letter-${Date.now()}`);
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`${letterType}-letter.pdf`);
+      link.download = `${sanitizedSubject}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 600);
 
       toast({
         title: "Letter exported!",
@@ -352,7 +380,7 @@ ${letterData.content || ''}
         {/* Main Options Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Create Letter */}
-          <button 
+          <button
             onClick={() => setCurrentStep('create')}
             className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
           >
@@ -367,7 +395,7 @@ ${letterData.content || ''}
           </button>
 
           {/* Cover Letter from Job */}
-          <button 
+          <button
             onClick={() => setCurrentStep('job-url')}
             className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
           >
@@ -382,7 +410,7 @@ ${letterData.content || ''}
           </button>
 
           {/* Browse Templates */}
-          <button 
+          <button
             onClick={() => setCurrentStep('templates')}
             className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
           >
@@ -397,7 +425,7 @@ ${letterData.content || ''}
           </button>
 
           {/* Quick Thank You */}
-          <button 
+          <button
             onClick={() => {
               setLetterType('thank');
               setCurrentStep('create');
@@ -639,7 +667,7 @@ ${letterData.content || ''}
   // Create Letter View
   if (currentStep === 'create') {
     const selectedType = LETTER_TYPES.find(t => t.id === letterType) || LETTER_TYPES[0];
-    
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4 mb-6">
@@ -783,15 +811,15 @@ ${letterData.content || ''}
             <CardContent className="py-10 text-center">
               <MailIcon className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">
-                {isGenerating 
+                {isGenerating
                   ? "Creating your letter with AI magic..."
                   : "Your letter preview will appear here"}
               </p>
               {isGenerating && (
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               )}
             </CardContent>
@@ -875,7 +903,7 @@ ${letterData.content || ''}
               <p className="text-sm text-muted-foreground mb-4">
                 Your professional letter is ready. You can download it as PDF, copy the text, or send it via email.
               </p>
-              
+
               <div className="space-y-2">
                 <Button
                   onClick={() => setCurrentStep('create')}

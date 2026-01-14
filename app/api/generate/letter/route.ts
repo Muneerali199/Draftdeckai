@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60; // Allow 60 seconds for AI generation (Vercel Hobby limit)
 
 import { NextResponse } from 'next/server';
 import { generateLetterWithMistral, generateCoverLetterFromJob } from '@/lib/mistral';
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     // ✅ AUTHENTICATION CHECK
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '');
-    
+
     if (!token) {
       return NextResponse.json(
         { error: 'Authentication required. Please sign in to create letters.' },
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required. Please sign in to create letters.' },
@@ -35,12 +36,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { 
-      prompt, 
-      fromName, 
-      fromAddress, 
-      toName, 
-      toAddress, 
+    const {
+      prompt,
+      fromName,
+      fromAddress,
+      toName,
+      toAddress,
       letterType,
       // For job-based cover letter generation
       jobDescription,
@@ -54,10 +55,10 @@ export async function POST(request: Request) {
     // Cover letters require both job description and sender name to be present
     const isCoverLetter = jobDescription && fromName;
     const actionType = isCoverLetter ? 'cover_letter' : 'letter';
-    
+
     // Check user credits
     const creditCost = ACTION_COSTS[actionType];
-    
+
     // Get or create user credits
     let { data: userCredits } = await supabaseAdmin
       .from('user_credits')
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
         })
         .select()
         .single();
-      
+
       if (insertError) {
         console.error('Failed to create credits record:', insertError);
         return NextResponse.json(
@@ -109,10 +110,10 @@ export async function POST(request: Request) {
 
     // Check if user has enough credits
     const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
-    
+
     if (creditsRemaining < creditCost) {
       return NextResponse.json(
-        { 
+        {
           error: 'Not enough credits',
           message: `You need ${creditCost} credits to generate a ${isCoverLetter ? 'cover letter' : 'letter'}. You have ${creditsRemaining} credits remaining.`,
           needsUpgrade: true,
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
     // Check if this is a job-based cover letter request
     if (isCoverLetter) {
       console.log('📝 Generating cover letter from job description with Mistral...');
-      
+
       const coverLetter = await generateCoverLetterFromJob({
         jobDescription,
         jobUrl,
@@ -136,11 +137,11 @@ export async function POST(request: Request) {
         skills,
         experience
       });
-      
+
       // ✅ DEDUCT CREDITS after successful generation
       const { error: updateError } = await supabaseAdmin
         .from('user_credits')
-        .update({ 
+        .update({
           credits_used: userCredits.credits_used + creditCost,
           updated_at: new Date().toISOString()
         })
@@ -157,10 +158,10 @@ export async function POST(request: Request) {
             credits_used: creditCost,
             metadata: { type: 'cover_letter', has_job_description: true }
           });
-        
+
         console.log(`💳 Deducted ${creditCost} credits for cover letter generation`);
       }
-      
+
       return NextResponse.json(coverLetter);
     }
 
@@ -182,7 +183,7 @@ export async function POST(request: Request) {
       toAddress,
       letterType,
     });
-    
+
     // Format the response to ensure it has the expected structure
     const formattedResponse = {
       from: {
@@ -201,13 +202,13 @@ export async function POST(request: Request) {
       subject: letter.subject || "Re: " + prompt.substring(0, 30) + "...",
       content: letter.content || letter.letter || "Letter content not available."
     };
-    
+
     console.log('✅ Letter generated successfully with Mistral');
-    
+
     // ✅ DEDUCT CREDITS after successful generation
     const { error: updateError } = await supabaseAdmin
       .from('user_credits')
-      .update({ 
+      .update({
         credits_used: userCredits.credits_used + creditCost,
         updated_at: new Date().toISOString()
       })
@@ -224,10 +225,10 @@ export async function POST(request: Request) {
           credits_used: creditCost,
           metadata: { letter_type: letterType, prompt_length: prompt.length }
         });
-      
+
       console.log(`💳 Deducted ${creditCost} credits for letter generation`);
     }
-    
+
     return NextResponse.json(formattedResponse);
   } catch (error) {
     console.error('Error generating letter:', error);
