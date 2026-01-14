@@ -487,7 +487,6 @@ REQUIREMENTS:
 3. Relevant to the specific request and letter type
 4. Appropriate length and detail level
 
-4. Appropriate length and detail level
 5. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
 
 Return ONLY valid JSON.`;
