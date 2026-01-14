@@ -77,13 +77,9 @@ function extractAndParseJSON(content: string, context: string = ''): any {
       try {
         return JSON.parse(jsonStr);
       } catch (e3) {
-        // If standard parsing fails, try to clean newlines in strings which is common invalid JSON from LLMs
-        // This is a naive cleanup but helps with unescaped newlines in values
-        try {
-          // Replace unescaped newlines within quotes? Hard to do safely with regex.
-          // Let's try to just log for now, usually the brace extraction allows it to work if it was just surrounded by text.
-          console.warn(`JSON parsing failed after extraction for ${context}. Raw:`, jsonStr.substring(0, 100) + '...');
-        } catch (e4) { }
+        // If standard parsing fails after brace extraction, log the failure for troubleshooting.
+        // Usually the brace extraction allows it to work if it was just surrounded by non-JSON text.
+        console.warn(`JSON parsing failed after extraction for ${context}. Raw:`, jsonStr.substring(0, 100) + '...');
       }
     }
   }
