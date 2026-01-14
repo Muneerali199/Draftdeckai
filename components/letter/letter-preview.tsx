@@ -1,7 +1,8 @@
+import ReactMarkdown from 'react-markdown';
+
 interface LetterPreviewProps {
   letter: any;
 }
-import ReactMarkdown from 'react-markdown';
 
 export function LetterPreview({ letter }: LetterPreviewProps) {
   if (!letter) return null;
