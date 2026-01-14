@@ -70,11 +70,21 @@ export function LetterGenerator() {
         console.log('DEBUG: Access Token Present:', !!session?.access_token);
       }
 
+      if (!session?.access_token) {
+        console.error("No valid session or access token found when generating letter.");
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate a letter.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt,
