@@ -1,12 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 
-// Register a standard serif font for a professional look
-Font.register({
-    family: 'Times-Roman',
-    src: 'https://fonts.gstatic.com/s/timesnewroman/v12/TimesNewRoman.ttf' // Fallback or use standard PDF fonts
-});
-
 const styles = StyleSheet.create({
     page: {
         padding: 72, // 1 inch margins (72pt)
