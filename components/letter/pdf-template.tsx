@@ -88,6 +88,12 @@ const renderStyledText = (text: string) => {
             </Text>
         );
     }
+
+    // Warn if bold tag was left unclosed
+    if (isBold) {
+        console.warn('Unclosed bold marker detected in PDF text:', text);
+    }
+
     return elements;
 };
 
