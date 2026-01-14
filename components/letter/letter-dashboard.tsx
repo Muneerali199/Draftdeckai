@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { sanitizeFilename } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -284,9 +285,7 @@ ${letterData.content || ''}
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const sanitizedSubject = letterData.subject
-        ? letterData.subject.slice(0, 40).replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_')
-        : `${letterType}-letter-${Date.now()}`;
+      const sanitizedSubject = sanitizeFilename(letterData.subject, `${letterType}-letter-${Date.now()}`);
 
       link.download = `${sanitizedSubject}.pdf`;
       document.body.appendChild(link);

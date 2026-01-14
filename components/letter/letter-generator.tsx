@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeFilename } from '@/lib/utils';
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -188,9 +189,8 @@ ${letterData.content || ''}
       const { LetterPdf } = await import('./pdf-template');
 
       // Generate filename from subject or use timestamp
-      const filename = letterData.subject
-        ? `${letterData.subject.replace(/[^a-z0-9]/gi, '_').substring(0, 50)}.pdf`
-        : `letter_${Date.now()}.pdf`;
+      const sanitizedSubject = sanitizeFilename(letterData.subject, `letter_${Date.now()}`);
+      const filename = `${sanitizedSubject}.pdf`;
 
       // Create PDF blob
       const blob = await pdf(

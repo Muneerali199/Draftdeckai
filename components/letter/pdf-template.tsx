@@ -63,7 +63,7 @@ const renderStyledText = (text: string) => {
     let key = 0;
     for (let i = 0; i < text.length; i++) {
         // Detect bold marker `**`
-        if (text[i] === '*' && text[i + 1] === '*') {
+        if (i < text.length - 1 && text[i] === '*' && text[i + 1] === '*') {
             // Flush current buffer as a Text node with the current style
             if (buffer) {
                 elements.push(

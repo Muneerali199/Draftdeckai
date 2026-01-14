@@ -40,7 +40,7 @@ async function addCredits() {
                 .eq('user_id', targetUser.id);
 
             if (error) {
-                console.error('Error updating credits:', error.message);
+                console.error(`Error updating credits for user ${targetUser.id}:`, error.message);
             } else {
                 console.log('Successfully updated credits for user! (1000 total, 0 used)');
             }
