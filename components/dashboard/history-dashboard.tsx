@@ -27,6 +27,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { SiteHeader } from "@/components/site-header";
+import { SlideCard, Slide } from "@/components/presentation/real-time-generator";
+import { getThemeById } from "@/lib/presentation-themes";
 
 type ContentType = "resume" | "presentation" | "diagram" | "letter";
 
@@ -94,9 +96,10 @@ function getDocumentDescription(doc: any): string {
   }
 }
 
-const PresentationPreview = ({ slides, title }: { slides: any[], title: string }) => {
+const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title: string, themeId?: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const theme = getThemeById(themeId || 'modern-blue');
 
   useEffect(() => {
     if (!isHovered || slides.length <= 1) return;
@@ -118,40 +121,35 @@ const PresentationPreview = ({ slides, title }: { slides: any[], title: string }
 
   return (
     <div 
-      className="h-full w-full relative group/slideshow cursor-pointer"
+      className="h-full w-full relative group/slideshow cursor-pointer flex items-center justify-center bg-gray-50 dark:bg-gray-800"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
         setCurrentIndex(0);
       }}
     >
-      <div className="h-full flex flex-col p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 transition-colors duration-500">
-        <div className="flex justify-between items-center mb-1">
-          <div className="text-[6px] font-bold uppercase text-purple-600 tracking-wider">
-            Slide {currentIndex + 1} of {slides.length}
-          </div>
-          {isHovered && <Sparkles className="h-2 w-2 text-yellow-500 animate-pulse" />}
-        </div>
-        
-        <div className="font-bold text-[9px] text-gray-800 dark:text-gray-100 mb-1.5 line-clamp-2 leading-tight">
-          {slide.title || title || "Untitled Slide"}
-        </div>
-        
-        <div className="text-[7px] text-gray-600 dark:text-gray-400 line-clamp-[8] leading-normal">
-          {slide.content || (Array.isArray(slide.bullets) ? slide.bullets.join('. ') : slide.description) || "No content preview available"}
-        </div>
-        
-        {/* Progress Dots */}
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 opacity-60">
-          {slides.slice(0, 8).map((_, i) => (
-            <div 
-              key={i} 
-              className={`w-1 h-1 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-3 bg-purple-500' : 'bg-gray-300'}`} 
-            />
-          ))}
-          {slides.length > 8 && <div className="text-[4px] text-gray-400 self-center">...</div>}
-        </div>
+      <div className="w-[166.67%] h-[166.67%] scale-[0.6] transform-gpu pointer-events-none origin-center">
+         <SlideCard 
+           slide={slide} 
+           theme={theme} 
+           getGradientClass={() => theme.colors.gradient}
+         />
       </div>
+
+      {/* Slide number indicator */}
+      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[8px] px-2 py-0.5 rounded-full backdrop-blur-md font-bold z-20">
+        {currentIndex + 1} / {slides.length}
+      </div>
+      
+      {/* Progress bar */}
+      {isHovered && slides.length > 1 && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200/50 z-20">
+          <div 
+            className="h-full bg-purple-500 transition-all duration-300"
+            style={{ width: `${((currentIndex + 1) / slides.length) * 100}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -269,7 +267,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((resume) => ({
+    return (data as any[] || []).map((resume) => ({
       id: resume.id,
       type: "resume" as ContentType,
       title: resume.title || "Untitled Resume",
@@ -292,7 +290,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((pres) => ({
+    return (data as any[] || []).map((pres) => ({
       id: pres.id,
       type: "presentation" as ContentType,
       title: pres.title || "Untitled Presentation",
@@ -315,7 +313,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((diagram) => ({
+    return (data as any[] || []).map((diagram) => ({
       id: diagram.id,
       type: "diagram" as ContentType,
       title: diagram.title || "Untitled Diagram",
@@ -338,7 +336,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((letter) => ({
+    return (data as any[] || []).map((letter) => ({
       id: letter.id,
       type: "letter" as ContentType,
       title: letter.subject || letter.title || "Untitled Letter",
@@ -413,7 +411,8 @@ export function HistoryDashboard() {
       case "presentation":
         const rawSlides = item.data?.slides || item.data?.content?.slides;
         const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
-        return <PresentationPreview slides={slides} title={item.title} />;
+        const themeId = item.data?.themeId || item.data?.content?.themeId;
+        return <PresentationPreview slides={slides} title={item.title} themeId={themeId} />;
       
       case "diagram":
         return (
@@ -657,7 +656,7 @@ export function HistoryDashboard() {
                       onClick={() => handleView(item)}
                     >
                       {/* Preview Area */}
-                      <div className={`relative aspect-[3/4] bg-gradient-to-br ${config.gradient} overflow-hidden`}>
+                      <div className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} bg-gradient-to-br ${config.gradient} overflow-hidden`}>
                         {/* Document Preview Content */}
                         <div className="absolute inset-0 bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner overflow-hidden">
                           {renderPreview(item)}
