@@ -45,21 +45,9 @@ async function addCredits() {
                 console.log('Successfully updated credits for user! (1000 total, 0 used)');
             }
         } else {
-            console.log(`User ${targetEmail} not found. Attempting to update ALL records in user_credits...`);
-
-            const { data, error } = await supabase
-                .from('user_credits')
-                .update({
-                    credits_total: 1000,
-                    credits_used: 0
-                })
-                .select();
-
-            if (error) {
-                console.error('Error updating all credits:', error.message);
-            } else {
-                console.log(`Updated credits for ${data.length} users.`);
-            }
+            console.error(`User with email ${targetEmail} not found.`);
+            console.log('Please ensure the email is correct and the user exists in the system.');
+            process.exit(1);
         }
 
     } catch (error) {
