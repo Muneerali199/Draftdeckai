@@ -67,8 +67,10 @@ export function LetterGenerator() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('DEBUG: Generating letter, Session User:', session?.user?.email);
-      console.log('DEBUG: Access Token Present:', !!session?.access_token);
+      if (process.env.NODE_ENV !== "production") {
+        console.log('DEBUG: Generating letter, Session User:', session?.user?.email);
+        console.log('DEBUG: Access Token Present:', !!session?.access_token);
+      }
 
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
