@@ -115,10 +115,7 @@ const parseContent = (content: string) => {
                 blocks.push({ type: 'list', items: currentList });
                 currentList = [];
             }
-            // If line is empty, it's a paragraph break.
-            // If it has text, add as a paragraph (or merge with previous if desired? 
-            // usually in markdown single newlines are soft, but for letters we often treat them as lines.
-            // Let's treat non-empty lines as paragraphs for simplicity and clarity in letters)
+            // Treat each non-empty line as a separate paragraph to preserve explicit line breaks in letters.
             if (trimmed) {
                 blocks.push({ type: 'paragraph', items: [trimmed] });
             }
