@@ -717,7 +717,6 @@ COVER LETTER REQUIREMENTS:
 6. Professional but personable tone
 7. ATS-friendly formatting
 
-7. ATS-friendly formatting
 8. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
 
 Return ONLY valid JSON.`;
