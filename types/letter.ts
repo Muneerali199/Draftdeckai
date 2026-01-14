@@ -10,5 +10,5 @@ export interface Letter {
     };
     date?: string;
     subject?: string;
-    content?: string;
+    content: string;
 }

@@ -206,7 +206,7 @@ ${letterData.content || ''}
       // Delay revoking the object URL to ensure the download has time to start
       setTimeout(() => {
         URL.revokeObjectURL(url);
-      }, 100);
+      }, 600);
 
       toast({
         title: "Letter exported!",

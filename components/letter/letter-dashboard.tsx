@@ -291,7 +291,7 @@ ${letterData.content || ''}
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      setTimeout(() => URL.revokeObjectURL(url), 600);
 
       toast({
         title: "Letter exported!",

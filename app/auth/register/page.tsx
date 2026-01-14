@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ReferralHandler } from "./referral-handler";
 import { Button } from "@/components/ui/button";
@@ -302,11 +302,22 @@ function RegisterForm() {
     );
   }
 
+  // Memoized referral handler to prevent unnecessary re-renders
+  const handleReferral = useCallback((code: string | null) => {
+    setReferralCode(code);
+    if (code) {
+      toast({
+        title: "Referral Applied",
+        description: "Your referral code has been applied successfully.",
+      });
+    }
+  }, [toast]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-8">
       {/* Handle referral codes from URL params */}
       <Suspense fallback={null}>
-        <ReferralHandler onReferralCode={setReferralCode} />
+        <ReferralHandler onReferralCode={handleReferral} />
       </Suspense>
 
       {/* Enhanced background elements with parallax effect */}
