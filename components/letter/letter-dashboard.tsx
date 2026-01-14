@@ -113,11 +113,22 @@ export function LetterDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt,
@@ -169,11 +180,22 @@ export function LetterDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           jobDescription,
