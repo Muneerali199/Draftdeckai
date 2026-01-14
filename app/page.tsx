@@ -44,6 +44,12 @@ export default async function Home() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
+        set(name: string, value: string, options?: any) {
+          // No-op in this read-only context
+        },
+        remove(name: string, options?: any) {
+          // No-op in this read-only context
+        },
       },
     }
   );
