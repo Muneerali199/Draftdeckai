@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const token = authHeader?.replace('Bearer ', '');
     
     if (!token) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Authentication required. Please sign in.' },
         { status: 401 }
       );
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Authentication required. Please sign in.' },
         { status: 401 }
       );
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const { topic, audience, outline, settings } = await req.json();
 
     if (!topic) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Topic is required' },
         { status: 400 }
       );

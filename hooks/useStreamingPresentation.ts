@@ -10,9 +10,15 @@ interface StreamingState {
   creditsRemaining?: number;
 }
 
-const supabase = createClient();
-
 export function useStreamingPresentation() {
+  const [state, setState] = useState<StreamingState>({
+    isStreaming: false,
+    content: '',
+    error: null,
+    progress: 0,
+  });
+
+  const supabase = createClient();
 
   const generatePresentation = useCallback(
     async (topic: string, audience: string, outline?: any[], settings?: any) => {
@@ -145,4 +151,3 @@ export function useStreamingPresentation() {
     reset,
   };
 }
-

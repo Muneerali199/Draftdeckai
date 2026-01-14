@@ -130,59 +130,21 @@ export function HistoryDashboard() {
 
       console.log('📋 Fetching history for user:', user.id);
 
-      // Fetch all documents from unified documents table
-      const { data: documents, error } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // Fetch from all sources in parallel
+      const [documentsResult, resumes, presentations, diagrams, letters] = await Promise.all([
+        supabase.from("documents").select("*").eq("user_id", user.id),
+        fetchResumes(user.id),
+        fetchPresentations(user.id),
+        fetchDiagrams(user.id),
+        fetchLetters(user.id),
+      ]);
 
-      if (error) {
-        console.log("Documents table not available or error:", error.message);
-        console.log("📋 Trying fallback to individual tables...");
-        
-        // Try fallback to individual tables
-        const [resumes, presentations, diagrams, letters] = await Promise.all([
-          fetchResumes(user.id),
-          fetchPresentations(user.id),
-          fetchDiagrams(user.id),
-          fetchLetters(user.id),
-        ]);
-
-        console.log('📋 Fetched from individual tables:', {
-          resumes: resumes.length,
-          presentations: presentations.length,
-          diagrams: diagrams.length,
-          letters: letters.length
-        });
-
-        const allItems = [
-          ...resumes,
-          ...presentations,
-          ...diagrams,
-          ...letters,
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        setItems(allItems);
-        setStats({
-          total: allItems.length,
-          resume: resumes.length,
-          presentation: presentations.length,
-          diagram: diagrams.length,
-          letter: letters.length,
-        });
-        return;
-      }
-
-      console.log('📋 Fetched from documents table:', documents?.length || 0);
-
+      const { data: documents } = documentsResult;
+      
       // Map documents to history items
-      const allItems: HistoryItem[] = (documents || []).map((doc: any) => {
+      const docItems: HistoryItem[] = (documents || []).map((doc: any) => {
         const content = doc.content || {};
-        // For resumes, extract resumeData if it exists
-        const data = doc.type === 'resume' 
-          ? (content.resumeData || content)
-          : content;
+        const data = doc.type === 'resume' ? (content.resumeData || content) : content;
         
         return {
           id: doc.id,
@@ -194,6 +156,22 @@ export function HistoryDashboard() {
           data: data,
         };
       });
+
+      // Merge all items and deduplicate by ID
+      const mergedMap = new Map<string, HistoryItem>();
+      
+      // Add legacy items first
+      [...resumes, ...presentations, ...diagrams, ...letters].forEach(item => {
+        mergedMap.set(item.id, item);
+      });
+      
+      // Add (and potentially overwrite with better data) document items
+      docItems.forEach(item => {
+        mergedMap.set(item.id, item);
+      });
+
+      const allItems = Array.from(mergedMap.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setItems(allItems);
 
