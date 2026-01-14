@@ -57,7 +57,9 @@ const GitHubIcon = () => (
   </svg>
 );
 
-export default function Register() {
+import { Suspense } from "react";
+
+function RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -918,5 +920,17 @@ export default function Register() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Register() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }
