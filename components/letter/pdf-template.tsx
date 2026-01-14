@@ -1,11 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-
-// Register a standard serif font for a professional look
-Font.register({
-    family: 'Times-Roman',
-    src: 'https://fonts.gstatic.com/s/timesnewroman/v12/TimesNewRoman.ttf' // Fallback or use standard PDF fonts
-});
+import { Letter } from '@/types/letter';
 
 const styles = StyleSheet.create({
     page: {
@@ -54,35 +49,59 @@ const styles = StyleSheet.create({
 });
 
 interface LetterPdfProps {
-    letter: {
-        from?: { name?: string; address?: string };
-        to?: { name?: string; address?: string };
-        date?: string;
-        subject?: string;
-        content?: string;
-    };
+    letter: Letter;
 }
 
-// Helper to render text with Bold formatting (**text**)
+// This is a simple parser that toggles bold on encountering `**` markers.
+// Note: It does not implement full markdown semantics (e.g., nested bold),
+// but avoids fragile regex-based splitting.
 const renderStyledText = (text: string) => {
     if (!text) return null;
-
-    // Split by bold markers (**...**)
-    // matches: (**bold**) | (normal)
-    const parts = text.split(/(\*\*.*?\*\*)/g);
-
-    return parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-            // Render bold content without markers
-            return (
-                <Text key={index} style={styles.bold}>
-                    {part.slice(2, -2)}
-                </Text>
-            );
+    const elements: React.ReactElement[] = [];
+    let buffer = '';
+    let isBold = false;
+    let key = 0;
+    for (let i = 0; i < text.length; i++) {
+        // Handle escaped characters (e.g., \* for literal asterisk)
+        if (text[i] === '\\' && i < text.length - 1 && text[i + 1] === '*') {
+            buffer += '*';
+            i++; // Skip the asterisk
+            continue;
         }
-        // Return normal text
-        return <Text key={index}>{part}</Text>;
-    });
+
+        // Detect bold marker `**`
+        if (i < text.length - 1 && text[i] === '*' && text[i + 1] === '*') {
+            // Flush current buffer as a Text node with the current style
+            if (buffer) {
+                elements.push(
+                    <Text key={key++} style={isBold ? styles.bold : undefined}>
+                        {buffer}
+                    </Text>
+                );
+                buffer = '';
+            }
+            // Toggle bold state and skip the second '*'
+            isBold = !isBold;
+            i++; // Skip next '*'
+        } else {
+            buffer += text[i];
+        }
+    }
+    // Flush any remaining buffer
+    if (buffer) {
+        elements.push(
+            <Text key={key++} style={isBold ? styles.bold : undefined}>
+                {buffer}
+            </Text>
+        );
+    }
+
+    // Warn if bold tag was left unclosed
+    if (isBold) {
+        console.warn('Unclosed bold marker detected in PDF text:', text);
+    }
+
+    return elements;
 };
 
 // Helper to parse content into blocks (paragraphs and lists)
@@ -104,10 +123,7 @@ const parseContent = (content: string) => {
                 blocks.push({ type: 'list', items: currentList });
                 currentList = [];
             }
-            // If line is empty, it's a paragraph break.
-            // If it has text, add as a paragraph (or merge with previous if desired? 
-            // usually in markdown single newlines are soft, but for letters we often treat them as lines.
-            // Let's treat non-empty lines as paragraphs for simplicity and clarity in letters)
+            // Treat each non-empty line as a separate paragraph to preserve explicit line breaks in letters.
             if (trimmed) {
                 blocks.push({ type: 'paragraph', items: [trimmed] });
             }

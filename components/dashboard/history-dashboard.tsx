@@ -27,6 +27,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { SiteHeader } from "@/components/site-header";
+import { SlideCard, Slide } from "@/components/presentation/real-time-generator";
+import { getThemeById } from "@/lib/presentation-themes";
 
 type ContentType = "resume" | "presentation" | "diagram" | "letter";
 
@@ -83,7 +85,7 @@ function getDocumentDescription(doc: any): string {
     case 'resume':
       return content.resumeData?.name || content.name || 'Resume';
     case 'presentation':
-      const slides = content.slides || content.outlines || [];
+      const slides = Array.isArray(content.slides) ? content.slides : (content.outlines || content.slides || []);
       return `${slides.length || 0} slides`;
     case 'diagram':
       return content.type || 'Diagram';
@@ -93,6 +95,64 @@ function getDocumentDescription(doc: any): string {
       return doc.type || 'Document';
   }
 }
+
+const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title: string, themeId?: string }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const theme = getThemeById(themeId || 'modern-blue');
+
+  useEffect(() => {
+    if (!isHovered || slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isHovered, slides.length]);
+
+  if (!slides || slides.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center p-4 bg-purple-50">
+        <Presentation className="h-8 w-8 text-purple-400" />
+      </div>
+    );
+  }
+
+  const slide = slides[currentIndex] || slides[0];
+
+  return (
+    <div 
+      className="h-full w-full relative group/slideshow cursor-pointer flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setCurrentIndex(0);
+      }}
+    >
+      <div className="w-[166.67%] h-[166.67%] scale-[0.6] transform-gpu pointer-events-none origin-center">
+         <SlideCard 
+           slide={slide} 
+           theme={theme} 
+           getGradientClass={() => theme.colors.gradient}
+         />
+      </div>
+
+      {/* Slide number indicator */}
+      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[8px] px-2 py-0.5 rounded-full backdrop-blur-md font-bold z-20">
+        {currentIndex + 1} / {slides.length}
+      </div>
+      
+      {/* Progress bar */}
+      {isHovered && slides.length > 1 && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200/50 z-20">
+          <div 
+            className="h-full bg-purple-500 transition-all duration-300"
+            style={{ width: `${((currentIndex + 1) / slides.length) * 100}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export function HistoryDashboard() {
   const [activeTab, setActiveTab] = useState<ContentType | "all">("all");
@@ -130,59 +190,21 @@ export function HistoryDashboard() {
 
       console.log('📋 Fetching history for user:', user.id);
 
-      // Fetch all documents from unified documents table
-      const { data: documents, error } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // Fetch from all sources in parallel
+      const [documentsResult, resumes, presentations, diagrams, letters] = await Promise.all([
+        supabase.from("documents").select("*").eq("user_id", user.id),
+        fetchResumes(user.id),
+        fetchPresentations(user.id),
+        fetchDiagrams(user.id),
+        fetchLetters(user.id),
+      ]);
 
-      if (error) {
-        console.log("Documents table not available or error:", error.message);
-        console.log("📋 Trying fallback to individual tables...");
-        
-        // Try fallback to individual tables
-        const [resumes, presentations, diagrams, letters] = await Promise.all([
-          fetchResumes(user.id),
-          fetchPresentations(user.id),
-          fetchDiagrams(user.id),
-          fetchLetters(user.id),
-        ]);
-
-        console.log('📋 Fetched from individual tables:', {
-          resumes: resumes.length,
-          presentations: presentations.length,
-          diagrams: diagrams.length,
-          letters: letters.length
-        });
-
-        const allItems = [
-          ...resumes,
-          ...presentations,
-          ...diagrams,
-          ...letters,
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        setItems(allItems);
-        setStats({
-          total: allItems.length,
-          resume: resumes.length,
-          presentation: presentations.length,
-          diagram: diagrams.length,
-          letter: letters.length,
-        });
-        return;
-      }
-
-      console.log('📋 Fetched from documents table:', documents?.length || 0);
-
+      const { data: documents } = documentsResult;
+      
       // Map documents to history items
-      const allItems: HistoryItem[] = (documents || []).map((doc: any) => {
+      const docItems: HistoryItem[] = (documents || []).map((doc: any) => {
         const content = doc.content || {};
-        // For resumes, extract resumeData if it exists
-        const data = doc.type === 'resume' 
-          ? (content.resumeData || content)
-          : content;
+        const data = doc.type === 'resume' ? (content.resumeData || content) : content;
         
         return {
           id: doc.id,
@@ -194,6 +216,22 @@ export function HistoryDashboard() {
           data: data,
         };
       });
+
+      // Merge all items and deduplicate by ID
+      const mergedMap = new Map<string, HistoryItem>();
+      
+      // Add legacy items first
+      [...resumes, ...presentations, ...diagrams, ...letters].forEach(item => {
+        mergedMap.set(item.id, item);
+      });
+      
+      // Add (and potentially overwrite with better data) document items
+      docItems.forEach(item => {
+        mergedMap.set(item.id, item);
+      });
+
+      const allItems = Array.from(mergedMap.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setItems(allItems);
 
@@ -229,7 +267,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((resume) => ({
+    return (data as any[] || []).map((resume) => ({
       id: resume.id,
       type: "resume" as ContentType,
       title: resume.title || "Untitled Resume",
@@ -252,7 +290,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((pres) => ({
+    return (data as any[] || []).map((pres) => ({
       id: pres.id,
       type: "presentation" as ContentType,
       title: pres.title || "Untitled Presentation",
@@ -275,7 +313,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((diagram) => ({
+    return (data as any[] || []).map((diagram) => ({
       id: diagram.id,
       type: "diagram" as ContentType,
       title: diagram.title || "Untitled Diagram",
@@ -298,7 +336,7 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data || []).map((letter) => ({
+    return (data as any[] || []).map((letter) => ({
       id: letter.id,
       type: "letter" as ContentType,
       title: letter.subject || letter.title || "Untitled Letter",
@@ -371,31 +409,10 @@ export function HistoryDashboard() {
         );
       
       case "presentation":
-        const rawSlides = item.data?.slides;
+        const rawSlides = item.data?.slides || item.data?.content?.slides;
         const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
-        const firstSlide = slides[0];
-        return (
-          <div className="h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-50 to-pink-50">
-            <div className="text-center">
-              <div className="font-bold text-[10px] text-gray-800 mb-1 line-clamp-2">
-                {firstSlide?.title || item.title || "Presentation Title"}
-              </div>
-              <div className="text-[6px] text-gray-500 mb-2">
-                {slides.length} slides
-              </div>
-              <div className="flex justify-center gap-1">
-                {slides.slice(0, 4).map((_: any, i: number) => (
-                  <div key={i} className="w-4 h-3 bg-purple-200 rounded-sm border border-purple-300" />
-                ))}
-                {slides.length > 4 && (
-                  <div className="w-4 h-3 bg-purple-100 rounded-sm border border-purple-200 flex items-center justify-center">
-                    <span className="text-[4px] text-purple-600">+{slides.length - 4}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
+        const themeId = item.data?.themeId || item.data?.content?.themeId;
+        return <PresentationPreview slides={slides} title={item.title} themeId={themeId} />;
       
       case "diagram":
         return (
@@ -487,14 +504,14 @@ export function HistoryDashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   if (isLoading) {
@@ -639,7 +656,7 @@ export function HistoryDashboard() {
                       onClick={() => handleView(item)}
                     >
                       {/* Preview Area */}
-                      <div className={`relative aspect-[3/4] bg-gradient-to-br ${config.gradient} overflow-hidden`}>
+                      <div className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} bg-gradient-to-br ${config.gradient} overflow-hidden`}>
                         {/* Document Preview Content */}
                         <div className="absolute inset-0 bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner overflow-hidden">
                           {renderPreview(item)}

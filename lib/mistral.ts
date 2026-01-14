@@ -77,13 +77,9 @@ function extractAndParseJSON(content: string, context: string = ''): any {
       try {
         return JSON.parse(jsonStr);
       } catch (e3) {
-        // If standard parsing fails, try to clean newlines in strings which is common invalid JSON from LLMs
-        // This is a naive cleanup but helps with unescaped newlines in values
-        try {
-          // Replace unescaped newlines within quotes? Hard to do safely with regex.
-          // Let's try to just log for now, usually the brace extraction allows it to work if it was just surrounded by text.
-          console.warn(`JSON parsing failed after extraction for ${context}. Raw:`, jsonStr.substring(0, 100) + '...');
-        } catch (e4) { }
+        // If standard parsing fails after brace extraction, log the failure for troubleshooting.
+        // Usually the brace extraction allows it to work if it was just surrounded by non-JSON text.
+        console.warn(`JSON parsing failed after extraction for ${context}. Raw:`, jsonStr.substring(0, 100) + '...');
       }
     }
   }
@@ -296,7 +292,8 @@ Omit "chart" if not applicable.`;
 }
 
 /**
- * Generate presentation text content using Mistral AI
+ * Generate presentation text content using Mistral AI - ULTRA PREMIUM VERSION
+ * Creates presentations 10x better than Gamma with diverse slide types and rich content
  */
 export async function generatePresentationText(
   topic: string,
@@ -308,35 +305,137 @@ export async function generatePresentationText(
   }
 
   try {
-    const prompt = `Create a professional presentation outline for: "${topic}"
+    // Calculate slide type distribution for optimal variety
+    const slideTypeDistribution = getSlideTypeDistribution(pageCount);
 
-Generate ${pageCount} slides with:
-1. Cover slide with engaging title
-2. Content slides with clear structure
-3. Conclusion slide
+    const prompt = `You are a WORLD-CLASS presentation designer creating a PREMIUM presentation that's 10X better than Gamma or Canva.
 
-Return ONLY a JSON array with this structure:
+Topic: "${topic}"
+Total Slides: ${pageCount}
+
+REQUIRED SLIDE TYPE DISTRIBUTION:
+${slideTypeDistribution.map((type, i) => `Slide ${i + 1}: ${type}`).join('\n')}
+
+Generate a JSON array of ${pageCount} slides. Each slide MUST follow this structure:
+
 [
   {
-    "title": "Engaging Title",
-    "type": "title|content|conclusion|chart",
-    "bulletPoints": ["Key point 1", "Key point 2", "Key point 3"],
-    "content": "Optional paragraph content",
-    "notes": "Speaker notes"
+    "slideNumber": 1,
+    "type": "hero",
+    "title": "Bold, Compelling Title That Hooks the Audience",
+    "subtitle": "Engaging subtitle that explains the core value",
+    "cta": "Action button text"
+  },
+  {
+    "slideNumber": 2,
+    "type": "stats",
+    "title": "Impressive Results",
+    "stats": [
+      { "value": "94%", "label": "Customer Satisfaction", "context": "year over year", "trend": "up" },
+      { "value": "$2.4M", "label": "Revenue Generated", "context": "this quarter", "trend": "up" },
+      { "value": "10x", "label": "Faster Processing", "context": "vs competitors", "trend": "up" }
+    ]
+  },
+  {
+    "slideNumber": 3,
+    "type": "comparison",
+    "title": "Before vs After",
+    "comparison": {
+      "leftTitle": "❌ The Old Way",
+      "left": ["Problem 1", "Problem 2", "Problem 3"],
+      "rightTitle": "✨ The New Way",
+      "right": ["Solution 1", "Solution 2", "Solution 3"],
+      "highlight": "right"
+    }
+  },
+  {
+    "slideNumber": 4,
+    "type": "feature-grid",
+    "title": "Key Features",
+    "icons": [
+      { "icon": "Zap", "label": "Fast", "description": "Lightning quick processing" },
+      { "icon": "Shield", "label": "Secure", "description": "Enterprise-grade security" },
+      { "icon": "Globe", "label": "Global", "description": "Available worldwide" },
+      { "icon": "Users", "label": "Collaborative", "description": "Team-friendly design" }
+    ]
+  },
+  {
+    "slideNumber": 5,
+    "type": "data-viz",
+    "title": "Growth Trajectory",
+    "chartData": {
+      "type": "line",
+      "data": [
+        { "name": "Q1", "value": 45 },
+        { "name": "Q2", "value": 78 },
+        { "name": "Q3", "value": 125 },
+        { "name": "Q4", "value": 189 }
+      ]
+    }
+  },
+  {
+    "slideNumber": 6,
+    "type": "process",
+    "title": "How It Works",
+    "bullets": [
+      "📤 Step 1: Upload your data",
+      "🤖 Step 2: AI processes automatically",
+      "📊 Step 3: Get instant insights",
+      "🚀 Step 4: Take action"
+    ]
+  },
+  {
+    "slideNumber": 7,
+    "type": "timeline",
+    "title": "Our Journey",
+    "timeline": [
+      { "date": "2022", "title": "Founded", "description": "Started with a vision" },
+      { "date": "2023", "title": "Growth", "description": "Reached 10K users" },
+      { "date": "2024", "title": "Expansion", "description": "Went global" }
+    ]
+  },
+  {
+    "slideNumber": 8,
+    "type": "testimonial",
+    "title": "Customer Love",
+    "testimonial": {
+      "quote": "This completely transformed our workflow. Game changer!",
+      "author": "Jane Smith",
+      "role": "CEO",
+      "company": "Tech Corp"
+    }
   }
 ]
 
-Guidelines:
-- Use professional, clear language
-- Make bullet points concise and impactful
-- Mix different types for visual variety
-- Ensure logical flow between slides`;
+CRITICAL SLIDE TYPE GUIDELINES:
+
+1. **hero** - Opening slide with bold title + subtitle + CTA
+2. **stats** - 3-4 impressive numbers with value, label, context, trend (up/down/neutral)
+3. **comparison** - Side-by-side with leftTitle, left[], rightTitle, right[], highlight
+4. **feature-grid** - 3-4 features with icon name, label, description
+5. **data-viz** - Chart with type (bar/line/pie) and data array [{name, value}]
+6. **process** - Step-by-step bullets with emojis
+7. **timeline** - Milestones with date, title, description
+8. **testimonial** - Quote with author, role, company
+9. **bullets** - Key points with compelling text
+10. **closing** - Final CTA with stats or call-to-action
+
+ICON OPTIONS for feature-grid: Zap, Shield, Users, Globe, Target, Rocket, Heart, Star, Check, TrendUp, Clock, Lock, Award, Lightbulb, BarChart, DollarSign, Smartphone, Cloud, Code, Palette
+
+RULES:
+1. Use SPECIFIC numbers (94% not 90%, $2.4M not $2M)
+2. Each bullet max 10 words
+3. Every slide must be UNIQUE and visually different
+4. Create content that tells a COMPELLING STORY
+5. Make stats realistic and impressive
+
+Return ONLY the JSON array. No markdown, no explanation.`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-small-latest',
+      model: 'mistral-large-latest', // Use large model for better quality
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      maxTokens: 3000,
+      maxTokens: 5000, // Increased for richer content
     });
 
     let content = response.choices?.[0]?.message?.content || '[]';
@@ -355,13 +454,15 @@ Guidelines:
           return parsedSlides.slice(0, pageCount);
         }
 
-        // If too few slides, generate filler slides based on topic using helper
+        // If too few slides, generate professional filler slides
         while (parsedSlides.length < pageCount) {
-          parsedSlides.push(createMistralFillerSlide(parsedSlides.length + 1, pageCount, topic));
+          const slideNum = parsedSlides.length + 1;
+          parsedSlides.push(createProfessionalFillerSlide(slideNum, pageCount, topic));
         }
       }
 
-      return parsedSlides;
+      // Enrich slides with proper structure
+      return parsedSlides.map((slide: any, index: number) => enrichSlideData(slide, index + 1, topic));
     }
     return [];
   } catch (error) {
@@ -369,6 +470,165 @@ Guidelines:
     throw error;
   }
 }
+
+/**
+ * Get optimal slide type distribution based on slide count
+ */
+function getSlideTypeDistribution(pageCount: number): string[] {
+  const distribution: string[] = [];
+
+  // Always start with hero
+  distribution.push('hero');
+
+  // Calculate remaining slots
+  let remaining = pageCount - 2; // Reserve 1 for hero, 1 for closing
+
+  // Add diverse types based on count
+  const typeRotation = [
+    'stats', 'feature-grid', 'comparison', 'data-viz',
+    'process', 'timeline', 'testimonial', 'bullets'
+  ];
+
+  let typeIndex = 0;
+  while (remaining > 0) {
+    distribution.push(typeRotation[typeIndex % typeRotation.length]);
+    typeIndex++;
+    remaining--;
+  }
+
+  // Always end with closing
+  distribution.push('closing');
+
+  return distribution.slice(0, pageCount);
+}
+
+/**
+ * Create a professional filler slide with the correct type
+ */
+function createProfessionalFillerSlide(slideNumber: number, pageCount: number, topic: string): any {
+  const isClosing = slideNumber === pageCount;
+
+  if (isClosing) {
+    return {
+      slideNumber,
+      type: 'closing',
+      title: `Ready to Get Started with ${topic}?`,
+      subtitle: 'Take the next step today',
+      cta: 'Learn More →',
+      stats: [
+        { value: 'Free', label: 'Consultation', context: 'No commitment' }
+      ]
+    };
+  }
+
+  // Cycle through different types for variety
+  const types = ['stats', 'feature-grid', 'bullets', 'process'];
+  const typeIndex = (slideNumber - 2) % types.length;
+  const type = types[typeIndex];
+
+  switch (type) {
+    case 'stats':
+      return {
+        slideNumber,
+        type: 'stats',
+        title: `Key Metrics for ${topic}`,
+        stats: [
+          { value: '85%', label: 'Success Rate', context: 'proven results', trend: 'up' },
+          { value: '3x', label: 'Efficiency Gain', context: 'average improvement', trend: 'up' },
+          { value: '24/7', label: 'Availability', context: 'always on', trend: 'neutral' }
+        ]
+      };
+    case 'feature-grid':
+      return {
+        slideNumber,
+        type: 'feature-grid',
+        title: `Why Choose ${topic}`,
+        icons: [
+          { icon: 'Check', label: 'Reliable', description: 'Trusted by thousands' },
+          { icon: 'Zap', label: 'Fast', description: 'Quick implementation' },
+          { icon: 'Shield', label: 'Secure', description: 'Enterprise-grade' }
+        ]
+      };
+    case 'process':
+      return {
+        slideNumber,
+        type: 'process',
+        title: `Getting Started with ${topic}`,
+        bullets: [
+          '📋 Step 1: Define your goals',
+          '🔍 Step 2: Assess your needs',
+          '🚀 Step 3: Implement the solution',
+          '📈 Step 4: Measure results'
+        ]
+      };
+    default:
+      return {
+        slideNumber,
+        type: 'bullets',
+        title: `More About ${topic}`,
+        bulletPoints: [
+          'Important consideration for success',
+          'Key factor to keep in mind',
+          'Best practice recommendation'
+        ]
+      };
+  }
+}
+
+/**
+ * Enrich slide data with proper structure for rendering
+ */
+function enrichSlideData(slide: any, slideNumber: number, topic: string): any {
+  const enriched = {
+    ...slide,
+    slideNumber,
+    // Ensure bulletPoints exists for backward compatibility
+    bulletPoints: slide.bulletPoints || slide.bullets || [],
+    // Convert icons format if needed
+    icons: slide.icons?.map((icon: any) => ({
+      icon: icon.icon || 'Star',
+      label: icon.label || 'Feature',
+      description: icon.description || ''
+    })),
+    // Ensure stats have proper format
+    stats: slide.stats?.map((stat: any) => ({
+      value: stat.value || '0',
+      label: stat.label || 'Metric',
+      context: stat.context || '',
+      trend: stat.trend || 'neutral'
+    })),
+    // Add description for outline compatibility
+    description: slide.subtitle || slide.content || getSlideDescription(slide, topic)
+  };
+
+  return enriched;
+}
+
+/**
+ * Generate a description from slide content
+ */
+function getSlideDescription(slide: any, topic: string): string {
+  if (slide.stats?.length) {
+    return `Key metrics: ${slide.stats.map((s: any) => `${s.value} ${s.label}`).join(', ')}`;
+  }
+  if (slide.comparison) {
+    return `Comparison showing benefits of the new approach`;
+  }
+  if (slide.timeline?.length) {
+    return `Timeline with ${slide.timeline.length} key milestones`;
+  }
+  if (slide.icons?.length) {
+    return `${slide.icons.length} key features and benefits`;
+  }
+  if (slide.testimonial) {
+    return `Customer testimonial from ${slide.testimonial.author || 'satisfied customer'}`;
+  }
+  if (slide.chartData) {
+    return `${slide.chartData.type} chart visualization`;
+  }
+  return `Professional content about ${topic}`;
+}
+
 
 /**
  * Generate alternative image suggestions for a slide
@@ -487,7 +747,6 @@ REQUIREMENTS:
 3. Relevant to the specific request and letter type
 4. Appropriate length and detail level
 
-4. Appropriate length and detail level
 5. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
 
 Return ONLY valid JSON.`;
@@ -717,7 +976,6 @@ COVER LETTER REQUIREMENTS:
 6. Professional but personable tone
 7. ATS-friendly formatting
 
-7. ATS-friendly formatting
 8. FORMATTING: Use Markdown formatting strictly within the content field. Use **bold** for key skills and achievements. Use bullet points * at the start of lines for lists.
 
 Return ONLY valid JSON.`;

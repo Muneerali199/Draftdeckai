@@ -13,8 +13,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function addCredits() {
     console.log('Adding credits to users...');
-    const targetEmail = 'gca1245@gmail.com';
+    const targetEmail = process.argv[2] || process.env.TARGET_EMAIL;
 
+    if (!targetEmail) {
+        console.error('Missing target email. Provide it as a command-line argument or set TARGET_EMAIL.');
+        process.exit(1);
+    }
     try {
         // 1. Get User ID from Auth
         const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
@@ -36,27 +40,14 @@ async function addCredits() {
                 .eq('user_id', targetUser.id);
 
             if (error) {
-                console.error('Error updating credits:', error.message);
+                console.error(`Error updating credits for user ${targetUser.id}:`, error.message);
             } else {
                 console.log('Successfully updated credits for user! (1000 total, 0 used)');
             }
         } else {
-            console.log(`User ${targetEmail} not found. Attempting to update ALL records in user_credits...`);
-
-            const { data, error } = await supabase
-                .from('user_credits')
-                .update({
-                    credits_total: 1000,
-                    credits_used: 0
-                })
-                .neq('id', '000000') // Dummy filter
-                .select();
-
-            if (error) {
-                console.error('Error updating all credits:', error.message);
-            } else {
-                console.log(`Updated credits for ${data.length} users.`);
-            }
+            console.error(`User with email ${targetEmail} not found.`);
+            console.log('Please ensure the email is correct and the user exists in the system.');
+            process.exit(1);
         }
 
     } catch (error) {

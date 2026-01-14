@@ -42,6 +42,21 @@ interface SlideOutline {
   chartData?: any;
   imageQuery?: string;
   imageUrl?: string;
+  // Premium slide properties
+  stats?: { value: string; label: string; context?: string; trend?: string }[];
+  comparison?: { 
+    leftTitle?: string; 
+    left?: string[]; 
+    rightTitle?: string; 
+    right?: string[]; 
+    highlight?: string;
+  };
+  timeline?: { date: string; title: string; description?: string; icon?: string }[];
+  icons?: { icon: string; label: string; description?: string }[];
+  mockup?: { type: string; title?: string; elements: { type: string; content: string }[] };
+  testimonial?: { quote: string; author: string; role?: string; company?: string };
+  logos?: string[];
+  cta?: string;
 }
 
 interface SlideOutlinePreviewProps {
@@ -114,15 +129,33 @@ export function SlideOutlinePreview({ outlines, onOutlinesUpdate, editable = tru
   const getSlideIcon = (type: string) => {
     switch (type) {
       case 'cover':
+      case 'hero':
         return <FileText className="h-4 w-4" />;
       case 'list':
+      case 'bullets':
         return <List className="h-4 w-4" />;
       case 'chart':
+      case 'data-viz':
         return <BarChart3 className="h-4 w-4" />;
       case 'split':
+      case 'comparison':
+      case 'before-after':
         return <ImageIcon className="h-4 w-4" />;
       case 'process':
+      case 'timeline':
+      case 'roadmap':
         return <ArrowRight className="h-4 w-4" />;
+      case 'stats':
+        return <TrendingUp className="h-4 w-4" />;
+      case 'feature-grid':
+        return <Target className="h-4 w-4" />;
+      case 'testimonial':
+      case 'quote':
+        return <Brain className="h-4 w-4" />;
+      case 'mockup':
+        return <Camera className="h-4 w-4" />;
+      case 'closing':
+        return <CheckCircle className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -144,58 +177,124 @@ export function SlideOutlinePreview({ outlines, onOutlinesUpdate, editable = tru
   const getSlideTypeLabel = (type: string) => {
     switch (type) {
       case 'cover':
-        return 'Hero Slide';
+      case 'hero':
+        return '🚀 Hero Slide';
       case 'list':
-        return 'Key Points';
+      case 'bullets':
+        return '📝 Key Points';
       case 'chart':
-        return 'Data Visual';
+      case 'data-viz':
+        return '📊 Data Visual';
       case 'split':
-        return 'Split Layout';
+      case 'comparison':
+        return '⚖️ Comparison';
+      case 'before-after':
+        return '🔄 Before/After';
       case 'process':
-        return 'Process Flow';
+        return '⚡ Process Flow';
+      case 'timeline':
+      case 'roadmap':
+        return '📅 Timeline';
       case 'text':
-        return 'Content Focus';
+        return '📄 Content Focus';
+      case 'stats':
+        return '📈 Statistics';
+      case 'feature-grid':
+        return '✨ Features';
+      case 'testimonial':
+        return '💬 Testimonial';
+      case 'quote':
+        return '💭 Quote';
+      case 'mockup':
+        return '📱 Product Mockup';
+      case 'logo-cloud':
+        return '🏢 Partners';
+      case 'closing':
+        return '🎯 Call to Action';
       default:
-        return 'Standard';
+        return '✨ Premium';
     }
   };
 
   const getSlideTypeColor = (type: string) => {
     switch (type) {
       case 'cover':
+      case 'hero':
         return 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300';
       case 'list':
+      case 'bullets':
         return 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300';
       case 'chart':
+      case 'data-viz':
+      case 'stats':
         return 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border-purple-300';
       case 'split':
+      case 'comparison':
+      case 'before-after':
         return 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300';
       case 'process':
+      case 'timeline':
+      case 'roadmap':
         return 'bg-gradient-to-r from-pink-100 to-pink-200 text-pink-800 border-pink-300';
+      case 'feature-grid':
+        return 'bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-800 border-indigo-300';
+      case 'testimonial':
+      case 'quote':
+        return 'bg-gradient-to-r from-teal-100 to-teal-200 text-teal-800 border-teal-300';
+      case 'mockup':
+        return 'bg-gradient-to-r from-cyan-100 to-cyan-200 text-cyan-800 border-cyan-300';
+      case 'closing':
+        return 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border-amber-300';
       default:
         return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300';
     }
   };
 
   const getAIInsights = () => {
-    const chartSlides = outlines.filter(o => o.type === 'chart').length;
-    const listSlides = outlines.filter(o => o.type === 'list').length;
+    const chartSlides = outlines.filter(o => o.type === 'chart' || o.type === 'data-viz' || o.chartData).length;
+    const statsSlides = outlines.filter(o => o.type === 'stats' || (o.stats?.length ?? 0) > 0).length;
+    const comparisonSlides = outlines.filter(o => o.type === 'comparison' || o.type === 'before-after').length;
+    const timelineSlides = outlines.filter(o => o.type === 'timeline' || o.type === 'roadmap' || (o.timeline?.length ?? 0) > 0).length;
+    const featureSlides = outlines.filter(o => o.type === 'feature-grid' || (o.icons?.length ?? 0) > 0).length;
+    const testimonialSlides = outlines.filter(o => o.type === 'testimonial' || o.type === 'quote').length;
+    const mockupSlides = outlines.filter(o => o.type === 'mockup').length;
+    const listSlides = outlines.filter(o => o.type === 'list' || o.type === 'bullets').length;
     const splitSlides = outlines.filter(o => o.type === 'split').length;
     const imageSlides = outlines.filter(o => o.imageUrl || o.imageQuery).length;
     
     const insights = [];
     
+    if (statsSlides > 0) {
+      insights.push(`📈 ${statsSlides} impressive stats slide${statsSlides > 1 ? 's' : ''} with key metrics`);
+    }
     if (chartSlides > 0) {
-      insights.push(`${chartSlides} professional chart${chartSlides > 1 ? 's' : ''} for data impact`);
+      insights.push(`📊 ${chartSlides} data visualization${chartSlides > 1 ? 's' : ''} for impact`);
+    }
+    if (comparisonSlides > 0) {
+      insights.push(`⚖️ ${comparisonSlides} comparison${comparisonSlides > 1 ? 's' : ''} for persuasion`);
+    }
+    if (timelineSlides > 0) {
+      insights.push(`📅 ${timelineSlides} timeline${timelineSlides > 1 ? 's' : ''} for storytelling`);
+    }
+    if (featureSlides > 0) {
+      insights.push(`✨ ${featureSlides} feature grid${featureSlides > 1 ? 's' : ''} with icons`);
+    }
+    if (testimonialSlides > 0) {
+      insights.push(`💬 ${testimonialSlides} testimonial${testimonialSlides > 1 ? 's' : ''} for social proof`);
+    }
+    if (mockupSlides > 0) {
+      insights.push(`📱 ${mockupSlides} product mockup${mockupSlides > 1 ? 's' : ''}`);
     }
     if (listSlides > 0) {
-      insights.push(`${listSlides} structured content slide${listSlides > 1 ? 's' : ''} for clarity`);
-    }
-    if (splitSlides > 0) {
-      insights.push(`${splitSlides} visual layout${splitSlides > 1 ? 's' : ''} for engagement`);
+      insights.push(`📝 ${listSlides} structured content slide${listSlides > 1 ? 's' : ''}`);
     }
     if (imageSlides > 0) {
-      insights.push(`${imageSlides} high-quality image${imageSlides > 1 ? 's' : ''} from Pexels`);
+      insights.push(`🖼️ ${imageSlides} AI-generated image${imageSlides > 1 ? 's' : ''}`);
+    }
+    
+    // If no specific insights, add a general one
+    if (insights.length === 0) {
+      insights.push('Premium slide variety for engagement');
     }
     
     return insights;

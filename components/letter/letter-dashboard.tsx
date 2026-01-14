@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { sanitizeFilename } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,11 +114,22 @@ export function LetterDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt,
@@ -169,11 +181,22 @@ export function LetterDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Validate session before making API call
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate letters.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/generate/letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           jobDescription,
@@ -262,15 +285,13 @@ ${letterData.content || ''}
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const sanitizedSubject = letterData.subject
-        ? letterData.subject.slice(0, 40).replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_')
-        : `${letterType}-letter-${Date.now()}`;
+      const sanitizedSubject = sanitizeFilename(letterData.subject, `${letterType}-letter-${Date.now()}`);
 
       link.download = `${sanitizedSubject}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 600);
 
       toast({
         title: "Letter exported!",
