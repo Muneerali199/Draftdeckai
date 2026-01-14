@@ -13,8 +13,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function addCredits() {
     console.log('Adding credits to users...');
-    const targetEmail = 'gca1245@gmail.com';
+    const targetEmail = process.argv[2] || process.env.TARGET_EMAIL;
 
+    if (!targetEmail) {
+        console.error('Missing target email. Provide it as a command-line argument or set TARGET_EMAIL.');
+        process.exit(1);
+    }
     try {
         // 1. Get User ID from Auth
         const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
