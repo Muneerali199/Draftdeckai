@@ -164,11 +164,11 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
 
   const handleLinkedInImport = (profile: any) => {
     console.log('LinkedIn profile received:', profile);
-    
+
     // Convert LinkedIn profile to resume format
     // Handle both 'name' and 'fullName' field
     const fullName = profile.fullName || profile.name || "";
-    
+
     const resume = {
       name: fullName,
       email: profile.email || "",
@@ -204,7 +204,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
   // Download functions
   const downloadPDF = async () => {
     if (!resumeData) return;
-    
+
     setIsExporting(true);
     try {
       const resumeElement = document.getElementById('resume-content');
@@ -227,7 +227,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);
-      
+
       // Create PDF with proper A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -238,22 +238,22 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
 
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = 297; // A4 height in mm
-      
+
       // Calculate proper dimensions to fit content
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / (imgWidth / 3.78), pdfHeight / (imgHeight / 3.78)); // Convert pixels to mm
-      
+
       const finalWidth = (imgWidth / 3.78) * ratio;
       const finalHeight = (imgHeight / 3.78) * ratio;
-      
+
       // Center the content
       const xOffset = (pdfWidth - finalWidth) / 2;
       const yOffset = 0;
-      
+
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight, '', 'FAST');
       pdf.save(`${resumeData.name?.replace(/\s+/g, '-').toLowerCase() || 'resume'}.pdf`);
-      
+
       toast({
         title: "Resume downloaded!",
         description: "Your resume has been downloaded as a PDF.",
@@ -280,11 +280,11 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
   // Share functions
   const saveAndShareResume = async () => {
     if (!resumeData) return;
-    
+
     setIsSaving(true);
     try {
       const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-      
+
       if (sessionError || !session) {
         console.error('Session error:', sessionError);
         toast({
@@ -338,7 +338,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
 
   const copyShareLink = async () => {
     if (!shareUrl) return;
-    
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast({
@@ -415,8 +415,8 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
     <>
       <div className={`space-y-6 transition-all duration-300 ${isFullView ? "p-0" : "px-2 sm:px-0"}`}>
         <Tabs defaultValue="guided" className="w-full">
-        <div className={`flex justify-center mb-6 ${isFullView ? "hidden" : ""}`}>
-          <TabsList className="glass-effect border border-yellow-400/20 p-1 h-auto flex overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 w-full max-w-full">
+          <div className={`flex justify-center mb-6 ${isFullView ? "hidden" : ""}`}>
+            <TabsList className="glass-effect border border-yellow-400/20 p-1 h-auto flex overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 w-full max-w-full">
               <TabsTrigger
                 value="guided"
                 className="data-[state=active]:bolt-gradient data-[state=active]:text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-all duration-300 flex items-center gap-1 sm:gap-2 text-sm sm:text-base min-w-[140px] justify-center"
@@ -513,9 +513,8 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   </Button>
                 </div>
 
-                <div className={`glass-effect border border-yellow-400/20 rounded-xl overflow-hidden bg-white transition-all duration-300 ${
-                  isFullView ? "fixed inset-4 z-50 shadow-2xl" : ""
-                }`}>
+                <div className={`glass-effect border border-yellow-400/20 rounded-xl overflow-hidden bg-white transition-all duration-300 ${isFullView ? "fixed inset-4 z-50 shadow-2xl" : ""
+                  }`}>
                   <div className="absolute inset-0 shimmer opacity-10"></div>
                   <div className="relative z-10">
                     <ResumePreview resume={resumeData} template={selectedTemplate} />
@@ -606,11 +605,10 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                       placeholder="john@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`glass-effect focus:ring-yellow-400/20 w-full text-base px-3 py-2 ${
-                        email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
+                      className={`glass-effect focus:ring-yellow-400/20 w-full text-base px-3 py-2 ${email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
                           ? "border-red-400/60 focus:border-red-400/80"
                           : "border-yellow-400/30 focus:border-yellow-400/60"
-                      }`}
+                        }`}
                       disabled={isGenerating}
                     />
                   </div>
@@ -749,9 +747,8 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
 
                 {resumeData ? (
                   <div
-                    className={`glass-effect border border-yellow-400/20 rounded-xl overflow-hidden bg-white transition-all duration-300 ${
-                      isFullView ? "fixed inset-4 z-50 shadow-2xl" : ""
-                    }`}
+                    className={`glass-effect border border-yellow-400/20 rounded-xl overflow-y-auto bg-white transition-all duration-300 ${isFullView ? "fixed inset-4 z-50 shadow-2xl" : "overflow-hidden"
+                      }`}
                   >
                     <div className="absolute inset-0 shimmer opacity-10"></div>
                     <div className="relative z-10">
@@ -808,15 +805,15 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                 <ResumeTemplates
                   selectedTemplate={selectedTemplate}
                   onSelectTemplate={setSelectedTemplate}
-                  onEditTemplate={() => {}}
-                  onDownloadTemplate={() => {}}
+                  onEditTemplate={() => { }}
+                  onDownloadTemplate={() => { }}
                 />
               </div>
             </div>
           </TabsContent>
         </Tabs>
       </div>
-      
+
       {/* Enhanced Share Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -826,7 +823,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
               Share your professional resume across multiple platforms
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-4">
             {/* Link Section */}
             <div className="space-y-2">
@@ -841,8 +838,8 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                 <Button onClick={copyShareLink} size="sm" variant="outline" title="Copy link">
                   <Copy className="h-4 w-4" />
                 </Button>
-                <Button 
-                  onClick={() => window.open(shareUrl, '_blank')} 
+                <Button
+                  onClick={() => window.open(shareUrl, '_blank')}
                   size="sm"
                   variant="outline"
                   title="Open in new tab"
@@ -864,7 +861,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   <Mail className="mr-2 h-5 w-5 text-blue-600" />
                   <span>Email</span>
                 </Button>
-                
+
                 <Button
                   onClick={shareViaWhatsApp}
                   variant="outline"
@@ -873,7 +870,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   <MessageCircle className="mr-2 h-5 w-5 text-green-600" />
                   <span>WhatsApp</span>
                 </Button>
-                
+
                 <Button
                   onClick={shareViaTwitter}
                   variant="outline"
@@ -882,7 +879,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   <Twitter className="mr-2 h-5 w-5 text-sky-500" />
                   <span>Twitter</span>
                 </Button>
-                
+
                 <Button
                   onClick={shareViaLinkedIn}
                   variant="outline"
@@ -891,7 +888,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   <Linkedin className="mr-2 h-5 w-5 text-blue-700" />
                   <span>LinkedIn</span>
                 </Button>
-                
+
                 <Button
                   onClick={shareViaFacebook}
                   variant="outline"
@@ -900,7 +897,7 @@ export function ResumeGenerator({ initialSession }: { initialSession?: any }) {
                   <Facebook className="mr-2 h-5 w-5 text-blue-600" />
                   <span>Facebook</span>
                 </Button>
-                
+
                 <Button
                   onClick={shareViaTelegram}
                   variant="outline"

@@ -19,7 +19,7 @@ export default function ResumeEditorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [editMode, setEditMode] = useState<'form' | 'latex' | 'ai'>('form');
   const [selectedTemplate, setSelectedTemplate] = useState('professional');
-  
+
   const [resumeData, setResumeData] = useState({
     name: 'JOHN ANDERSON',
     email: 'john.anderson@email.com',
@@ -131,7 +131,7 @@ export default function ResumeEditorPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT - Editor Panel */}
         <div className="w-1/2 border-r bg-white flex flex-col">
-          <Tabs value={editMode} onValueChange={(v) => setEditMode(v as any)} className="flex-1 flex flex-col">
+          <Tabs value={editMode} onValueChange={(v) => setEditMode(v as any)} className="flex-1 flex flex-col min-h-0">
             <TabsList className="w-full justify-start rounded-none border-b px-6">
               <TabsTrigger value="form" className="gap-2">
                 <Edit3 className="w-4 h-4" />
@@ -147,16 +147,34 @@ export default function ResumeEditorPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="form" className="flex-1 overflow-auto p-6">
-              <ResumeFormEditor data={resumeData} onChange={setResumeData} />
+            <TabsContent
+              value="form"
+              forceMount={true}
+              className={`flex flex-col overflow-hidden min-h-0 p-0 mt-0 ${editMode === 'form' ? 'flex-1' : 'h-[10px] flex-none'}`}
+            >
+              <div className="flex-1 overflow-y-auto p-6">
+                <ResumeFormEditor data={resumeData} onChange={setResumeData} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="latex" className="flex-1 overflow-auto p-6">
-              <ResumeLatexEditor data={resumeData} onChange={setResumeData} />
+            <TabsContent
+              value="latex"
+              forceMount={true}
+              className={`flex flex-col overflow-hidden min-h-0 p-0 mt-0 ${editMode === 'latex' ? 'flex-1' : 'h-[10px] flex-none'}`}
+            >
+              <div className="flex-1 overflow-y-auto p-6">
+                <ResumeLatexEditor data={resumeData} onChange={setResumeData} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="ai" className="flex-1 overflow-auto p-6">
-              <ResumeAIEditor data={resumeData} onChange={setResumeData} />
+            <TabsContent
+              value="ai"
+              forceMount={true}
+              className={`flex flex-col overflow-hidden min-h-0 p-0 mt-0 ${editMode === 'ai' ? 'flex-1' : 'h-[10px] flex-none'}`}
+            >
+              <div className="flex-1 overflow-y-auto p-6">
+                <ResumeAIEditor data={resumeData} onChange={setResumeData} />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
