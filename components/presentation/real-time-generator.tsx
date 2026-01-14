@@ -177,18 +177,41 @@ export default function RealTimeGenerator() {
       if (!editId) return;
       
       try {
-        const { data, error } = await supabase
-          .from('presentations')
+        // Try documents table first (new standard for unified history)
+        let { data, error } = await supabase
+          .from('documents')
           .select('*')
           .eq('id', editId)
           .single();
 
-        if (error) throw error;
+        // Fallback to older presentations table for legacy items
+        if (error || !data) {
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('presentations')
+            .select('*')
+            .eq('id', editId)
+            .single();
+          
+          if (legacyData) {
+            data = legacyData;
+          } else {
+             if (error || legacyError) console.error('Load error:', error || legacyError);
+          }
+        }
+
         if (data) {
-          const storedData = data.slides || {};
-          // Handle both legacy (Array) and new (Object) formats
-          const loadedSlides = Array.isArray(storedData) ? storedData : (storedData.slides || []);
-          const loadedThemeId = storedData.themeId || 'peach';
+          // Structure can vary between tables
+          const content = data.content || {};
+          const storedSlides = data.slides || {};
+          
+          // Handle both 'documents' (data.content.slides) and 'presentations' (data.slides.slides or data.slides)
+          const loadedSlides = Array.isArray(content.slides) 
+            ? content.slides 
+            : Array.isArray(storedSlides) 
+              ? storedSlides 
+              : (storedSlides.slides || []);
+          
+          const loadedThemeId = content.themeId || storedSlides.themeId || 'peach';
           
           setSlides(loadedSlides);
           setTopic(data.title);
@@ -279,45 +302,74 @@ export default function RealTimeGenerator() {
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleSavePresentation = async () => {
-    setIsSaving(true);
+  const handleSavePresentation = async (isAutoSave = false) => {
+    if (!isAutoSave) setIsSaving(true);
     const supabase = createClient();
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        alert('Please sign in to save and share presentations');
+        if (!isAutoSave) alert('Please sign in to save and share presentations');
         setIsSaving(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('presentations')
-        .insert({
-          user_id: user.id,
-          title: topic || 'Untitled Presentation',
-          slides: {
-            slides: slides,
-            themeId: selectedThemeId,
-            version: 2
-          },
-          is_public: true
-        })
-        .select()
-        .single();
+      // Save to 'documents' table for unified history
+      const savePayload = {
+        user_id: user.id,
+        title: topic || 'Untitled Presentation',
+        type: 'presentation',
+        content: {
+          slides: slides,
+          themeId: selectedThemeId,
+          version: 2,
+          isPublic: true
+        }
+      };
 
-      if (error) throw error;
+      let result;
       
-      const link = `${window.location.protocol}//${window.location.host}/p/${data.id}`;
-      setShareUrl(link);
-      setPresentationId(data.id);
-      setShowShareModal(true);
+      if (presentationId) {
+        // Update existing
+        const { data, error } = await supabase
+          .from('documents')
+          .update(savePayload)
+          .eq('id', presentationId)
+          .select()
+          .single();
+        
+        if (error) {
+          // Try updating legacy presentations table if it was a legacy item
+          await supabase.from('presentations').update({
+            title: savePayload.title,
+            slides: savePayload.content
+          }).eq('id', presentationId);
+        }
+        result = data;
+      } else {
+        // Insert new
+        const { data, error } = await supabase
+          .from('documents')
+          .insert(savePayload)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+        setPresentationId(data.id);
+      }
+
+      if (result && !isAutoSave) {
+        const link = `${window.location.protocol}//${window.location.host}/presentation/view/${result.id}`;
+        setShareUrl(link);
+        setShowShareModal(true);
+      }
       
-      console.log('✅ Presentation saved:', data);
+      console.log(isAutoSave ? '🤖 Presentation auto-saved' : '✅ Presentation saved:', result?.id);
     } catch (error) {
       console.error('❌ Error saving presentation:', error);
-      alert('Failed to save presentation. Please try again.');
+      if (!isAutoSave) alert('Failed to save presentation. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -325,6 +377,16 @@ export default function RealTimeGenerator() {
 
   const { isStreaming, content, error, progress, generatePresentation } =
     useStreamingPresentation();
+
+  // Auto-save when generation completes
+  useEffect(() => {
+    if (!isStreaming && slides.length > 3 && !presentationId && view === 'presentation') {
+      const timer = setTimeout(() => {
+        handleSavePresentation(true);
+      }, 2000); // Small delay to ensure state is settled
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming, slides.length, presentationId, view]);
 
   const examplePrompts = [
     "The future of AI in healthcare",

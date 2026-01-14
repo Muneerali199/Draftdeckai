@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface StreamingState {
   isStreaming: boolean;
   content: string;
   error: string | null;
   progress: number;
+  creditsUsed?: number;
+  creditsRemaining?: number;
 }
 
 export function useStreamingPresentation() {
@@ -14,6 +17,8 @@ export function useStreamingPresentation() {
     error: null,
     progress: 0,
   });
+
+  const supabase = createClient();
 
   const generatePresentation = useCallback(
     async (topic: string, audience: string, outline?: any[], settings?: any) => {
@@ -25,16 +30,34 @@ export function useStreamingPresentation() {
       });
 
       try {
+        // Get authentication token
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('Please sign in to create presentations');
+        }
+
         const response = await fetch('/api/generate-presentation-stream', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ topic, audience, outline, settings }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to start stream');
+          const errorData = await response.json();
+          
+          if (response.status === 401) {
+            throw new Error('Authentication required. Please sign in.');
+          }
+          
+          if (response.status === 402) {
+            throw new Error(errorData.message || 'Not enough credits. Please upgrade your plan.');
+          }
+          
+          throw new Error(errorData.error || 'Failed to start stream');
         }
 
         const reader = response.body?.getReader();
@@ -80,7 +103,13 @@ export function useStreamingPresentation() {
                     ...prev,
                     isStreaming: false,
                     progress: 100,
+                    creditsUsed: data.credits?.used,
+                    creditsRemaining: data.credits?.remaining,
                   }));
+                  
+                  if (data.credits) {
+                    console.log(`💳 Credits used: ${data.credits.used}, Remaining: ${data.credits.remaining}`);
+                  }
                 }
 
                 if (data.error) {
@@ -104,7 +133,7 @@ export function useStreamingPresentation() {
         }));
       }
     },
-    []
+    [supabase]
   );
 
   const reset = useCallback(() => {

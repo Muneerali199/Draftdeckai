@@ -34,6 +34,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ResumeGenerator } from "@/components/resume/resume-generator";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const cookieStore = cookies();
   const supabase = createServerClient(
