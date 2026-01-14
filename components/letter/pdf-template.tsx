@@ -62,6 +62,13 @@ const renderStyledText = (text: string) => {
     let isBold = false;
     let key = 0;
     for (let i = 0; i < text.length; i++) {
+        // Handle escaped characters (e.g., \* for literal asterisk)
+        if (text[i] === '\\' && i < text.length - 1 && text[i + 1] === '*') {
+            buffer += '*';
+            i++; // Skip the asterisk
+            continue;
+        }
+
         // Detect bold marker `**`
         if (i < text.length - 1 && text[i] === '*' && text[i + 1] === '*') {
             // Flush current buffer as a Text node with the current style
