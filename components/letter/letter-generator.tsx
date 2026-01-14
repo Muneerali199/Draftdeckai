@@ -77,6 +77,7 @@ export function LetterGenerator() {
           description: "Please sign in to generate a letter.",
           variant: "destructive",
         });
+        setIsGenerating(false);
         return;
       }
 
