@@ -60,7 +60,7 @@ const GitHubIcon = () => (
   </svg>
 );
 
-import { Suspense } from "react";
+
 
 function RegisterForm() {
   const [name, setName] = useState("");
@@ -355,8 +355,8 @@ function RegisterForm() {
             {/* Enhanced header with advanced animations */}
             <div
               className={`text-center mb-6 sm:mb-8 transition-all duration-700 delay-200 ${mounted
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
                 }`}
             >
               {/* Professional badge with hover effects */}
@@ -449,8 +449,8 @@ function RegisterForm() {
               {/* Enhanced Name field with advanced interactions */}
               <div
                 className={`space-y-2 transition-all duration-500 delay-400 ${mounted
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 <Label
@@ -460,8 +460,8 @@ function RegisterForm() {
                 >
                   <User
                     className={`h-4 w-4 text-muted-foreground transition-all duration-300 ${focusedField === "name"
-                        ? "text-yellow-500 animate-pulse"
-                        : ""
+                      ? "text-yellow-500 animate-pulse"
+                      : ""
                       }`}
                   />
                   Full Name
@@ -484,8 +484,8 @@ function RegisterForm() {
                   />
                   <div
                     className={`absolute inset-0 rounded-md border pointer-events-none transition-all duration-300 ${focusedField === "name"
-                        ? "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
-                        : "border-yellow-400/20"
+                      ? "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
+                      : "border-yellow-400/20"
                       }`}
                   ></div>
                   {/* Progress indicator */}
@@ -499,8 +499,8 @@ function RegisterForm() {
               {/* Enhanced Email field with validation animations */}
               <div
                 className={`space-y-2 transition-all duration-500 delay-450 ${mounted
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 <Label
@@ -510,8 +510,8 @@ function RegisterForm() {
                 >
                   <Mail
                     className={`h-4 w-4 text-muted-foreground transition-all duration-300 ${focusedField === "email"
-                        ? "text-yellow-500 animate-pulse"
-                        : ""
+                      ? "text-yellow-500 animate-pulse"
+                      : ""
                       }`}
                   />
                   Email Address
@@ -530,30 +530,30 @@ function RegisterForm() {
                     placeholder="Enter your email"
                     required
                     className={`glass-effect focus:ring-yellow-400/20 pl-4 pr-4 py-3 text-sm sm:text-base transition-all duration-300 group-hover:shadow-lg ${email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
-                        ? "border-red-400/60 focus:border-red-400/80 hover:border-red-400/70"
-                        : "border-yellow-400/30 focus:border-yellow-400/60 hover:border-yellow-400/50"
+                      ? "border-red-400/60 focus:border-red-400/80 hover:border-red-400/70"
+                      : "border-yellow-400/30 focus:border-yellow-400/60 hover:border-yellow-400/50"
                       }`}
                     disabled={isLoading || isOAuthLoading !== null}
                   />
                   <div
                     className={`absolute inset-0 rounded-md border pointer-events-none transition-all duration-300 ${focusedField === "email"
-                        ? email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
-                          ? "border-red-400/40 shadow-lg shadow-red-400/20"
-                          : "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
-                        : email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
-                          ? "border-red-400/20"
-                          : "border-yellow-400/20"
+                      ? email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
+                        ? "border-red-400/40 shadow-lg shadow-red-400/20"
+                        : "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
+                      : email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
+                        ? "border-red-400/20"
+                        : "border-yellow-400/20"
                       }`}
                   ></div>
                   {/* Progress indicator */}
                   <div
                     className={`absolute bottom-0 left-0 h-0.5 transition-all duration-300 ${email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                        ? "w-full bg-gradient-to-r from-green-400 to-blue-500"
-                        : email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
-                          ? "w-full bg-gradient-to-r from-red-400 to-orange-500"
-                          : email
-                            ? "w-1/2 bg-gradient-to-r from-yellow-400 to-blue-500"
-                            : "w-0"
+                      ? "w-full bg-gradient-to-r from-green-400 to-blue-500"
+                      : email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length > 0
+                        ? "w-full bg-gradient-to-r from-red-400 to-orange-500"
+                        : email
+                          ? "w-1/2 bg-gradient-to-r from-yellow-400 to-blue-500"
+                          : "w-0"
                       }`}
                   ></div>
                 </div>
@@ -572,21 +572,21 @@ function RegisterForm() {
               {/* Enhanced Password field with strength indicator */}
               <div
                 className={`space-y-2 transition-all duration-500 delay-500 ${mounted
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 <Label
                   htmlFor="password"
                   className={`text-sm font-medium flex items-center gap-2 professional-text transition-all duration-300 ${focusedField === "password"
-                      ? "text-yellow-600 scale-105"
-                      : ""
+                    ? "text-yellow-600 scale-105"
+                    : ""
                     }`}
                 >
                   <Lock
                     className={`h-4 w-4 text-muted-foreground transition-all duration-300 ${focusedField === "password"
-                        ? "text-yellow-500 animate-pulse"
-                        : ""
+                      ? "text-yellow-500 animate-pulse"
+                      : ""
                       }`}
                   />
                   Password
@@ -624,8 +624,8 @@ function RegisterForm() {
                   </button>
                   <div
                     className={`absolute inset-0 rounded-md border pointer-events-none transition-all duration-300 ${focusedField === "password"
-                        ? "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
-                        : "border-yellow-400/20"
+                      ? "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
+                      : "border-yellow-400/20"
                       }`}
                   ></div>
                 </div>
@@ -638,22 +638,22 @@ function RegisterForm() {
                         <div
                           key={i}
                           className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < passwordStrength
-                              ? i < 2
-                                ? "bg-red-400"
-                                : i < 4
-                                  ? "bg-yellow-400"
-                                  : "bg-green-400"
-                              : "bg-gray-200 dark:bg-gray-700"
+                            ? i < 2
+                              ? "bg-red-400"
+                              : i < 4
+                                ? "bg-yellow-400"
+                                : "bg-green-400"
+                            : "bg-gray-200 dark:bg-gray-700"
                             }`}
                         />
                       ))}
                     </div>
                     <p
                       className={`text-xs transition-all duration-300 ${passwordStrength < 2
-                          ? "text-red-500"
-                          : passwordStrength < 4
-                            ? "text-yellow-500"
-                            : "text-green-500"
+                        ? "text-red-500"
+                        : passwordStrength < 4
+                          ? "text-yellow-500"
+                          : "text-green-500"
                         }`}
                     >
                       {passwordStrength < 2 && "Weak password"}
@@ -669,21 +669,21 @@ function RegisterForm() {
               {/* Enhanced Confirm Password field with advanced validation */}
               <div
                 className={`space-y-2 transition-all duration-500 delay-550 ${mounted
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 <Label
                   htmlFor="confirmPassword"
                   className={`text-sm font-medium flex items-center gap-2 professional-text transition-all duration-300 ${focusedField === "confirmPassword"
-                      ? "text-yellow-600 scale-105"
-                      : ""
+                    ? "text-yellow-600 scale-105"
+                    : ""
                     }`}
                 >
                   <Shield
                     className={`h-4 w-4 text-muted-foreground transition-all duration-300 ${focusedField === "confirmPassword"
-                        ? "text-yellow-500 animate-pulse"
-                        : ""
+                      ? "text-yellow-500 animate-pulse"
+                      : ""
                       }`}
                   />
                   Confirm Password
@@ -702,8 +702,8 @@ function RegisterForm() {
                     placeholder="Confirm your password"
                     required
                     className={`glass-effect focus:ring-yellow-400/20 pl-4 pr-12 py-3 text-sm sm:text-base transition-all duration-300 group-hover:shadow-lg ${confirmPassword && password !== confirmPassword
-                        ? "border-red-400/60 focus:border-red-400/80 hover:border-red-400/70"
-                        : "border-yellow-400/30 focus:border-yellow-400/60 hover:border-yellow-400/50"
+                      ? "border-red-400/60 focus:border-red-400/80 hover:border-red-400/70"
+                      : "border-yellow-400/30 focus:border-yellow-400/60 hover:border-yellow-400/50"
                       }`}
                     disabled={isLoading || isOAuthLoading !== null}
                   />
@@ -726,21 +726,21 @@ function RegisterForm() {
                   </button>
                   <div
                     className={`absolute inset-0 rounded-md border pointer-events-none transition-all duration-300 ${focusedField === "confirmPassword"
-                        ? confirmPassword && password !== confirmPassword
-                          ? "border-red-400/40 shadow-lg shadow-red-400/20"
-                          : "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
-                        : confirmPassword && password !== confirmPassword
-                          ? "border-red-400/20"
-                          : "border-yellow-400/20"
+                      ? confirmPassword && password !== confirmPassword
+                        ? "border-red-400/40 shadow-lg shadow-red-400/20"
+                        : "border-yellow-400/40 shadow-lg shadow-yellow-400/20"
+                      : confirmPassword && password !== confirmPassword
+                        ? "border-red-400/20"
+                        : "border-yellow-400/20"
                       }`}
                   ></div>
                   {/* Progress indicator */}
                   <div
                     className={`absolute bottom-0 left-0 h-0.5 transition-all duration-300 ${confirmPassword && password === confirmPassword
-                        ? "w-full bg-gradient-to-r from-green-400 to-blue-500"
-                        : confirmPassword && password !== confirmPassword
-                          ? "w-full bg-gradient-to-r from-red-400 to-orange-500"
-                          : "w-0"
+                      ? "w-full bg-gradient-to-r from-green-400 to-blue-500"
+                      : confirmPassword && password !== confirmPassword
+                        ? "w-full bg-gradient-to-r from-red-400 to-orange-500"
+                        : "w-0"
                       }`}
                   ></div>
                 </div>
@@ -780,8 +780,8 @@ function RegisterForm() {
               {/* Enhanced submit button with advanced animations */}
               <div
                 className={`transition-all duration-500 delay-650 ${mounted
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 <Button
@@ -838,8 +838,8 @@ function RegisterForm() {
             {/* Enhanced footer with advanced styling */}
             <div
               className={`mt-6 sm:mt-8 text-center transition-all duration-500 delay-700 ${mounted
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
                 }`}
             >
               <div className="glass-effect p-4 rounded-xl border border-yellow-400/10 hover:border-yellow-400/20 transition-all duration-300 group hover:scale-105">
@@ -864,8 +864,8 @@ function RegisterForm() {
             {/* Enhanced navigation link */}
             <div
               className={`mt-4 text-center transition-all duration-500 delay-750 ${mounted
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
                 }`}
             >
               <Link
