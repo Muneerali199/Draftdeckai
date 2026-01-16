@@ -755,95 +755,81 @@ export async function generateDiagramWithMistral({
   }
 
   try {
-    const systemPrompt = `You are an expert diagram designer. Generate a professional ${diagramType} diagram using Mermaid syntax.
+    // Simplified, focused system prompt that produces reliable results
+    const systemPrompt = `Generate a ${diagramType} diagram using Mermaid syntax.
 
 USER REQUEST: ${prompt}
-DIAGRAM TYPE: ${diagramType}
 
-Return ONLY valid JSON:
-{
-  "type": "${diagramType}",
-  "title": "Descriptive title for the diagram",
-  "description": "Brief explanation of what the diagram shows",
-  "code": "Valid Mermaid syntax code",
-  "suggestions": [
-    "Improvement suggestion 1",
-    "Enhancement suggestion 2"
-  ]
-}
+Return ONLY this JSON format (no markdown, no code blocks):
+{"type":"${diagramType}","title":"Diagram Title","description":"What it shows","code":"mermaid code here","suggestions":["improvement 1","improvement 2"]}
 
-MERMAID SYNTAX GUIDELINES:
+QUICK RULES:
+${diagramType === 'flowchart' ? `- Use: flowchart TD (or LR)
+- Nodes: A[text], B{decision}, C((circle))
+- Links: A --> B, A -->|label| B
+- Keep simple, under 20 nodes` : ''}
+${diagramType === 'sequence' ? `- Use: sequenceDiagram
+- Format: participant Name
+- Messages: Name1->>Name2: Message
+- Keep 3-5 participants max` : ''}
+${diagramType === 'classDiagram' ? `- Use: classDiagram
+- Format: class Name { attributes, methods }
+- Relations: A <|-- B (inheritance)` : ''}
+${diagramType === 'erDiagram' ? `- Use: erDiagram
+- Format: ENTITY1 ||--o{ ENTITY2 : relation
+- Add attributes in braces` : ''}
+${diagramType === 'stateDiagram' ? `- Use: stateDiagram-v2
+- Format: [*] --> State1
+- Transitions: State1 --> State2 : trigger` : ''}
 
-For FLOWCHART:
-- Use "flowchart TD" (top-down) or "flowchart LR" (left-right)
-- Nodes: A[Rectangle], B{Diamond/Decision}, C((Circle)), D>Flag]
-- Connections: A --> B, A -.-> B (dotted), A ==> B (thick)
-- Labels: A -->|Yes| B, A -->|No| C
-
-For SEQUENCE DIAGRAM:
-- Use "sequenceDiagram"
-- participant A as Alice
-- A->>B: Message
-- A-->>B: Response (dotted)
-- activate A / deactivate A
-
-For CLASS DIAGRAM:
-- Use "classDiagram"
-- class Animal { +String name +makeSound() }
-- Animal <|-- Dog (inheritance)
-
-For ER DIAGRAM:
-- Use "erDiagram"
-- CUSTOMER ||--o{ ORDER : places
-- CUSTOMER { string name string email }
-
-For STATE DIAGRAM:
-- Use "stateDiagram-v2"
-- [*] --> State1
-- State1 --> State2
-
-For GANTT CHART:
-- Use "gantt"
-- dateFormat YYYY-MM-DD
-- section Section Name
-- Task Name :done, a1, 2024-01-01, 30d
-
-For PIE CHART:
-- Use "pie title Chart Title"
-- "Label" : value
-
-For MINDMAP:
-- Use "mindmap"
-- root((Central Idea))
-
-For TIMELINE:
-- Use "timeline"
-- title Timeline Title
-- 2024 : Event Description
-
-REQUIREMENTS:
-1. Generate syntactically correct Mermaid code
-2. Make it relevant to the user's request
-3. Use clear, professional naming
-4. Ensure visual clarity and logic`;
+CRITICAL: Generate ONLY valid, error-free Mermaid code. Test syntax mentally. No deprecated features.`;
 
     const response = await mistral.chat.complete({
       model: 'mistral-large-latest',
       messages: [{ role: 'user', content: systemPrompt }],
-      temperature: 0.7,
-      maxTokens: 2000,
+      temperature: 0.5,
+      maxTokens: 1500,
     });
 
     let content = response.choices?.[0]?.message?.content || '{}';
     if (Array.isArray(content)) content = content.join('');
     if (typeof content !== 'string') content = String(content);
     
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    // Clean up the response - remove markdown code blocks and extra text
+    content = content
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .replace(/^[\s\S]*?(\{)/, '$1')  // Remove any text before first {
+      .trim();
+    
+    // Extract JSON - more robust matching
+    let jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('Raw content:', content.substring(0, 200));
+      throw new Error(`Failed to extract JSON from response`);
     }
     
-    throw new Error('Failed to parse diagram response');
+    try {
+      const result = JSON.parse(jsonMatch[0]);
+      
+      // Validate the result has required fields
+      if (!result.code || typeof result.code !== 'string') {
+        throw new Error('Response missing valid diagram code field');
+      }
+      
+      // Clean and validate the code
+      const cleanCode = result.code.trim();
+      if (cleanCode.length < 5) {
+        throw new Error('Generated code is too short - possibly invalid');
+      }
+      
+      // Return with cleaned code
+      result.code = cleanCode;
+      return result;
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError, 'Content:', jsonMatch[0].substring(0, 100));
+      throw new Error('Failed to parse diagram code from response');
+    }
   } catch (error) {
     console.error('Error generating diagram with Mistral:', error);
     throw error;

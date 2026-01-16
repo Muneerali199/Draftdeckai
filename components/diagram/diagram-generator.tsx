@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DiagramPreview } from "@/components/diagram/diagram-preview";
 import { DiagramTemplates } from "@/components/diagram/diagram-templates";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth-provider";
+import { createClient } from "@/lib/supabase/client";
 import { 
   Loader2, 
   Sparkles, 
@@ -166,7 +168,9 @@ export function DiagramGenerator() {
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState("editor");
   const { toast } = useToast();
+  const { user } = useAuth();
   const diagramRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
 
   const handleTemplateSelect = (template: string) => {
     setSelectedTemplate(template);
@@ -183,13 +187,31 @@ export function DiagramGenerator() {
       return;
     }
 
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to generate diagrams",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
+      // Get the current session token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error('Failed to get authentication token');
+      }
+
       const response = await fetch('/api/generate/diagram', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt,
@@ -198,27 +220,49 @@ export function DiagramGenerator() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate diagram');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorMessage = errorData.message || errorData.error || 'Failed to generate diagram';
+        const hint = errorData.hint ? `\n\n💡 ${errorData.hint}` : '';
+        throw new Error(errorMessage + hint);
       }
 
       const data = await response.json();
       
-      if (data.code) {
-        setDiagramCode(data.code);
-        setActiveTab("preview");
-        
-        toast({
-          title: "🎯 AI Diagram Generated!",
-          description: data.title || "Your diagram has been created successfully",
-        });
-      } else {
-        throw new Error('Invalid response from API');
+      // Validate response has required fields
+      if (!data || !data.code) {
+        throw new Error('Invalid response from API - missing diagram code');
       }
+      
+      if (data.code.trim().length === 0) {
+        throw new Error('Generated diagram code is empty');
+      }
+      
+      setDiagramCode(data.code);
+      setActiveTab("preview");
+      
+      toast({
+        title: "🎯 AI Diagram Generated!",
+        description: data.title || "Your diagram has been created successfully",
+      });
     } catch (error) {
       console.error('Diagram generation error:', error);
+      let errorMessage = "Failed to generate diagram. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('parse')) {
+          errorMessage = "AI response format error. Try a simpler description like 'Create a flowchart for user registration'";
+        } else if (error.message.includes('missing')) {
+          errorMessage = "Invalid diagram generated. Try rephrasing your description.";
+        } else if (error.message.includes('empty')) {
+          errorMessage = "Generated diagram is empty. Try a more detailed description.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Generation Failed",
-        description: "Failed to generate diagram. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -376,7 +420,7 @@ export function DiagramGenerator() {
         </div>
 
         <TabsContent value="editor" className="space-y-4 sm:space-y-6 px-2 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8 auto-rows-max lg:auto-rows-auto">
             {/* Left Side - Code Editor */}
             <div className="space-y-4 sm:space-y-6">
               <div className="text-center lg:text-left">
@@ -423,16 +467,74 @@ export function DiagramGenerator() {
                     </div>
 
                     <div>
-                      <Label htmlFor="aiPrompt" className="text-xs text-muted-foreground mb-1.5 block">
-                        Describe Your Diagram
+                      <Label htmlFor="aiPrompt" className="text-xs text-muted-foreground mb-1.5 block flex items-center justify-between">
+                        <span>Describe Your Diagram</span>
+                        <span className="text-[10px] text-yellow-600 font-medium">Be specific & concise</span>
                       </Label>
                       <Textarea
                         id="aiPrompt"
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="E.g., Create an ER diagram for a blog system with users, posts, comments, and tags..."
-                        className="min-h-[80px] text-sm glass-effect border-yellow-400/20 focus:border-yellow-400/60 resize-none"
+                        placeholder={
+                          selectedDiagramType === 'flowchart' 
+                            ? "E.g., User login process with email verification and password reset options"
+                            : selectedDiagramType === 'sequence'
+                            ? "E.g., Customer places order with payment processing and order confirmation"
+                            : selectedDiagramType === 'classDiagram'
+                            ? "E.g., E-commerce system with User, Product, Order, and Payment classes"
+                            : selectedDiagramType === 'erDiagram'
+                            ? "E.g., Database for blog with Users, Posts, Comments, and Tags entities"
+                            : "Describe what your diagram should show..."
+                        }
+                        className="min-h-[100px] text-sm glass-effect border-yellow-400/20 focus:border-yellow-400/60 resize-none"
                       />
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        💡 Tip: Be specific and concise. Example: "Show a flowchart with start, check password, success, and error states"
+                      </p>
+                      
+                      {/* Quick Example Prompts */}
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <button
+                          onClick={() => {
+                            if (selectedDiagramType === 'flowchart') {
+                              setPrompt('User registration flow: enter email, verify, create password, confirm account');
+                            }
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-yellow-400/20 hover:bg-yellow-50 transition-colors text-left text-muted-foreground hover:text-foreground"
+                        >
+                          📝 User Registration
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (selectedDiagramType === 'flowchart') {
+                              setPrompt('E-commerce checkout: add to cart, enter shipping, payment, order confirmation');
+                            }
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-yellow-400/20 hover:bg-yellow-50 transition-colors text-left text-muted-foreground hover:text-foreground"
+                        >
+                          🛒 Checkout Flow
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (selectedDiagramType === 'flowchart') {
+                              setPrompt('API request handling: receive request, validate, process, return response');
+                            }
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-yellow-400/20 hover:bg-yellow-50 transition-colors text-left text-muted-foreground hover:text-foreground"
+                        >
+                          🔗 API Flow
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (selectedDiagramType === 'flowchart') {
+                              setPrompt('Project timeline: planning, design, development, testing, deployment');
+                            }
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-yellow-400/20 hover:bg-yellow-50 transition-colors text-left text-muted-foreground hover:text-foreground"
+                        >
+                          📅 Project Timeline
+                        </button>
+                      </div>
                     </div>
 
                     <Button
@@ -531,8 +633,8 @@ export function DiagramGenerator() {
               </div>
             </div>
 
-            {/* Right Side - Live Preview */}
-            <div className="space-y-3 sm:space-y-4">
+            {/* Right Side - Live Preview - Sticky on Desktop */}
+            <div className="space-y-3 sm:space-y-4 lg:sticky lg:top-4 lg:h-fit">
               <div className="text-center lg:text-left">
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full glass-effect mb-2 sm:mb-3">
                   <Eye className="h-3 w-3 text-blue-500" />
@@ -541,20 +643,21 @@ export function DiagramGenerator() {
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold bolt-gradient-text">Preview</h2>
               </div>
 
-              <div ref={diagramRef} className="glass-effect border border-yellow-400/20 rounded-xl overflow-hidden bg-white relative min-h-[300px] sm:min-h-[400px]">
-                <div className="absolute inset-0 shimmer opacity-10"></div>
-                <div className="relative z-10">
+              <div ref={diagramRef} className="glass-effect border-2 border-yellow-400/30 rounded-xl overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-white relative min-h-[300px] sm:min-h-[450px] lg:min-h-[550px] shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="absolute inset-0 shimmer opacity-20"></div>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-400/10 rounded-full blur-3xl -z-10"></div>
+                <div className="relative z-10 h-full">
                   <DiagramPreview code={diagramCode} />
                 </div>
               </div>
 
-              {/* Export Options */}
-              <div className="glass-effect p-4 rounded-xl border border-yellow-400/20">
+              {/* Export Options - Hidden on Mobile, Shown on Desktop */}
+              <div className="hidden lg:block glass-effect p-4 rounded-xl border border-yellow-400/20">
                 <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
                   <Download className="h-4 w-4 text-yellow-500" />
-                  Export Options
+                  Export
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2">
                   <Button
                     variant="outline"
                     onClick={() => exportDiagram('png')}
@@ -612,66 +715,72 @@ export function DiagramGenerator() {
 
         <TabsContent value="preview" className="pt-3 sm:pt-4 px-2 sm:px-0">
           <div className="space-y-4 sm:space-y-6">
-            <div className="text-center">
+            <div className="text-center animate-fade-in">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bolt-gradient-text">
-                Full Screen Preview
+                Full Screen Diagram View
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto px-4">
-                View your diagram in full detail with export and sharing options
+                Beautiful, responsive view optimized for both desktop and mobile devices
               </p>
             </div>
 
-            <div ref={diagramRef} className="glass-effect border border-yellow-400/20 rounded-xl overflow-hidden bg-white relative min-h-[400px] sm:min-h-[500px] md:min-h-[600px]">
-              <div className="absolute inset-0 shimmer opacity-10"></div>
-              <div className="relative z-10">
+            <div ref={diagramRef} className="glass-effect border-2 border-yellow-400/30 rounded-xl overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-white relative min-h-[400px] sm:min-h-[500px] md:min-h-[700px] shadow-2xl">
+              <div className="absolute inset-0 shimmer opacity-20"></div>
+              <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-400/10 rounded-full blur-3xl -z-10"></div>
+              <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl -z-10"></div>
+              <div className="relative z-10 h-full w-full flex flex-col">
                 <DiagramPreview code={diagramCode} fullScreen />
               </div>
             </div>
 
-            {/* Full Export Panel */}
-            <div className="glass-effect p-6 rounded-xl border border-yellow-400/20">
-              <h3 className="text-xl font-medium mb-4 flex items-center gap-2">
+            {/* Full Export Panel - Responsive Grid */}
+            <div className="glass-effect p-4 sm:p-6 rounded-xl border-2 border-yellow-400/30 bg-gradient-to-br from-yellow-50/50 to-transparent">
+              <h3 className="text-lg sm:text-xl font-medium mb-4 flex items-center gap-2">
                 <Download className="h-5 w-5 text-yellow-500" />
-                Export & Share
+                Export & Share Options
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                 <Button
                   onClick={() => exportDiagram('png')}
                   disabled={isExporting}
-                  className="bolt-gradient text-white font-semibold hover:scale-105 transition-all duration-300"
+                  className="bolt-gradient text-white font-semibold hover:scale-105 transition-all duration-300 text-sm sm:text-base py-2 sm:py-3"
                 >
-                  <FileImage className="mr-2 h-4 w-4" />
-                  PNG Export
+                  <FileImage className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">PNG Export</span>
+                  <span className="sm:hidden">PNG</span>
                 </Button>
                 <Button
                   onClick={() => exportDiagram('svg')}
                   disabled={isExporting}
                   variant="outline"
-                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60"
+                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60 text-sm sm:text-base py-2 sm:py-3"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  SVG Export
+                  <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">SVG Export</span>
+                  <span className="sm:hidden">SVG</span>
                 </Button>
                 <Button
                   onClick={copyToClipboard}
                   disabled={isCopying}
                   variant="outline"
-                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60"
+                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60 text-sm sm:text-base py-2 sm:py-3"
                 >
                   {isCopying ? (
-                    <Check className="mr-2 h-4 w-4 text-green-500" />
+                    <Check className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                   ) : (
-                    <Copy className="mr-2 h-4 w-4" />
+                    <Copy className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   )}
-                  Copy Code
+                  <span className="hidden sm:inline">Copy Code</span>
+                  <span className="sm:hidden">Copy</span>
                 </Button>
                 <Button
                   onClick={shareDiagram}
                   variant="outline"
-                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60"
+                  className="glass-effect border-yellow-400/30 hover:border-yellow-400/60 text-sm sm:text-base py-2 sm:py-3"
                 >
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share Diagram
+                  <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Share</span>
+                  <span className="sm:hidden">Share</span>
                 </Button>
               </div>
             </div>

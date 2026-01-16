@@ -114,7 +114,66 @@ export async function POST(request: Request) {
 
     console.log(`📊 Generating ${diagramType} diagram with Mistral...`);
     
-    const diagram = await generateDiagramWithMistral({ prompt, diagramType });
+    let diagram;
+    try {
+      diagram = await generateDiagramWithMistral({ prompt, diagramType });
+    } catch (genError) {
+      console.error('Diagram generation failed:', genError);
+      const errorMsg = genError instanceof Error ? genError.message : 'Unknown error during generation';
+      return NextResponse.json(
+        { 
+          error: 'Diagram generation failed',
+          message: errorMsg.includes('parse') ? 'Invalid response format from AI. Please try again with a different description.' : errorMsg,
+          details: errorMsg,
+          hint: 'Try being more specific in your description or use shorter text for labels.'
+        },
+        { status: 500 }
+      );
+    }
+    
+    // Validate diagram response
+    if (!diagram || !diagram.code) {
+      console.error('Invalid diagram response:', diagram);
+      return NextResponse.json(
+        { 
+          error: 'Invalid diagram response',
+          message: 'The AI did not generate valid diagram code. Please try again with a simpler description.',
+          details: 'Missing code field in response',
+          hint: 'Try: "Simple flowchart with 5 steps for user login process"'
+        },
+        { status: 500 }
+      );
+    }
+
+    // Validate Mermaid syntax
+    const diagramCode = diagram.code.trim();
+    const validDiagramTypes = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 'erDiagram', 'journey', 'gantt', 'pie', 'gitGraph', 'mindmap', 'timeline'];
+    const hasValidStart = validDiagramTypes.some(type => diagramCode.toLowerCase().startsWith(type.toLowerCase()));
+    
+    if (!hasValidStart) {
+      console.error('Invalid diagram type in code:', diagramCode.substring(0, 50));
+      return NextResponse.json(
+        { 
+          error: 'Invalid diagram syntax',
+          message: `Diagram must start with one of: ${validDiagramTypes.join(', ')}`,
+          details: `Generated code starts with: ${diagramCode.substring(0, 30)}...`,
+          hint: 'Regenerate or manually edit to start with a valid diagram type.'
+        },
+        { status: 422 }
+      );
+    }
+
+    // Basic syntax validation
+    if (diagramCode.length < 10) {
+      return NextResponse.json(
+        { 
+          error: 'Diagram too short',
+          message: 'Generated diagram is too simple. Please provide a more detailed description.',
+          hint: 'Try a more detailed prompt, for example: "Create a flowchart for an ecommerce checkout process"'
+        },
+        { status: 422 }
+      );
+    }
     
     console.log('✅ Diagram generated successfully with Mistral');
     
@@ -147,8 +206,13 @@ export async function POST(request: Request) {
     return NextResponse.json(diagram);
   } catch (error) {
     console.error('Error generating diagram:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to generate diagram', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to generate diagram',
+        message: 'An unexpected error occurred. Please try again.',
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

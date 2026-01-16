@@ -129,24 +129,42 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
           diagramContainer.style.padding = '30px';
           diagramContainer.style.backgroundColor = '#ffffff';
           
-          // Find the SVG element and enhance it
+          // Find the SVG element and enhance it with beautiful styling
           const svgElement = diagramContainer.querySelector('svg');
           if (svgElement) {
-            // Increase diagram size for better visibility
+            // Responsive sizing - scales beautifully on mobile and desktop
             svgElement.style.maxWidth = '100%';
             svgElement.style.height = 'auto';
-            svgElement.style.minWidth = fullScreen ? '800px' : '600px';
+            svgElement.style.minWidth = fullScreen ? '100%' : '100%';
+            svgElement.style.maxHeight = fullScreen ? '700px' : '500px';
             
-            // Ensure text is black and visible
+            // Enhance visual appeal with better spacing
+            svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            svgElement.style.display = 'block';
+            svgElement.style.margin = '0 auto';
+            
+            // Improve text rendering with better fonts and colors
             const textElements = svgElement.querySelectorAll('text, tspan, .nodeLabel, .edgeLabel');
             textElements.forEach((text: any) => {
-              text.style.fill = '#000000';
-              text.style.color = '#000000';
-              text.setAttribute('fill', '#000000');
+              text.style.fill = '#1a1a1a';
+              text.style.color = '#1a1a1a';
+              text.setAttribute('fill', '#1a1a1a');
+              text.style.fontSize = text.getAttribute('font-size') || '14px';
+              text.style.fontWeight = '500';
+              text.style.fontFamily = '\"Segoe UI\", \"Roboto\", sans-serif';
             });
             
-            // Make diagram responsive on mobile
-            svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            // Enhance node styling with subtle shadows
+            const nodes = svgElement.querySelectorAll('[data-type="node"], .node, [class*="node"]');
+            nodes.forEach((node: any) => {
+              node.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))';
+            });
+            
+            // Make SVG more responsive on mobile with scaling
+            if (window.innerWidth < 768) {
+              svgElement.style.transform = 'scale(0.95)';
+              svgElement.style.transformOrigin = 'top center';
+            }
           }
           
           containerRef.current.appendChild(diagramContainer);
@@ -216,8 +234,11 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          backgroundColor: '#ffffff',
-          WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafb 100%)',
+          WebkitOverflowScrolling: 'touch',
+          borderRadius: '8px',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)',
+          padding: fullScreen ? '40px 20px' : '30px 15px',
         }}
       />
     </div>
