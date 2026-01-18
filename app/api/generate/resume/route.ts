@@ -77,15 +77,15 @@ Create realistic, relevant content based on the job description. Use action verb
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || '';
-  
+
   // Parse JSON from response
   const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-  
+
   if (!jsonMatch) {
     throw new Error('No JSON found in Mistral response');
   }
-  
+
   return JSON.parse(jsonMatch[0]);
 }
 
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
 
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       console.error('Authentication error:', authError);
       return NextResponse.json(
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
 
     // Check user credits
     const creditCost = ACTION_COSTS.resume;
-    
+
     // Get or create user credits
     let { data: userCredits, error: creditsError } = await supabaseAdmin
       .from('user_credits')
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
         })
         .select()
         .single();
-      
+
       if (insertError) {
         console.error('Failed to create credits record:', insertError);
         return NextResponse.json(
@@ -213,10 +213,10 @@ export async function POST(request: Request) {
 
     // Check if user has enough credits
     const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
-    
+
     if (creditsRemaining < creditCost) {
       return NextResponse.json(
-        { 
+        {
           error: 'Not enough credits',
           message: `You need ${creditCost} credits to generate a resume. You have ${creditsRemaining} credits remaining.`,
           needsUpgrade: true,
@@ -252,9 +252,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Additional security checks
-    if (detectSqlInjection(prompt) || detectSqlInjection(name) || detectSqlInjection(email)) {
-      console.warn('Potential SQL injection attempt detected');
+
+    // Additional security checks - only check name and email for SQL injection
+    // Note: We don't check prompt because it contains user-generated content like LinkedIn exports
+    // that naturally contain words like "SELECT candidates" which trigger false positives.
+    // The prompt is only passed to the AI model, not used in SQL queries.
+    if (detectSqlInjection(name) || detectSqlInjection(email)) {
+      console.warn('Potential SQL injection attempt detected in name/email');
       return NextResponse.json(
         { error: 'Invalid input detected' },
         { status: 400 }
@@ -270,9 +274,9 @@ export async function POST(request: Request) {
     let resume;
     try {
       console.log('🚀 Generating resume with Mistral...');
-      resume = await generateResumeWithMistral({ 
-        prompt: sanitizedPrompt, 
-        name: sanitizedName, 
+      resume = await generateResumeWithMistral({
+        prompt: sanitizedPrompt,
+        name: sanitizedName,
         email: sanitizedEmail
       });
       console.log('✅ Resume generated with Mistral');
@@ -280,11 +284,11 @@ export async function POST(request: Request) {
       console.error('❌ Mistral failed:', mistralError.message);
       throw new Error('Unable to generate resume. Please try again later.');
     }
-    
+
     // Deduct credits after successful generation
     const { error: updateError } = await supabaseAdmin
       .from('user_credits')
-      .update({ 
+      .update({
         credits_used: userCredits!.credits_used + creditCost,
         updated_at: new Date().toISOString()
       })
@@ -303,13 +307,13 @@ export async function POST(request: Request) {
           credits_used: creditCost,
           metadata: { prompt_length: sanitizedPrompt.length }
         });
-      
+
       console.log(`💳 Deducted ${creditCost} credits for resume generation`);
     }
-    
+
     // Save resume to documents table for history
     const resumeTitle = resume.name ? `${resume.name}'s Resume` : 'Untitled Resume';
-    
+
     try {
       // First try to save to documents table
       const { data: savedDoc, error: docError } = await supabaseAdmin
@@ -322,10 +326,10 @@ export async function POST(request: Request) {
         })
         .select()
         .single();
-      
+
       if (docError) {
         console.error('Failed to save to documents table:', docError);
-        
+
         // Fallback: Try saving to resumes table
         const { error: resumeError } = await supabaseAdmin
           .from('resumes')
@@ -341,7 +345,7 @@ export async function POST(request: Request) {
             content: resume,
             template: 'deedy-resume',
           });
-        
+
         if (resumeError) {
           console.error('Failed to save to resumes table:', resumeError);
         } else {
@@ -354,7 +358,7 @@ export async function POST(request: Request) {
       console.error('Error saving resume:', saveError);
       // Don't fail the request if saving fails
     }
-    
+
     return NextResponse.json(resume, { status: 200 });
 
   } catch (error: any) {
@@ -363,11 +367,11 @@ export async function POST(request: Request) {
       name: error.name,
       stack: error.stack?.split('\n').slice(0, 3)
     });
-    
+
     // Provide detailed, user-friendly error messages
     let errorMessage = 'Failed to generate resume';
     let errorDetails = error.message || 'Unknown error occurred';
-    
+
     if (error.message?.includes('API key')) {
       errorMessage = 'AI service configuration error';
       errorDetails = 'The AI service is not properly configured. Please contact support.';
@@ -384,9 +388,9 @@ export async function POST(request: Request) {
       errorMessage = 'Network error';
       errorDetails = 'Unable to connect to AI service. Please check your internet connection.';
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
         message: errorDetails,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined

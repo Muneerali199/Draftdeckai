@@ -48,6 +48,7 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",
     "@mistralai/mistralai": "^1.10.0",
+    "@monaco-editor/react": "^4.7.0",
     "@netlify/plugin-nextjs": "^4.41.3",
     "@phazr/custom-cursor": "^0.1.2",
     "@radix-ui/react-accordion": "^1.2.0",
