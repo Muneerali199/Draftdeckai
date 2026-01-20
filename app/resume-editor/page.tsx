@@ -19,6 +19,8 @@ export default function ResumeEditorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [editMode, setEditMode] = useState<'form' | 'latex' | 'ai'>('form');
   const [selectedTemplate, setSelectedTemplate] = useState('professional');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isCompiling, setIsCompiling] = useState(false);
 
   const [resumeData, setResumeData] = useState({
     name: 'JOHN ANDERSON',
@@ -163,7 +165,14 @@ export default function ResumeEditorPage() {
               className={`flex flex-col overflow-hidden min-h-0 p-0 mt-0 ${editMode === 'latex' ? 'flex-1' : 'h-[10px] flex-none'}`}
             >
               <div className="flex-1 overflow-y-auto p-6">
-                <ResumeLatexEditor data={resumeData} onChange={setResumeData} />
+                <ResumeLatexEditor
+                  data={resumeData}
+                  onChange={setResumeData}
+                  onPdfGenerated={(url) => {
+                    setPdfUrl(url);
+                    setIsCompiling(false);
+                  }}
+                />
               </div>
             </TabsContent>
 
@@ -181,7 +190,14 @@ export default function ResumeEditorPage() {
 
         {/* RIGHT - Live Preview */}
         <div className="w-1/2 bg-gradient-to-br from-gray-100 to-gray-200 overflow-auto">
-          <ResumePreviewPanel data={resumeData} template={selectedTemplate} onTemplateChange={setSelectedTemplate} />
+          <ResumePreviewPanel
+            data={resumeData}
+            template={selectedTemplate}
+            onTemplateChange={setSelectedTemplate}
+            pdfUrl={pdfUrl}
+            isPdfMode={editMode === 'latex'}
+            isCompiling={isCompiling}
+          />
         </div>
       </div>
     </div>

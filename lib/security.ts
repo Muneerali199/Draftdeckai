@@ -51,9 +51,9 @@ export const getSecurityHeaders = (isDevelopment: boolean = false) => {
   // Common CSP directives
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+    "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: https: blob:",
     // SECURITY NOTE: data: URIs in connect-src are ONLY needed for @react-pdf/renderer's yoga-wasm module
     // which loads the WASM layout engine via a data: URI. This is a controlled, safe use case as:
@@ -62,9 +62,9 @@ export const getSecurityHeaders = (isDevelopment: boolean = false) => {
     // 3. Alternative approaches (blob: or external URLs) would increase attack surface
     // WARNING: This allows data: URIs globally in connect-src. Monitor for unintended usage in other network requests.
     // If this directive is ever removed, PDF generation will fail with CSP violations.
-    "connect-src 'self' data: https://*.supabase.co https://*.nebius.cloud https://api.stripe.com https://generativelanguage.googleapis.com https://api.mistral.ai https://api.tokenfactory.nebius.com",
-    "frame-src https://js.stripe.com",
-    "object-src 'none'",
+    "connect-src 'self' data: https://*.supabase.co https://*.nebius.cloud https://api.stripe.com https://generativelanguage.googleapis.com https://api.mistral.ai https://api.tokenfactory.nebius.com https://latexonline.cc https://latex.ytotech.com https://cdn.jsdelivr.net",
+    "frame-src 'self' blob: https://js.stripe.com",
+    "object-src 'self' blob:",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
