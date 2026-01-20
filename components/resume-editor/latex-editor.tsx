@@ -14,8 +14,7 @@ export function ResumeLatexEditor({ data, onChange }: ResumeLatexEditorProps) {
   const [latexCode, setLatexCode] = useState('');
 
   useEffect(() => {
-    // Convert data to LaTeX format
-    const latex = `\\documentclass[11pt,a4paper]{article}
+  const latex = `\\documentclass[11pt,a4paper]{article}
 \\usepackage[utf8]{inputenc}
 \\usepackage{geometry}
 \\geometry{margin=1in}
@@ -38,10 +37,18 @@ ${exp.location}\\\\
 ${exp.description?.[0] || ''}
 `).join('\n') || ''}
 
-\\end{document}`;
-    
-    setLatexCode(latex);
-  }, [data]);
+\\section*{Skills}
+\\begin{itemize}
+${data.skills?.programming?.map(
+  (skill: string) => `\\item ${skill}`
+).join('\n') || ''}
+\\end{itemize}
+
+\\end{document}
+`;
+
+  setLatexCode(latex);
+}, [data]);
 
   const handleApply = () => {
     toast.success('LaTeX code applied!');
