@@ -53,6 +53,10 @@ ${escapeLatex(proj.description)}
 \\\\\\textit{Technologies: ${proj.technologies?.map((t: string) => escapeLatex(t)).join(', ') || ''}}
 `).join('\n') || '';
 
+  const certificationsSection = data.certifications?.map((cert: any) => `
+\\textbf{${escapeLatex(cert.name)}} -- ${escapeLatex(cert.issuer)} \\hfill ${escapeLatex(cert.date)}
+`).join('\\\\\n') || '';
+
   return `\\documentclass[11pt,a4paper]{article}
 \\usepackage[utf8]{inputenc}
 \\usepackage[T1]{fontenc}
@@ -78,24 +82,28 @@ ${data.linkedin ? `\\href{https://${data.linkedin}}{${escapeLatex(data.linkedin)
 \\end{center}
 
 % Professional Summary
-\\section*{Professional Summary}
-${escapeLatex(data.summary)}
+${data.summary ? `\\section*{Professional Summary}
+${escapeLatex(data.summary)}` : ''}
 
 % Work Experience
-\\section*{Work Experience}
-${experienceSection}
+${data.experience?.length > 0 ? `\\section*{Work Experience}
+${experienceSection}` : ''}
 
 % Education
-\\section*{Education}
-${educationSection}
+${data.education?.length > 0 ? `\\section*{Education}
+${educationSection}` : ''}
 
 % Skills
-\\section*{Technical Skills}
-${skillsSection}
+${Object.keys(data.skills || {}).length > 0 ? `\\section*{Technical Skills}
+${skillsSection}` : ''}
 
 % Projects
 ${data.projects?.length > 0 ? `\\section*{Projects}
 ${projectsSection}` : ''}
+
+% Certifications
+${data.certifications?.length > 0 ? `\\section*{Certifications}
+${certificationsSection}` : ''}
 
 \\end{document}
 `;
