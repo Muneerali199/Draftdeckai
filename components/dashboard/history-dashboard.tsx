@@ -49,7 +49,7 @@ const contentTypeConfig = {
     label: "Resumes",
     color: "text-blue-500",
     bgColor: "bg-blue-50",
-    route: "/resume",
+    route: "/resume-editor",
     gradient: "from-blue-500 to-cyan-500",
   },
   presentation: {
@@ -120,7 +120,7 @@ const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title:
   const slide = slides[currentIndex] || slides[0];
 
   return (
-    <div 
+    <div
       className="h-full w-full relative group/slideshow cursor-pointer flex items-center justify-center bg-gray-50 dark:bg-gray-800"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
@@ -129,22 +129,22 @@ const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title:
       }}
     >
       <div className="w-[166.67%] h-[166.67%] scale-[0.6] transform-gpu pointer-events-none origin-center">
-         <SlideCard 
-           slide={slide} 
-           theme={theme} 
-           getGradientClass={() => theme.colors.gradient}
-         />
+        <SlideCard
+          slide={slide}
+          theme={theme}
+          getGradientClass={() => theme.colors.gradient}
+        />
       </div>
 
       {/* Slide number indicator */}
       <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[8px] px-2 py-0.5 rounded-full backdrop-blur-md font-bold z-20">
         {currentIndex + 1} / {slides.length}
       </div>
-      
+
       {/* Progress bar */}
       {isHovered && slides.length > 1 && (
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200/50 z-20">
-          <div 
+          <div
             className="h-full bg-purple-500 transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / slides.length) * 100}%` }}
           />
@@ -173,16 +173,37 @@ export function HistoryDashboard() {
 
   useEffect(() => {
     fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Filter items when dependencies change
   useEffect(() => {
-    filterItems();
+    let filtered = items;
+
+    // Filter by type
+    if (activeTab !== "all") {
+      filtered = filtered.filter((item) => item.type === activeTab);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (item) =>
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredItems(filtered);
   }, [activeTab, searchQuery, items]);
 
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() for rate limit avoidance (reads from local cache)
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
       if (!user) {
         router.push("/auth/signin");
         return;
@@ -200,12 +221,12 @@ export function HistoryDashboard() {
       ]);
 
       const { data: documents } = documentsResult;
-      
+
       // Map documents to history items
       const docItems: HistoryItem[] = (documents || []).map((doc: any) => {
         const content = doc.content || {};
         const data = doc.type === 'resume' ? (content.resumeData || content) : content;
-        
+
         return {
           id: doc.id,
           type: doc.type as ContentType,
@@ -219,12 +240,12 @@ export function HistoryDashboard() {
 
       // Merge all items and deduplicate by ID
       const mergedMap = new Map<string, HistoryItem>();
-      
+
       // Add legacy items first
       [...resumes, ...presentations, ...diagrams, ...letters].forEach(item => {
         mergedMap.set(item.id, item);
       });
-      
+
       // Add (and potentially overwrite with better data) document items
       docItems.forEach(item => {
         mergedMap.set(item.id, item);
@@ -232,6 +253,14 @@ export function HistoryDashboard() {
 
       const allItems = Array.from(mergedMap.values())
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // DEBUG: Log the final merged items
+      console.log('📊 Final History Items:', allItems.length, 'items');
+      allItems.forEach((item, idx) => {
+        if (item.type === 'resume') {
+          console.log(`📝 Resume ${idx + 1}:`, item.id, item.title, 'data keys:', Object.keys(item.data || {}));
+        }
+      });
 
       setItems(allItems);
 
@@ -257,9 +286,10 @@ export function HistoryDashboard() {
 
   const fetchResumes = async (userId: string): Promise<HistoryItem[]> => {
     const { data, error } = await supabase
-      .from("resumes")
+      .from("documents")
       .select("*")
       .eq("user_id", userId)
+      .eq("type", "resume")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -267,15 +297,25 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data as any[] || []).map((resume) => ({
-      id: resume.id,
-      type: "resume" as ContentType,
-      title: resume.title || "Untitled Resume",
-      description: resume.personal_info?.name || "",
-      created_at: resume.created_at,
-      updated_at: resume.updated_at,
-      data: resume,
-    }));
+    return (data as any[] || []).map((doc) => {
+      const content = doc.content || {};
+      
+      // DEBUG: Log the raw content structure
+      console.log('📄 Raw Resume Document:', doc.id, content);
+      
+      // Pass the full content object which contains resumeData
+      // The preview component will unwrap it properly
+      return {
+        id: doc.id,
+        type: "resume" as ContentType,
+        title: doc.title || "Untitled Resume",
+        description: content.resumeData?.personal_info?.name || content.resumeData?.personalInfo?.name || 
+                    content.personal_info?.name || content.personalInfo?.name || "",
+        created_at: doc.created_at,
+        updated_at: doc.updated_at,
+        data: content, // Pass the full content object
+      };
+    });
   };
 
   const fetchPresentations = async (userId: string): Promise<HistoryItem[]> => {
@@ -347,25 +387,7 @@ export function HistoryDashboard() {
     }));
   };
 
-  const filterItems = () => {
-    let filtered = items;
-
-    // Filter by type
-    if (activeTab !== "all") {
-      filtered = filtered.filter((item) => item.type === activeTab);
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (item) =>
-          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    setFilteredItems(filtered);
-  };
+  // filterItems is now inlined in useEffect above
 
   const handleView = (item: HistoryItem) => {
     const config = contentTypeConfig[item.type];
@@ -374,52 +396,217 @@ export function HistoryDashboard() {
 
   // Render visual preview based on content type
   const renderPreview = (item: HistoryItem) => {
+    // Helper to get nested data with multiple possible paths
+    const getData = (data: any, ...paths: string[]): any => {
+      if (!data) return null;
+      for (const path of paths) {
+        const keys = path.split('.');
+        let value = data;
+        for (const key of keys) {
+          value = value?.[key];
+          if (value === undefined) break;
+        }
+        if (value !== undefined && value !== null) return value;
+      }
+      return null;
+    };
+
     switch (item.type) {
       case "resume":
+        // DEBUG: Log the actual data structure
+        console.log('🔍 Resume Preview Data:', item.data);
+        
+        // Handle different resume data structures - support both nested and flat formats
+        let resumeData = item.data;
+        
+        // If data is wrapped in resumeData key, unwrap it
+        if (item.data?.resumeData && typeof item.data.resumeData === 'object') {
+          resumeData = item.data.resumeData;
+          console.log('📦 Unwrapped resumeData from nested structure');
+        }
+        
+        // Support both personal_info and personalInfo naming
+        const personalInfo = resumeData?.personal_info || resumeData?.personalInfo || {};
+        
+        // Extract all fields with fallbacks
+        const name = personalInfo?.name || resumeData?.name || item.title || "Resume";
+        const email = personalInfo?.email || resumeData?.email || "";
+        const phone = personalInfo?.phone || resumeData?.phone || "";
+        const location = personalInfo?.location || resumeData?.location || "";
+        const linkedin = personalInfo?.linkedin || resumeData?.linkedin || "";
+        const github = personalInfo?.github || resumeData?.github || "";
+        const summary = personalInfo?.summary || resumeData?.summary || "";
+        
+        // Extract experiences
+        const experiences = resumeData?.experience || resumeData?.work_experience || 
+                           resumeData?.workExperience || resumeData?.experiences || [];
+        
+        // Extract education
+        const education = resumeData?.education || resumeData?.educations || [];
+        
+        // Extract skills - handle both array and object formats
+        let skills: any[] = [];
+        if (Array.isArray(resumeData?.skills)) {
+          skills = resumeData.skills;
+        } else if (typeof resumeData?.skills === 'object' && resumeData.skills !== null) {
+          // Flatten skills object (e.g., {technical: [...], programming: [...]})
+          skills = Object.values(resumeData.skills).flat();
+        }
+        
+        // Extract projects
+        const projects = resumeData?.projects || resumeData?.project || [];
+        
+        // Extract certifications
+        const certifications = resumeData?.certifications || resumeData?.certification || [];
+        
+        console.log('✅ Extracted Resume Fields:', {
+          name, email, phone, location,
+          hasSummary: !!summary,
+          experiencesCount: experiences?.length || 0,
+          educationCount: education?.length || 0,
+          skillsCount: skills?.length || 0,
+          projectsCount: projects?.length || 0,
+          certificationsCount: certifications?.length || 0
+        });
+
         return (
-          <div className="p-3 text-[6px] leading-tight h-full overflow-hidden">
-            <div className="text-center mb-2">
-              <div className="font-bold text-[8px] text-gray-800">
-                {item.data?.personal_info?.name || item.data?.name || "Your Name"}
+          <div className="p-2 text-[5px] leading-tight h-full overflow-hidden bg-white flex flex-col">
+            {/* Header - Name & Contact */}
+            <div className="text-center mb-1 pb-1 border-b border-gray-300">
+              <div className="font-bold text-[7px] text-gray-900">
+                {name}
               </div>
-              <div className="text-gray-500 text-[5px]">
-                {item.data?.personal_info?.email || item.data?.email || "email@example.com"}
+              <div className="text-gray-600 text-[4px] mt-0.5">
+                {email && <span>{email}</span>}
+                {phone && email && <span> • </span>}
+                {phone && <span>{phone}</span>}
+                {location && (email || phone) && <span> • </span>}
+                {location && <span>{location}</span>}
               </div>
-            </div>
-            <div className="border-t border-gray-200 pt-1 mb-1">
-              <div className="font-semibold text-gray-700 text-[5px] mb-0.5">EXPERIENCE</div>
-              {(item.data?.experience || item.data?.work_experience || []).slice(0, 2).map((exp: any, i: number) => (
-                <div key={i} className="mb-1">
-                  <div className="font-medium text-gray-800">{exp.title || exp.position || "Position"}</div>
-                  <div className="text-gray-500">{exp.company || "Company"}</div>
+              {(linkedin || github) && (
+                <div className="text-gray-500 text-[3px] mt-0.5">
+                  {linkedin && <span>LinkedIn: {linkedin}</span>}
+                  {github && linkedin && <span> • </span>}
+                  {github && <span>GitHub: {github}</span>}
                 </div>
-              ))}
+              )}
             </div>
-            <div className="border-t border-gray-200 pt-1">
-              <div className="font-semibold text-gray-700 text-[5px] mb-0.5">SKILLS</div>
-              <div className="flex flex-wrap gap-0.5">
-                {(item.data?.skills?.technical || item.data?.skills || []).slice(0, 5).map((skill: any, i: number) => (
-                  <span key={i} className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded text-[4px]">
-                    {typeof skill === 'string' ? skill : skill.name}
-                  </span>
+            
+            {/* Summary */}
+            {summary && (
+              <div className="mb-1">
+                <div className="text-gray-700 text-[4px] line-clamp-2 leading-tight">{summary}</div>
+              </div>
+            )}
+            
+            {/* Experience Section */}
+            {experiences.length > 0 && (
+              <div className="mb-1">
+                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Experience</div>
+                {experiences.slice(0, 3).map((exp: any, i: number) => (
+                  <div key={i} className="mb-1">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-semibold text-gray-800 text-[4px]">
+                        {exp.title || exp.position || exp.role || "Position"}
+                      </span>
+                      <span className="text-gray-500 text-[3px]">{exp.date || exp.duration || ""}</span>
+                    </div>
+                    <div className="text-gray-600 text-[3px] italic">
+                      {exp.company || exp.organization || exp.employer || "Company"}
+                      {exp.location && <span> — {exp.location}</span>}
+                    </div>
+                    {exp.description && Array.isArray(exp.description) && exp.description.length > 0 && (
+                      <ul className="mt-0.5 text-[3px] text-gray-600 list-disc list-inside">
+                        {exp.description.slice(0, 2).map((desc: string, j: number) => (
+                          <li key={j} className="line-clamp-1">{desc}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 ))}
               </div>
-            </div>
+            )}
+            
+            {/* Education Section */}
+            {education.length > 0 && (
+              <div className="mb-1">
+                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Education</div>
+                {education.slice(0, 2).map((edu: any, i: number) => (
+                  <div key={i} className="mb-0.5">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-semibold text-gray-800 text-[4px]">
+                        {edu.degree || edu.title || "Degree"}
+                      </span>
+                      <span className="text-gray-500 text-[3px]">{edu.date || edu.graduationDate || ""}</span>
+                    </div>
+                    <div className="text-gray-600 text-[3px]">
+                      {edu.institution || edu.school || edu.university || "Institution"}
+                      {edu.gpa && <span className="text-gray-500"> (GPA: {edu.gpa})</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Skills Section */}
+            {skills.length > 0 && (
+              <div className="mb-1">
+                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Skills</div>
+                <div className="flex flex-wrap gap-0.5">
+                  {skills.slice(0, 8).map((skill: any, i: number) => (
+                    <span key={i} className="bg-gray-100 text-gray-700 px-1 py-0.5 rounded text-[3px] border border-gray-200">
+                      {typeof skill === 'string' ? skill : skill.name || skill.skill || String(skill)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Projects Section */}
+            {projects.length > 0 && (
+              <div className="mb-1">
+                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Projects</div>
+                {projects.slice(0, 2).map((proj: any, i: number) => (
+                  <div key={i} className="mb-0.5">
+                    <div className="font-semibold text-gray-800 text-[4px]">{proj.name || proj.title || "Project"}</div>
+                    <div className="text-gray-600 text-[3px] line-clamp-1">{proj.description || ""}</div>
+                    {proj.technologies && Array.isArray(proj.technologies) && (
+                      <div className="text-[3px] text-gray-500 mt-0.5">
+                        {proj.technologies.slice(0, 3).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Certifications Section */}
+            {certifications.length > 0 && (
+              <div>
+                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Certifications</div>
+                {certifications.slice(0, 2).map((cert: any, i: number) => (
+                  <div key={i} className="flex justify-between items-baseline text-[3px]">
+                    <span className="text-gray-800">{cert.name || cert.title || "Certification"}</span>
+                    <span className="text-gray-500">{cert.date || cert.year || ""}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
-      
+
       case "presentation":
         const rawSlides = item.data?.slides || item.data?.content?.slides;
         const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
         const themeId = item.data?.themeId || item.data?.content?.themeId;
         return <PresentationPreview slides={slides} title={item.title} themeId={themeId} />;
-      
+
       case "diagram":
         return (
           <div className="h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-50 to-emerald-50">
             <Network className="h-8 w-8 text-green-500 mb-2" />
             <div className="text-[8px] font-medium text-gray-700 text-center">
-              {item.data?.type || "Diagram"}
+              {item.data?.type || item.data?.diagramType || "Diagram"}
             </div>
             <div className="mt-2 flex gap-1">
               {[1, 2, 3].map((i) => (
@@ -432,26 +619,50 @@ export function HistoryDashboard() {
             </div>
           </div>
         );
-      
+
       case "letter":
+        // Handle different letter data structures
+        const letterData = item.data?.letterData || item.data;
+        const recipientName = getData(letterData, 'to.name', 'recipient.name', 'recipientName', 'to');
+        const senderName = getData(letterData, 'from.name', 'sender.name', 'senderName', 'from');
+        const letterContent = getData(letterData, 'content', 'body', 'letterContent', 'text');
+        const letterType = getData(letterData, 'letter_type', 'letterType', 'type');
+        const letterDate = getData(letterData, 'date', 'createdAt');
+        const subject = getData(letterData, 'subject', 'title');
+
         return (
           <div className="p-3 text-[6px] leading-tight h-full overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50">
-            <div className="mb-2 text-right text-gray-500 text-[5px]">
-              {item.data?.date || new Date().toLocaleDateString()}
-            </div>
-            <div className="mb-2">
-              <div className="text-gray-700 font-medium">Dear {item.data?.to?.name || "Recipient"},</div>
+            {letterDate && (
+              <div className="mb-1 text-right text-gray-500 text-[5px]">
+                {new Date(letterDate).toLocaleDateString()}
+              </div>
+            )}
+            {subject && (
+              <div className="mb-1 font-semibold text-gray-800 text-[7px]">
+                Re: {subject}
+              </div>
+            )}
+            <div className="mb-1">
+              <div className="text-gray-700 font-medium">
+                Dear {typeof recipientName === 'string' ? recipientName : 'Recipient'},
+              </div>
             </div>
             <div className="text-gray-600 line-clamp-4">
-              {item.data?.content?.substring(0, 150) || "Letter content preview..."}
+              {typeof letterContent === 'string'
+                ? letterContent.substring(0, 150) + (letterContent.length > 150 ? '...' : '')
+                : letterType
+                  ? `${letterType} letter`
+                  : "Letter content..."}
             </div>
             <div className="mt-2 text-gray-700">
               <div>Sincerely,</div>
-              <div className="font-medium">{item.data?.from?.name || "Your Name"}</div>
+              <div className="font-medium">
+                {typeof senderName === 'string' ? senderName : 'Sender'}
+              </div>
             </div>
           </div>
         );
-      
+
       default:
         return (
           <div className="h-full flex items-center justify-center">
@@ -470,7 +681,7 @@ export function HistoryDashboard() {
         .from('documents' as any)
         .delete()
         .eq("id", item.id)) as { error: any };
-      
+
       if (!docError) {
         toast({
           title: "Deleted",
@@ -479,7 +690,7 @@ export function HistoryDashboard() {
         fetchHistory();
         return;
       }
-      
+
       // Fallback: try individual table
       const tableName = `${item.type}s`;
       const { error } = await (supabase.from(tableName as any).delete().eq("id", item.id)) as { error: any };
@@ -522,7 +733,7 @@ export function HistoryDashboard() {
         <div className="floating-orb w-32 h-32 sm:w-48 sm:h-48 bolt-gradient opacity-15 top-20 -left-24"></div>
         <div className="floating-orb w-24 h-24 sm:w-36 sm:h-36 bolt-gradient opacity-20 bottom-20 -right-18"></div>
         <div className="floating-orb w-40 h-40 sm:w-56 sm:h-56 bolt-gradient opacity-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-        
+
         <SiteHeader />
         <div className="flex-1 flex items-center justify-center relative z-10">
           <div className="text-center glass-effect p-8 rounded-2xl">
@@ -541,7 +752,7 @@ export function HistoryDashboard() {
       <div className="floating-orb w-32 h-32 sm:w-48 sm:h-48 bolt-gradient opacity-15 top-20 -left-24"></div>
       <div className="floating-orb w-24 h-24 sm:w-36 sm:h-36 bolt-gradient opacity-20 bottom-20 -right-18"></div>
       <div className="floating-orb w-40 h-40 sm:w-56 sm:h-56 bolt-gradient opacity-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-      
+
       {/* Grid pattern overlay */}
       <div
         className="absolute inset-0 opacity-[0.02]"
@@ -549,192 +760,192 @@ export function HistoryDashboard() {
           backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23000000' fill-opacity='1'%3e%3ccircle cx='30' cy='30' r='1'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
         }}
       />
-      
+
       <SiteHeader />
       <div className="flex-1 p-4 md:p-8 relative z-10">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-effect mb-4 shimmer">
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">Document History</span>
-            <Clock className="h-4 w-4 text-blue-500" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bolt-gradient-text">
-              Your Created Documents
-            </span>
-          </h1>
-          <p className="text-muted-foreground">
-            View and manage all your created content in one place
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card className="p-4 glass-effect border border-border/40 hover:shadow-lg transition-all">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm text-muted-foreground">Total</span>
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-effect mb-4 shimmer">
+              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-medium">Document History</span>
+              <Clock className="h-4 w-4 text-blue-500" />
             </div>
-            <p className="text-2xl font-bold bolt-gradient-text">{stats.total}</p>
-          </Card>
-
-          {Object.entries(contentTypeConfig).map(([type, config]) => {
-            const Icon = config.icon;
-            return (
-              <Card
-                key={type}
-                className={`p-4 glass-effect border border-border/40 cursor-pointer hover:scale-105 hover:shadow-lg transition-all ${activeTab === type ? 'ring-2 ring-yellow-400 border-yellow-400/50' : ''}`}
-                onClick={() => setActiveTab(type as ContentType)}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
-                    <Icon className={`h-4 w-4 ${config.color}`} />
-                  </div>
-                  <span className="text-sm text-muted-foreground">{config.label}</span>
-                </div>
-                <p className="text-2xl font-bold">{stats[type as ContentType]}</p>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Search and Filter */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search your content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-border/40 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 glass-effect bg-background/50 text-foreground placeholder:text-muted-foreground"
-            />
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <span className="bolt-gradient-text">
+                Your Created Documents
+              </span>
+            </h1>
+            <p className="text-muted-foreground">
+              View and manage all your created content in one place
+            </p>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ContentType | "all")}>
-          <TabsList className="mb-6 glass-effect border border-border/40">
-            <TabsTrigger value="all" className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">All ({stats.total})</TabsTrigger>
-            {Object.entries(contentTypeConfig).map(([type, config]) => (
-              <TabsTrigger key={type} value={type} className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">
-                {config.label} ({stats[type as ContentType]})
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <Card className="p-4 glass-effect border border-border/40 hover:shadow-lg transition-all">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-yellow-500" />
+                <span className="text-sm text-muted-foreground">Total</span>
+              </div>
+              <p className="text-2xl font-bold bolt-gradient-text">{stats.total}</p>
+            </Card>
 
-          <TabsContent value={activeTab} className="space-y-4">
-            {filteredItems.length === 0 ? (
-              <Card className="p-12 text-center glass-effect border border-border/40">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-20 h-20 rounded-full bolt-gradient flex items-center justify-center">
-                    <Sparkles className="h-10 w-10 text-white" />
+            {Object.entries(contentTypeConfig).map(([type, config]) => {
+              const Icon = config.icon;
+              return (
+                <Card
+                  key={type}
+                  className={`p-4 glass-effect border border-border/40 cursor-pointer hover:scale-105 hover:shadow-lg transition-all ${activeTab === type ? 'ring-2 ring-yellow-400 border-yellow-400/50' : ''}`}
+                  onClick={() => setActiveTab(type as ContentType)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
+                      <Icon className={`h-4 w-4 ${config.color}`} />
+                    </div>
+                    <span className="text-sm text-muted-foreground">{config.label}</span>
                   </div>
-                  <p className="text-foreground text-lg font-medium">No content found</p>
-                  <p className="text-muted-foreground text-sm">Start creating amazing documents!</p>
-                  <Button
-                    onClick={() => router.push("/")}
-                    className="bolt-gradient text-white hover:scale-105 transition-transform"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Create Something New
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredItems.map((item) => {
-                  const config = contentTypeConfig[item.type];
-                  const Icon = config.icon;
+                  <p className="text-2xl font-bold">{stats[type as ContentType]}</p>
+                </Card>
+              );
+            })}
+          </div>
 
-                  return (
-                    <Card
-                      key={item.id}
-                      className="group relative overflow-hidden glass-effect border border-border/40 hover:border-yellow-400/50 hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                      onClick={() => handleView(item)}
+          {/* Search and Filter */}
+          <div className="mb-6 flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search your content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-border/40 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 glass-effect bg-background/50 text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ContentType | "all")}>
+            <TabsList className="mb-6 glass-effect border border-border/40">
+              <TabsTrigger value="all" className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">All ({stats.total})</TabsTrigger>
+              {Object.entries(contentTypeConfig).map(([type, config]) => (
+                <TabsTrigger key={type} value={type} className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">
+                  {config.label} ({stats[type as ContentType]})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <TabsContent value={activeTab} className="space-y-4">
+              {filteredItems.length === 0 ? (
+                <Card className="p-12 text-center glass-effect border border-border/40">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-20 h-20 rounded-full bolt-gradient flex items-center justify-center">
+                      <Sparkles className="h-10 w-10 text-white" />
+                    </div>
+                    <p className="text-foreground text-lg font-medium">No content found</p>
+                    <p className="text-muted-foreground text-sm">Start creating amazing documents!</p>
+                    <Button
+                      onClick={() => router.push("/")}
+                      className="bolt-gradient text-white hover:scale-105 transition-transform"
                     >
-                      {/* Preview Area */}
-                      <div className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} bg-gradient-to-br ${config.gradient} overflow-hidden`}>
-                        {/* Document Preview Content */}
-                        <div className="absolute inset-0 bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner overflow-hidden">
-                          {renderPreview(item)}
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Create Something New
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredItems.map((item) => {
+                    const config = contentTypeConfig[item.type];
+                    const Icon = config.icon;
+
+                    return (
+                      <Card
+                        key={item.id}
+                        className="group relative overflow-hidden glass-effect border border-border/40 hover:border-yellow-400/50 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                        onClick={() => handleView(item)}
+                      >
+                        {/* Preview Area */}
+                        <div className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} bg-gradient-to-br ${config.gradient} overflow-hidden`}>
+                          {/* Document Preview Content */}
+                          <div className="absolute inset-0 bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner overflow-hidden">
+                            {renderPreview(item)}
+                          </div>
+
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div className="flex gap-3">
+                              <Button
+                                size="sm"
+                                className="bg-white text-gray-800 hover:bg-gray-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleView(item);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(item);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Type Badge */}
+                          <div className="absolute top-2 left-2">
+                            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-sm`}>
+                              <Icon className={`h-3 w-3 ${config.color}`} />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{config.label.slice(0, -1)}</span>
+                            </div>
+                          </div>
                         </div>
-                        
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <div className="flex gap-3">
+
+                        {/* Info Section */}
+                        <div className="p-4 bg-background/50">
+                          <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:bolt-gradient-text transition-colors">
+                            {item.title}
+                          </h3>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                              {item.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{formatDate(item.created_at)}</span>
+                            </div>
                             <Button
                               size="sm"
-                              className="bg-white text-gray-800 hover:bg-gray-100"
+                              variant="ghost"
+                              className="h-6 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleView(item);
                               }}
                             >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(item);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
                             </Button>
                           </div>
                         </div>
-
-                        {/* Type Badge */}
-                        <div className="absolute top-2 left-2">
-                          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-sm`}>
-                            <Icon className={`h-3 w-3 ${config.color}`} />
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{config.label.slice(0, -1)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Info Section */}
-                      <div className="p-4 bg-background/50">
-                        <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:bolt-gradient-text transition-colors">
-                          {item.title}
-                        </h3>
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                            {item.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{formatDate(item.created_at)}</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleView(item);
-                            }}
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

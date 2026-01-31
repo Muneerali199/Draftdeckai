@@ -53,7 +53,7 @@ export const getSecurityHeaders = (isDevelopment: boolean = false) => {
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "font-src 'self' https://fonts.gstatic.com data: https://cdn.jsdelivr.net",
     "img-src 'self' data: https: blob:",
     // SECURITY NOTE: data: URIs in connect-src are ONLY needed for @react-pdf/renderer's yoga-wasm module
     // which loads the WASM layout engine via a data: URI. This is a controlled, safe use case as:
@@ -68,6 +68,7 @@ export const getSecurityHeaders = (isDevelopment: boolean = false) => {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    "worker-src 'self' blob:",
   ].join('; ');
 
   const headers = {

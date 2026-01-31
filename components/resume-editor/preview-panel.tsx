@@ -10,6 +10,7 @@ import { TwoColumnTemplate } from './templates/two-column-template';
 import { ModernMinimalTemplate } from './templates/modern-minimal-template';
 import { CompactTemplate } from './templates/compact-template';
 import { AcademicTemplate } from './templates/academic-template';
+import { LatexMimicryWrapper } from './latex-mimicry-wrapper';
 import { useState } from 'react';
 
 interface ResumePreviewPanelProps {
@@ -171,17 +172,18 @@ export function ResumePreviewPanel({
         </div>
       )}
 
-      <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="flex-1 overflow-auto" style={{
+        background: 'linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 50%, #c8c8c8 100%)',
+        padding: '32px'
+      }}>
         {isPdfMode ? (
           <div className="h-full">
             {renderPdfPreview()}
           </div>
         ) : (
-          <div className="p-8">
-            <div className="w-full max-w-[210mm] mx-auto bg-white shadow-2xl" style={{ minHeight: '297mm', padding: '48px' }}>
-              {renderTemplate()}
-            </div>
-          </div>
+          <LatexMimicryWrapper>
+            {renderTemplate()}
+          </LatexMimicryWrapper>
         )}
       </div>
     </div>

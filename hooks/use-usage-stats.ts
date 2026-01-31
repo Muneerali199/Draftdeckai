@@ -30,10 +30,11 @@ export function useUsageStats() {
     try {
       setStats(prev => ({ ...prev, loading: true, error: null }));
 
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
+      // Use getSession() for rate limit avoidance (reads from local cache)
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
@@ -52,7 +53,7 @@ export function useUsageStats() {
           console.warn('Documents table not accessible:', docsError);
         } else {
           documentsCreated = documents?.length || 0;
-          
+
           // Count unique template types used (rough estimate of templates used)
           const uniqueTypes = new Set(documents?.map(doc => doc.type) || []);
           templatesUsed = uniqueTypes.size;

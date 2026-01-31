@@ -5,111 +5,22 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Play, Download, Copy, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { getLatexForTemplate } from '@/lib/latex-templates';
 
 interface ResumeLatexEditorProps {
   data: any;
+  templateId?: string;
   onChange: (data: any) => void;
   onPdfGenerated?: (pdfUrl: string | null) => void;
+  isLocked?: boolean; // When true, LaTeX is auto-generated from form data (user cannot edit)
 }
 
-// Generate LaTeX from resume data
-function generateLatexFromData(data: any): string {
-  const escapeLatex = (text: string) => {
-    if (!text) return '';
-    return text
-      .replace(/\\/g, '\\textbackslash{}')
-      .replace(/&/g, '\\&')
-      .replace(/%/g, '\\%')
-      .replace(/\$/g, '\\$')
-      .replace(/#/g, '\\#')
-      .replace(/_/g, '\\_')
-      .replace(/\{/g, '\\{')
-      .replace(/\}/g, '\\}')
-      .replace(/~/g, '\\textasciitilde{}')
-      .replace(/\^/g, '\\textasciicircum{}');
-  };
-
-  const experienceSection = data.experience?.map((exp: any) => `
-\\subsection*{${escapeLatex(exp.title)} | ${escapeLatex(exp.company)}}
-\\textit{${escapeLatex(exp.location)}} \\hfill ${escapeLatex(exp.date)}
-\\begin{itemize}
-${exp.description?.map((d: string) => `  \\item ${escapeLatex(d)}`).join('\n') || ''}
-\\end{itemize}
-`).join('\n') || '';
-
-  const educationSection = data.education?.map((edu: any) => `
-\\subsection*{${escapeLatex(edu.degree)}}
-\\textit{${escapeLatex(edu.institution)}, ${escapeLatex(edu.location)}} \\hfill ${escapeLatex(edu.date)}
-${edu.gpa ? `\\\\GPA: ${escapeLatex(edu.gpa)}` : ''}
-`).join('\n') || '';
-
-  const skillsSection = Object.entries(data.skills || {}).map(([category, skills]: [string, any]) =>
-    `\\textbf{${escapeLatex(category.charAt(0).toUpperCase() + category.slice(1))}:} ${Array.isArray(skills) ? skills.map(s => escapeLatex(s)).join(', ') : escapeLatex(String(skills))}`
-  ).join(' \\\\\n') || '';
-
-  const projectsSection = data.projects?.map((proj: any) => `
-\\subsection*{${escapeLatex(proj.name)}}
-${escapeLatex(proj.description)}
-\\\\\\textit{Technologies: ${proj.technologies?.map((t: string) => escapeLatex(t)).join(', ') || ''}}
-`).join('\n') || '';
-
-  const certificationsSection = data.certifications?.map((cert: any) => `
-\\textbf{${escapeLatex(cert.name)}} -- ${escapeLatex(cert.issuer)} \\hfill ${escapeLatex(cert.date)}
-`).join('\\\\\n') || '';
-
-  return `\\documentclass[11pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-\\usepackage{geometry}
-\\usepackage{hyperref}
-\\usepackage{enumitem}
-\\usepackage{titlesec}
-
-\\geometry{margin=0.75in}
-\\setlist[itemize]{nosep, leftmargin=*}
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titleformat{\\subsection}{\\bfseries}{}{0em}{}
-\\titlespacing{\\section}{0pt}{12pt}{6pt}
-\\titlespacing{\\subsection}{0pt}{8pt}{4pt}
-
-\\begin{document}
-
-% Header
-\\begin{center}
-{\\LARGE \\textbf{${escapeLatex(data.name)}}}\\\\[4pt]
-${escapeLatex(data.email)} | ${escapeLatex(data.phone)} | ${escapeLatex(data.location)}\\\\
-${data.linkedin ? `\\href{https://${data.linkedin}}{${escapeLatex(data.linkedin)}}` : ''} ${data.github ? `| \\href{https://${data.github}}{${escapeLatex(data.github)}}` : ''}
-\\end{center}
-
-% Professional Summary
-${data.summary ? `\\section*{Professional Summary}
-${escapeLatex(data.summary)}` : ''}
-
-% Work Experience
-${data.experience?.length > 0 ? `\\section*{Work Experience}
-${experienceSection}` : ''}
-
-% Education
-${data.education?.length > 0 ? `\\section*{Education}
-${educationSection}` : ''}
-
-% Skills
-${Object.keys(data.skills || {}).length > 0 ? `\\section*{Technical Skills}
-${skillsSection}` : ''}
-
-% Projects
-${data.projects?.length > 0 ? `\\section*{Projects}
-${projectsSection}` : ''}
-
-% Certifications
-${data.certifications?.length > 0 ? `\\section*{Certifications}
-${certificationsSection}` : ''}
-
-\\end{document}
-`;
+// Generate LaTeX from resume data - exported for use in other components
+export function generateLatexFromData(data: any, templateId: string = 'professional'): string {
+  return getLatexForTemplate(templateId, data);
 }
 
-export function ResumeLatexEditor({ data, onChange, onPdfGenerated }: ResumeLatexEditorProps) {
+export function ResumeLatexEditor({ data, templateId = 'professional', onChange, onPdfGenerated, isLocked = true }: ResumeLatexEditorProps) {
   const [latexCode, setLatexCode] = useState('');
   const [isCompiling, setIsCompiling] = useState(false);
   const [compileError, setCompileError] = useState<string | null>(null);
@@ -119,9 +30,9 @@ export function ResumeLatexEditor({ data, onChange, onPdfGenerated }: ResumeLate
 
   // Initialize LaTeX from data
   useEffect(() => {
-    const latex = generateLatexFromData(data);
+    const latex = generateLatexFromData(data, templateId);
     setLatexCode(latex);
-  }, [data]);
+  }, [data, templateId]);
 
   // Handle compilation
   const handleCompile = useCallback(async () => {
@@ -279,6 +190,7 @@ export function ResumeLatexEditor({ data, onChange, onPdfGenerated }: ResumeLate
             tabSize: 2,
             folding: true,
             renderWhitespace: 'selection',
+            readOnly: isLocked, // Prevent manual edits when locked
           }}
         />
       </div>

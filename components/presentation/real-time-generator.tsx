@@ -4,14 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useStreamingPresentation } from '@/hooks/useStreamingPresentation';
 import { exportPremiumPresentation } from '@/lib/premium-presentation-export';
 import { createClient } from '@/lib/supabase/client';
-import { 
-  Loader2, 
-  Sparkles, 
-  Zap, 
-  ChevronDown, 
-  FileText, 
-  Upload, 
-  Layout, 
+import {
+  Loader2,
+  Sparkles,
+  Zap,
+  ChevronDown,
+  FileText,
+  Upload,
+  Layout,
   ArrowLeft,
   Check,
   Palette,
@@ -115,19 +115,19 @@ export default function RealTimeGenerator() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
   const supabase = createClient();
-  
+
   // Settings
   const [slideCount, setSlideCount] = useState(8);
   const [language, setLanguage] = useState('English');
   const [topic, setTopic] = useState('');
-  
+
   // Outline Review State
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const [outlineMode, setOutlineMode] = useState<OutlineMode>('card-by-card');
   const [rawOutlineText, setRawOutlineText] = useState('');
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
   const [pastedText, setPastedText] = useState('');
-  
+
   // Advanced Settings
   const [textDensity, setTextDensity] = useState('concise');
   const [audience, setAudience] = useState('Business');
@@ -142,7 +142,7 @@ export default function RealTimeGenerator() {
   const [loadingStep, setLoadingStep] = useState(0);
   const loadingSteps = [
     "Analyzing your topic...",
-    "Brainstorming key ideas...", 
+    "Brainstorming key ideas...",
     "Structuring the narrative...",
     "Designing slide layouts...",
     "Polishing the outline..."
@@ -162,11 +162,11 @@ export default function RealTimeGenerator() {
   // Export state
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  
+
   // AI Image Generator Modal State
   const [showImageGenerator, setShowImageGenerator] = useState(false);
   const [imageGeneratorSlideIndex, setImageGeneratorSlideIndex] = useState<number | null>(null);
-  
+
   // Theme Gallery State
   const [showThemeGallery, setShowThemeGallery] = useState(false);
   const [selectedThemeId, setSelectedThemeId] = useState('peach');
@@ -175,7 +175,7 @@ export default function RealTimeGenerator() {
   useEffect(() => {
     async function loadPresentation() {
       if (!editId) return;
-      
+
       try {
         // Try documents table first (new standard for unified history)
         let { data, error } = await supabase
@@ -191,11 +191,11 @@ export default function RealTimeGenerator() {
             .select('*')
             .eq('id', editId)
             .single();
-          
+
           if (legacyData) {
             data = legacyData;
           } else {
-             if (error || legacyError) console.error('Load error:', error || legacyError);
+            if (error || legacyError) console.error('Load error:', error || legacyError);
           }
         }
 
@@ -203,30 +203,30 @@ export default function RealTimeGenerator() {
           // Structure can vary between tables
           const content = data.content || {};
           const storedSlides = data.slides || {};
-          
+
           // Handle both 'documents' (data.content.slides) and 'presentations' (data.slides.slides or data.slides)
-          const loadedSlides = Array.isArray(content.slides) 
-            ? content.slides 
-            : Array.isArray(storedSlides) 
-              ? storedSlides 
+          const loadedSlides = Array.isArray(content.slides)
+            ? content.slides
+            : Array.isArray(storedSlides)
+              ? storedSlides
               : (storedSlides.slides || []);
-          
+
           const loadedThemeId = content.themeId || storedSlides.themeId || 'peach';
-          
+
           setSlides(loadedSlides);
           setTopic(data.title);
           setSelectedThemeId(loadedThemeId);
           setPresentationId(data.id);
           // Switch to presentation view
           setView('presentation');
-          
+
           console.log('✅ Loaded presentation:', data.title);
         }
       } catch (error) {
         console.error('Error loading presentation:', error);
       }
     }
-    
+
     loadPresentation();
   }, [editId, supabase]);
 
@@ -305,10 +305,12 @@ export default function RealTimeGenerator() {
   const handleSavePresentation = async (isAutoSave = false) => {
     if (!isAutoSave) setIsSaving(true);
     const supabase = createClient();
-    
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      // Use getSession() for rate limit avoidance
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
       if (!user) {
         if (!isAutoSave) alert('Please sign in to save and share presentations');
         setIsSaving(false);
@@ -329,7 +331,7 @@ export default function RealTimeGenerator() {
       };
 
       let result;
-      
+
       if (presentationId) {
         // Update existing
         const { data, error } = await supabase
@@ -338,7 +340,7 @@ export default function RealTimeGenerator() {
           .eq('id', presentationId)
           .select()
           .single();
-        
+
         if (error) {
           // Try updating legacy presentations table if it was a legacy item
           await supabase.from('presentations').update({
@@ -354,7 +356,7 @@ export default function RealTimeGenerator() {
           .insert(savePayload)
           .select()
           .single();
-        
+
         if (error) throw error;
         result = data;
         setPresentationId(data.id);
@@ -365,7 +367,7 @@ export default function RealTimeGenerator() {
         setShareUrl(link);
         setShowShareModal(true);
       }
-      
+
       console.log(isAutoSave ? '🤖 Presentation auto-saved' : '✅ Presentation saved:', result?.id);
     } catch (error) {
       console.error('❌ Error saving presentation:', error);
@@ -464,39 +466,39 @@ export default function RealTimeGenerator() {
       // TOON Parsing
       // Split by separator, handle potential variations (case insensitive, spaces)
       const slideBlocks = text.split(/---SLIDE---|--- SLIDE ---|---slide---/i).filter(block => block.trim());
-      
+
       if (slideBlocks.length === 0) {
         // Fallback: If no separators found but text exists, treat as single slide or try to split by "Slide X"
         if (text.length > 50) {
-           const implicitSlides = text.split(/Slide \d+:/i).filter(b => b.trim());
-           if (implicitSlides.length > 1) {
-             return implicitSlides.map((block, i) => ({
-               slideNumber: i + 1,
-               title: `Slide ${i + 1}`,
-               content: block.trim(),
-               type: 'content',
-               design: { background: 'gradient-blue-purple', layout: 'default' }
-             }));
-           }
+          const implicitSlides = text.split(/Slide \d+:/i).filter(b => b.trim());
+          if (implicitSlides.length > 1) {
+            return implicitSlides.map((block, i) => ({
+              slideNumber: i + 1,
+              title: `Slide ${i + 1}`,
+              content: block.trim(),
+              type: 'content',
+              design: { background: 'gradient-blue-purple', layout: 'default' }
+            }));
+          }
         }
       }
 
       return slideBlocks.map((block, index) => {
         const lines = block.trim().split('\n');
-        const slide: any = { 
+        const slide: any = {
           slideNumber: index + 1,
           design: { background: 'gradient-blue-purple', layout: 'default' }
         };
-        
+
         let currentKey = '';
         let currentList: string[] = [];
         let chartDataLines: string[] = [];
         let inChartData = false;
-        
+
         lines.forEach(line => {
           const trimmedLine = line.trim();
           if (!trimmedLine) return;
-          
+
           const lowerLine = trimmedLine.toLowerCase();
 
           if (lowerLine.startsWith('type:')) {
@@ -538,7 +540,7 @@ export default function RealTimeGenerator() {
             slide.content += ' ' + trimmedLine;
           }
         });
-        
+
         // Add parsed chart data
         if (chartDataLines.length > 0 && slide.chartData) {
           slide.chartData.data = chartDataLines;
@@ -551,7 +553,7 @@ export default function RealTimeGenerator() {
           if (titleMatch) slide.title = titleMatch[1];
           else slide.title = `Slide ${index + 1}`;
         }
-        
+
         return slide as Slide;
       });
     };
@@ -569,7 +571,7 @@ export default function RealTimeGenerator() {
             return newSlide;
           });
         });
-        
+
         // Update current slide text for the loading indicator
         const lastSlide = parsedSlides[parsedSlides.length - 1];
         if (lastSlide) {
@@ -579,18 +581,18 @@ export default function RealTimeGenerator() {
     } catch (e) {
       console.error('Error parsing slides:', e);
     }
-  }, [content]);  const handleGenerateOutline = async () => {
+  }, [content]); const handleGenerateOutline = async () => {
     if (!topic.trim()) return;
-    
+
     console.log('🎯 handleGenerateOutline called with topic:', topic);
     console.log('🎯 Requesting', slideCount, 'cards');
-    
+
     setIsGeneratingOutline(true);
-    
+
     try {
       // Get authentication token
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         alert('Please sign in to create presentations.');
         setIsGeneratingOutline(false);
@@ -600,38 +602,38 @@ export default function RealTimeGenerator() {
       console.log('📡 Calling /api/generate/presentation-outline...');
       const response = await fetch('/api/generate/presentation-outline', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ 
-          prompt: topic, 
+        body: JSON.stringify({
+          prompt: topic,
           pageCount: slideCount,
-          outlineOnly: true 
+          outlineOnly: true
         })
       });
-      
+
       console.log('📡 Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         if (response.status === 401) {
           alert('Authentication required. Please sign in to create presentations.');
           return;
         }
-        
+
         if (response.status === 402) {
           alert(errorData.message || 'Not enough credits. Please upgrade your plan.');
           return;
         }
-        
+
         throw new Error(errorData.error || `API returned ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log('📦 Received data:', data);
-      
+
       if (data.outlines && Array.isArray(data.outlines)) {
         console.log('✅ Setting', data.outlines.length, 'outlines');
         setOutline(data.outlines);
@@ -654,12 +656,12 @@ export default function RealTimeGenerator() {
     console.log('🚀 Topic:', topic);
     console.log('🚀 Outline length:', outline.length);
     console.log('🚀 Settings:', { textDensity, audience, tone, theme, imageSource });
-    
+
     setSlides([]);
     setCurrentSlideText('');
     setView('presentation');
     console.log('🎬 View set to: presentation');
-    
+
     // If in card-by-card mode, parse the raw text back into structured outline
     // If in freeform mode, parse the raw text back into structured outline
     let finalOutline = outline;
@@ -698,29 +700,29 @@ export default function RealTimeGenerator() {
       outlineLength: finalOutline.length,
       settings
     });
-    
+
     // Start text generation stream
-    generatePresentation(topic, audience, finalOutline, settings); 
-    
+    generatePresentation(topic, audience, finalOutline, settings);
+
     // Start parallel image generation if enabled
     if (imageSource === 'ai') {
       console.log('🎨 Starting AI image generation for ALL slides...');
       try {
         // Import dynamically to avoid SSR issues
         const { generateSlideImage } = await import('@/lib/flux-image-generator');
-        
+
         // Generate images for EVERY slide in the outline
         const imagePromises = finalOutline.map(async (slide, index) => {
           try {
             console.log(`🖼️ Generating image for slide ${index + 1}: "${slide.title}"`);
-            
+
             const imageUrl = await generateSlideImage(
               slide.type || 'content',
               slide.title,
               slide.description || slide.content || '',
               "1024x576"
             );
-            
+
             // Update the specific slide with the new image
             setSlides(prevSlides => {
               const newSlides = [...prevSlides];
@@ -731,17 +733,17 @@ export default function RealTimeGenerator() {
               }
               return newSlides;
             });
-            
+
             return { index, imageUrl };
           } catch (err) {
             console.error(`Failed to generate image for slide ${index + 1}`, err);
             return { index, imageUrl: null };
           }
         });
-        
+
         // Wait for all images (optional, or let them load progressively)
         const results = await Promise.all(imagePromises);
-        
+
         // Final pass to ensure all images are attached to slides
         setSlides(prevSlides => {
           return prevSlides.map((slide, index) => {
@@ -752,7 +754,7 @@ export default function RealTimeGenerator() {
             return slide;
           });
         });
-        
+
       } catch (err) {
         console.error("❌ Image generation failed:", err);
       }
@@ -762,12 +764,12 @@ export default function RealTimeGenerator() {
   const handleExport = async (format: 'png' | 'pdf' | 'pptx') => {
     setIsExporting(true);
     setShowExportMenu(false);
-    
+
     try {
       const slideElements = Array.from(
         document.querySelectorAll('[data-slide-card]')
       ) as HTMLElement[];
-      
+
       if (slideElements.length === 0) {
         alert('No slides to export');
         return;
@@ -784,7 +786,7 @@ export default function RealTimeGenerator() {
           preserveGradients: true
         }
       );
-      
+
       console.log(`✅ Premium exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Export error:', error);
@@ -796,9 +798,9 @@ export default function RealTimeGenerator() {
 
   const handleGenerateFromText = async () => {
     if (!pastedText.trim()) return;
-    
+
     setIsGeneratingOutline(true);
-    
+
     try {
       // Check if text contains --- separators for manual slide breaks
       if (pastedText.includes('---')) {
@@ -808,7 +810,7 @@ export default function RealTimeGenerator() {
           const lines = section.trim().split('\n').filter(l => l.trim());
           const title = lines[0] || `Slide ${index + 1}`;
           const content = lines.slice(1).join('\n');
-          
+
           return {
             title,
             type: 'content',
@@ -817,7 +819,7 @@ export default function RealTimeGenerator() {
             bullets: lines.slice(1).filter(l => l.trim())
           };
         });
-        
+
         setOutline(manualOutline);
         setSlideCount(manualOutline.length);
         setRawOutlineText(pastedText);
@@ -826,10 +828,10 @@ export default function RealTimeGenerator() {
       } else {
         // AI mode: use pasted text as prompt to generate outline
         setTopic(pastedText.substring(0, 200)); // Set truncated version as topic
-        
+
         // Get authentication token
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session) {
           alert('Please sign in to create presentations.');
           setIsGeneratingOutline(false);
@@ -838,7 +840,7 @@ export default function RealTimeGenerator() {
 
         const response = await fetch('/api/generate/presentation-outline', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
@@ -848,23 +850,23 @@ export default function RealTimeGenerator() {
             outlineOnly: true
           })
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json();
-          
+
           if (response.status === 401) {
             alert('Authentication required. Please sign in to create presentations.');
             return;
           }
-          
+
           if (response.status === 402) {
             alert(errorData.message || 'Not enough credits. Please upgrade your plan.');
             return;
           }
-          
+
           throw new Error(errorData.error || 'Failed to generate outline');
         }
-        
+
         const data = await response.json();
         setOutline(data.outlines || []);
         setSlideCount(data.outlines?.length || 8);
@@ -927,7 +929,7 @@ export default function RealTimeGenerator() {
 
       {/* Main Content */}
       <div className="pt-24 pb-32 relative z-10">
-        
+
         {/* VIEW 1: DASHBOARD */}
         {view === 'dashboard' && (
           <div className="max-w-6xl mx-auto px-6">
@@ -945,58 +947,58 @@ export default function RealTimeGenerator() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <button 
+              <button
                 onClick={() => setView('input')}
                 className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="bg-card/60 backdrop-blur-xl w-full h-full rounded-[20px] p-6 flex flex-col relative overflow-hidden border border-border hover:border-blue-500/50 shadow-lg hover:shadow-blue-500/10 transition-all">
-                    <div className="w-12 h-12 bolt-gradient rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-lg">
-                      <Sparkles className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Generate</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Create from a one-line prompt.</p>
+                  <div className="w-12 h-12 bolt-gradient rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-lg">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Generate</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Create from a one-line prompt.</p>
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setView('paste-text')}
                 className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="bg-card/60 backdrop-blur-xl w-full h-full rounded-[20px] p-6 flex flex-col relative overflow-hidden border border-border hover:border-emerald-500/50 shadow-lg hover:shadow-emerald-500/10 transition-all">
-                    <div className="w-12 h-12 cosmic-gradient rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                      <FileText className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Paste Text</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Transform notes into slides.</p>
+                  <div className="w-12 h-12 cosmic-gradient rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Paste Text</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Transform notes into slides.</p>
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setView('import-file')}
                 className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-pink-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="bg-card/60 backdrop-blur-xl w-full h-full rounded-[20px] p-6 flex flex-col relative overflow-hidden border border-border hover:border-orange-500/50 shadow-lg hover:shadow-orange-500/10 transition-all">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                      <Upload className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">Import File</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Convert PDF or Doc to slides.</p>
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                    <Upload className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">Import File</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Convert PDF or Doc to slides.</p>
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setView('webpage')}
                 className="group relative flex flex-col p-1 rounded-3xl transition-all duration-300 hover:scale-105"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/20 to-cyan-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="bg-card/60 backdrop-blur-xl w-full h-full rounded-[20px] p-6 flex flex-col relative overflow-hidden border border-border hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all">
-                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                      <Layout className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Webpage</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Turn any URL into a deck.</p>
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                    <Layout className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold professional-heading mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Webpage</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Turn any URL into a deck.</p>
                 </div>
               </button>
             </div>
@@ -1064,8 +1066,8 @@ export default function RealTimeGenerator() {
                   <div className="p-3 bg-background rounded-lg shadow-sm">
                     <Globe className="w-6 h-6 text-indigo-500" />
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="https://example.com/article"
                     className="flex-1 bg-transparent border-none outline-none text-lg placeholder:text-muted-foreground"
                   />
@@ -1183,7 +1185,7 @@ export default function RealTimeGenerator() {
                         <div className="absolute inset-0 border-4 border-muted rounded-full"></div>
                         <div className="absolute inset-0 border-4 border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-transparent rounded-full animate-spin"></div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                           <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
+                          <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
                         </div>
                       </div>
 
@@ -1200,11 +1202,10 @@ export default function RealTimeGenerator() {
                       <div className="w-full space-y-2">
                         <div className="flex justify-between px-1">
                           {loadingSteps.map((_, idx) => (
-                            <div 
+                            <div
                               key={idx}
-                              className={`h-1.5 rounded-full transition-all duration-500 ${
-                                idx <= loadingStep ? 'w-full bg-blue-500' : 'w-2 bg-muted'
-                              } ${idx === loadingStep ? 'ring-2 ring-blue-500/30' : ''}`}
+                              className={`h-1.5 rounded-full transition-all duration-500 ${idx <= loadingStep ? 'w-full bg-blue-500' : 'w-2 bg-muted'
+                                } ${idx === loadingStep ? 'ring-2 ring-blue-500/30' : ''}`}
                               style={{ width: `${100 / loadingSteps.length}%`, margin: '0 2px' }}
                             />
                           ))}
@@ -1225,9 +1226,9 @@ export default function RealTimeGenerator() {
         {/* VIEW 3: OUTLINE REVIEW (Gamma Style) */}
         {view === 'outline-review' && (
           <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row gap-8">
-            
+
             {/* Left Column: Outline Editor */}
-            <OutlineEditor 
+            <OutlineEditor
               outline={outline}
               setOutline={setOutline}
               slideCount={slideCount}
@@ -1241,18 +1242,18 @@ export default function RealTimeGenerator() {
             {/* Right Column: Settings Panel */}
             <div className="w-full lg:w-80 flex-shrink-0 space-y-6 h-fit sticky top-24 overflow-y-auto max-h-[calc(100vh-8rem)] pr-2">
               <h3 className="text-lg font-bold professional-heading mb-4">Settings</h3>
-              
+
               {/* Text Settings */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   <Type className="w-3 h-3" />
                   Text Content
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Amount of text</label>
-                    <select 
+                    <select
                       value={textDensity}
                       onChange={(e) => setTextDensity(e.target.value)}
                       className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1266,7 +1267,7 @@ export default function RealTimeGenerator() {
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Write for...</label>
-                    <select 
+                    <select
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
                       className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1281,7 +1282,7 @@ export default function RealTimeGenerator() {
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Tone</label>
-                    <select 
+                    <select
                       value={tone}
                       onChange={(e) => setTone(e.target.value)}
                       className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1297,7 +1298,7 @@ export default function RealTimeGenerator() {
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Output language</label>
-                    <select 
+                    <select
                       value={language}
                       onChange={(e) => setLanguage(e.target.value)}
                       className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1315,7 +1316,7 @@ export default function RealTimeGenerator() {
 
               <div className="h-[1px] bg-border w-full" />
 
-                
+
               {/* Visual Settings */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -1326,14 +1327,14 @@ export default function RealTimeGenerator() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground block">Theme</label>
-                    <button 
+                    <button
                       onClick={() => setShowThemeGallery(true)}
                       className="text-xs text-blue-500 hover:text-blue-600 font-medium hover:underline"
                     >
                       View more
                     </button>
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-3">
                     {PRESENTATION_THEMES.slice(0, 6).map((t) => (
                       <button
@@ -1347,8 +1348,8 @@ export default function RealTimeGenerator() {
                           ${selectedThemeId === t.id ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-transparent hover:border-border'}
                         `}
                       >
-                        <div 
-                          className={`absolute inset-0 w-full h-full ${t.colors.gradient} p-3 flex flex-col`} 
+                        <div
+                          className={`absolute inset-0 w-full h-full ${t.colors.gradient} p-3 flex flex-col`}
                           style={{ backgroundColor: t.colors.background }}
                         >
                           <div className="flex-1" style={{ fontFamily: t.font, color: t.colors.foreground }}>
@@ -1370,11 +1371,11 @@ export default function RealTimeGenerator() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Image Source</label>
-                    <select 
+                    <select
                       value={imageSource}
                       onChange={(e) => setImageSource(e.target.value)}
                       className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1389,7 +1390,7 @@ export default function RealTimeGenerator() {
                     <>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground mb-1 block">AI Model</label>
-                        <select 
+                        <select
                           value={imageModel}
                           onChange={(e) => setImageModel(e.target.value)}
                           className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1401,7 +1402,7 @@ export default function RealTimeGenerator() {
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground mb-1 block">Art Style</label>
-                        <select 
+                        <select
                           value={artStyle}
                           onChange={(e) => setArtStyle(e.target.value)}
                           className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
@@ -1416,7 +1417,7 @@ export default function RealTimeGenerator() {
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground mb-1 block">Extra Keywords</label>
-                        <input 
+                        <input
                           value={extraKeywords}
                           onChange={(e) => setExtraKeywords(e.target.value)}
                           placeholder="e.g. playful, sunlit"
@@ -1435,7 +1436,7 @@ export default function RealTimeGenerator() {
         {showThemeGallery && (
           <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-8">
             <div className="bg-card w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl border border-border flex overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              
+
               {/* Left Sidebar - Filters & List */}
               <div className="w-1/3 border-r border-border flex flex-col bg-muted/30">
                 <div className="p-6 border-b border-border space-y-4">
@@ -1445,12 +1446,12 @@ export default function RealTimeGenerator() {
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  
+
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input 
-                      type="text" 
-                      placeholder="Search themes..." 
+                    <input
+                      type="text"
+                      placeholder="Search themes..."
                       value={searchTheme}
                       onChange={(e) => setSearchTheme(e.target.value)}
                       className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -1487,8 +1488,8 @@ export default function RealTimeGenerator() {
                           ${selectedThemeId === t.id ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-lg scale-[1.02]' : 'border-transparent hover:border-border'}
                         `}
                       >
-                        <div 
-                          className={`absolute inset-0 w-full h-full ${t.colors.gradient} p-4 flex flex-col`} 
+                        <div
+                          className={`absolute inset-0 w-full h-full ${t.colors.gradient} p-4 flex flex-col`}
                           style={{ backgroundColor: t.colors.background }}
                         >
                           <div className="flex-1" style={{ fontFamily: t.font, color: t.colors.foreground }}>
@@ -1521,15 +1522,15 @@ export default function RealTimeGenerator() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-8 flex justify-end gap-4">
-                  <button 
+                  <button
                     onClick={() => setShowThemeGallery(false)}
                     className="px-6 py-2.5 font-medium hover:bg-muted rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowThemeGallery(false)}
                     className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"
                   >
@@ -1562,22 +1563,22 @@ export default function RealTimeGenerator() {
           <div className="fixed inset-0 z-[200] bg-black text-white">
             <div className="snap-y snap-mandatory h-[100dvh] w-full overflow-y-scroll scroll-smooth">
               {slides.map((slide, idx) => (
-                 <div key={idx} className="h-[100dvh] w-full snap-start snap-always flex items-center justify-center p-4">
-                   <div 
-                     className="aspect-video w-full max-h-[90vh] shadow-2xl mx-auto"
-                     style={{ maxWidth: 'calc(90vh * 16 / 9)' }}
-                   >
-                     <SlideCard 
-                       slide={slide} 
-                       theme={currentTheme} 
-                       getGradientClass={getGradientClass}
-                     />
-                   </div>
-                 </div>
+                <div key={idx} className="h-[100dvh] w-full snap-start snap-always flex items-center justify-center p-4">
+                  <div
+                    className="aspect-video w-full max-h-[90vh] shadow-2xl mx-auto"
+                    style={{ maxWidth: 'calc(90vh * 16 / 9)' }}
+                  >
+                    <SlideCard
+                      slide={slide}
+                      theme={currentTheme}
+                      getGradientClass={getGradientClass}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setIsPresenting(false)}
               className="fixed bottom-12 left-1/2 -translate-x-1/2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold shadow-2xl z-[9999] flex items-center gap-3 transition-transform hover:scale-105 border-2 border-white/20"
             >
@@ -1596,7 +1597,7 @@ export default function RealTimeGenerator() {
           <div className="max-w-6xl mx-auto px-6 py-8">
             {!isStreaming && (
               <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-                <button 
+                <button
                   onClick={() => setView('dashboard')}
                   className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-medium group"
                 >
@@ -1715,7 +1716,7 @@ export default function RealTimeGenerator() {
                     <div className="absolute inset-0 border-4 border-muted/50 rounded-full"></div>
                     <div className="absolute inset-0 border-4 border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-transparent rounded-full animate-spin"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                       <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
+                      <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />
                     </div>
                   </div>
                   <h3 className="text-3xl font-bold professional-heading mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
@@ -1726,19 +1727,19 @@ export default function RealTimeGenerator() {
                   </p>
                 </div>
               )}
-              
+
               {slides.map((slide, index) => (
                 <div key={index} className="animate-fadeIn" data-slide-card>
-                  <SlideCard 
-                    slide={slide} 
-                    getGradientClass={getGradientClass} 
+                  <SlideCard
+                    slide={slide}
+                    getGradientClass={getGradientClass}
                     theme={currentTheme}
                     onUpdate={(updatedSlide) => handleSlideUpdate(index, updatedSlide)}
                     onAddImage={() => handleOpenImageGenerator(index)}
                   />
                 </div>
               ))}
-              
+
               {/* Add Slide Button */}
               {!isStreaming && slides.length > 0 && (
                 <div className="flex justify-center mt-8">
@@ -1756,7 +1757,7 @@ export default function RealTimeGenerator() {
                   </button>
                 </div>
               )}
-              
+
               {isStreaming && currentSlideText && slides.length > 0 && (
                 <div className="animate-pulse">
                   <div className="bg-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 aspect-video flex flex-col items-center justify-center border border-border shadow-xl">
@@ -1803,7 +1804,7 @@ export default function RealTimeGenerator() {
                       <p className="text-sm text-muted-foreground">Share with anyone via link</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setShowShareModal(false)}
                     className="p-2 hover:bg-muted rounded-full transition-colors"
                   >
@@ -1824,11 +1825,10 @@ export default function RealTimeGenerator() {
                       />
                       <button
                         onClick={() => handleCopyLink(shareUrl)}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                          copySuccess 
-                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${copySuccess
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }`}
+                          }`}
                       >
                         {copySuccess ? (
                           <>
@@ -1898,8 +1898,8 @@ export default function RealTimeGenerator() {
                   Est. time: <span className="text-foreground font-bold">~1min</span>
                 </div>
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleFinalGenerate}
                 className="bolt-gradient text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-blue-500/25 flex items-center gap-2"
               >
@@ -1933,9 +1933,9 @@ export default function RealTimeGenerator() {
 }
 
 // Enhanced Slide Card Component with Icons, Diagrams, Images, and Charts
-export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: { 
-  slide: Slide; 
-  getGradientClass: (bg?: string) => string; 
+export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
+  slide: Slide;
+  getGradientClass: (bg?: string) => string;
   theme: PresentationTheme;
   onUpdate?: (updatedSlide: Slide) => void;
   onAddImage?: () => void;
@@ -1961,12 +1961,12 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
   const isEditable = !!onUpdate;
 
   // Dynamic import for Recharts
-  const { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } = 
+  const { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } =
     require('recharts');
 
   // Enhanced icon mapping for different slide types
   const getSlideIcon = (type: string) => {
-    switch(type) {
+    switch (type) {
       case 'hero': return '🚀';
       case 'stats': return '📊';
       case 'comparison': return '⚖️';
@@ -1990,7 +1990,7 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
 
   // Parse icon from bullet text like "<Icon:Zap> Fast Performance"
   // Returns { IconComponent: React.FC | null, text: string, iconName: string }
-  const parseIconBullet = (text: string): { IconComponent: React.FC<{className?: string; color?: string}> | null; text: string; iconName: string } => {
+  const parseIconBullet = (text: string): { IconComponent: React.FC<{ className?: string; color?: string }> | null; text: string; iconName: string } => {
     const iconMatch = text.match(/<Icon:(\w+)>/);
     if (iconMatch) {
       const iconName = iconMatch[1];
@@ -2023,7 +2023,7 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
   // Smart text color based on background using WCAG 2.0 luminance calculation
   const slideBackground = slide.design?.background || '';
   const gradientClass = getGradientClass(slideBackground);
-  
+
   // ALWAYS use the theme's background hex color for contrast calculation
   // This ensures accurate text color on light backgrounds like Peach (#FFF5F0)
   const textColor = getOptimalTextColor(theme.colors.background) || theme.colors.foreground;
@@ -2036,29 +2036,29 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
     if (slide.bullets) len += slide.bullets.reduce((acc, b) => acc + b.length, 0);
     return len;
   };
-  
+
   const contentLen = getTotalContentLength();
-  
-  const titleSize = isHero 
+
+  const titleSize = isHero
     ? (contentLen > 300 ? 'text-4xl md:text-5xl' : 'text-5xl md:text-7xl')
     : (contentLen > 600 ? 'text-2xl md:text-3xl' : contentLen > 400 ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl');
-    
+
   const subtitleSize = contentLen > 600 ? 'text-lg md:text-xl' : 'text-2xl md:text-3xl';
-  
+
   const bodySize = contentLen > 800 ? 'text-sm' : contentLen > 500 ? 'text-base' : 'text-xl md:text-2xl';
   const bulletSize = contentLen > 800 ? 'text-sm' : contentLen > 500 ? 'text-base' : 'text-xl md:text-2xl';
 
   return (
-    <div 
+    <div
       className="group relative rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border"
-      style={{ 
+      style={{
         backgroundColor: theme.colors.card,
         borderColor: theme.colors.border
       }}
     >
       {/* Edit indicator */}
       {isEditable && (
-        <div 
+        <div
           data-export-hide="true"
           className="absolute top-4 left-4 z-30 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         >
@@ -2081,25 +2081,25 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
           Add AI Image
         </button>
       )}
-      
-      <div 
+
+      <div
         className={`${getGradientClass(slide.design?.background)} aspect-video relative overflow-hidden`}
-        style={{ 
+        style={{
           color: textColor,
           backgroundColor: theme.colors.background
         }}
       >
         {/* Premium Decorative Background Elements with Animations */}
-        <div 
-          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 float-animation" 
+        <div
+          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 float-animation"
           style={{ backgroundColor: `${theme.colors.accent}20` }}
         />
-        <div 
-          className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 float-animation" 
+        <div
+          className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 float-animation"
           style={{ backgroundColor: `${textColor}15`, animationDelay: '2s' }}
         />
         {/* Morphing accent shape */}
-        <div 
+        <div
           className="absolute top-1/4 left-1/4 w-32 h-32 morph-shape opacity-10"
           style={{ backgroundColor: theme.colors.accent }}
         />
@@ -2109,12 +2109,12 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
             <CircuitPattern color={theme.colors.accent} />
           </div>
         )}
-        
+
         {/* Slide Number Badge */}
-        <div 
+        <div
           data-export-hide="true"
           className="absolute top-8 right-8 backdrop-blur-md border px-4 py-2 rounded-full text-sm font-bold tracking-wide shadow-lg z-20"
-          style={{ 
+          style={{
             borderColor: `${textColor}30`,
             backgroundColor: `${theme.colors.background}40`,
             color: textColor
@@ -2126,803 +2126,803 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
         <div className="absolute inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           <div className="min-h-full w-full p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col items-center justify-center relative z-10">
             <div className={`max-w-5xl ${isHero ? 'text-center' : 'text-left'} w-full relative z-10`}>
-          {/* Icon for slide type */}
-          {!isHero && (
-            <div 
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl backdrop-blur-md mb-6 text-4xl"
-              style={{ backgroundColor: `${theme.colors.background}30` }}
-            >
-              {getSlideIcon(slide.type)}
-            </div>
-          )}
+              {/* Icon for slide type */}
+              {!isHero && (
+                <div
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl backdrop-blur-md mb-6 text-4xl"
+                  style={{ backgroundColor: `${theme.colors.background}30` }}
+                >
+                  {getSlideIcon(slide.type)}
+                </div>
+              )}
 
-          {/* Title */}
-          <h2 
-            contentEditable={isEditable}
-            suppressContentEditableWarning
-            onBlur={(e) => onUpdate?.({ ...slide, title: e.currentTarget.textContent || slide.title })}
-            className={`font-bold mb-8 leading-tight tracking-tight drop-shadow-md ${titleSize} ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
-            style={{ color: textColor }}
-          >
-            {slide.title}
-          </h2>
+              {/* Title */}
+              <h2
+                contentEditable={isEditable}
+                suppressContentEditableWarning
+                onBlur={(e) => onUpdate?.({ ...slide, title: e.currentTarget.textContent || slide.title })}
+                className={`font-bold mb-8 leading-tight tracking-tight drop-shadow-md ${titleSize} ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+                style={{ color: textColor }}
+              >
+                {slide.title}
+              </h2>
 
-          {/* Subtitle */}
-          {slide.subtitle && (
-            <p 
-              contentEditable={isEditable}
-              suppressContentEditableWarning
-              onBlur={(e) => onUpdate?.({ ...slide, subtitle: e.currentTarget.textContent || slide.subtitle })}
-              className={`${subtitleSize} mb-10 font-light leading-relaxed drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
-              style={{ color: textColor }}
-            >
-              {slide.subtitle}
-            </p>
-          )}
+              {/* Subtitle */}
+              {slide.subtitle && (
+                <p
+                  contentEditable={isEditable}
+                  suppressContentEditableWarning
+                  onBlur={(e) => onUpdate?.({ ...slide, subtitle: e.currentTarget.textContent || slide.subtitle })}
+                  className={`${subtitleSize} mb-10 font-light leading-relaxed drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+                  style={{ color: textColor }}
+                >
+                  {slide.subtitle}
+                </p>
+              )}
 
-          {/* Chart Visualization */}
-          {hasChart && (
-            <div className="my-10 backdrop-blur-md rounded-2xl p-6 border" style={{ borderColor: `${textColor}20`, backgroundColor: `${theme.colors.background}20` }}>
-              <ResponsiveContainer width="100%" height={350}>
-                {slide.chartData!.type === 'bar' && (
-                  <BarChart data={slide.chartData!.data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={`${textColor}30`} />
-                    <XAxis dataKey="name" stroke={textColor} />
-                    <YAxis stroke={textColor} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        background: theme.colors.card, 
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: '8px',
-                        color: theme.colors.foreground
-                      }} 
-                    />
-                    <Legend wrapperStyle={{ color: textColor }} />
-                    <Bar dataKey="value" fill={chartColors[0]} radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                )}
+              {/* Chart Visualization */}
+              {hasChart && (
+                <div className="my-10 backdrop-blur-md rounded-2xl p-6 border" style={{ borderColor: `${textColor}20`, backgroundColor: `${theme.colors.background}20` }}>
+                  <ResponsiveContainer width="100%" height={350}>
+                    {slide.chartData!.type === 'bar' && (
+                      <BarChart data={slide.chartData!.data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={`${textColor}30`} />
+                        <XAxis dataKey="name" stroke={textColor} />
+                        <YAxis stroke={textColor} />
+                        <Tooltip
+                          contentStyle={{
+                            background: theme.colors.card,
+                            border: `1px solid ${theme.colors.border}`,
+                            borderRadius: '8px',
+                            color: theme.colors.foreground
+                          }}
+                        />
+                        <Legend wrapperStyle={{ color: textColor }} />
+                        <Bar dataKey="value" fill={chartColors[0]} radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    )}
 
-                {slide.chartData!.type === 'line' && (
-                  <LineChart data={slide.chartData!.data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={`${textColor}30`} />
-                    <XAxis dataKey="name" stroke={textColor} />
-                    <YAxis stroke={textColor} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        background: theme.colors.card, 
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: '8px',
-                        color: theme.colors.foreground
-                      }} 
-                    />
-                    <Legend wrapperStyle={{ color: textColor }} />
-                    <Line type="monotone" dataKey="value" stroke={chartColors[0]} strokeWidth={3} />
-                  </LineChart>
-                )}
+                    {slide.chartData!.type === 'line' && (
+                      <LineChart data={slide.chartData!.data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={`${textColor}30`} />
+                        <XAxis dataKey="name" stroke={textColor} />
+                        <YAxis stroke={textColor} />
+                        <Tooltip
+                          contentStyle={{
+                            background: theme.colors.card,
+                            border: `1px solid ${theme.colors.border}`,
+                            borderRadius: '8px',
+                            color: theme.colors.foreground
+                          }}
+                        />
+                        <Legend wrapperStyle={{ color: textColor }} />
+                        <Line type="monotone" dataKey="value" stroke={chartColors[0]} strokeWidth={3} />
+                      </LineChart>
+                    )}
 
-                {slide.chartData!.type === 'pie' && (
-                  <PieChart>
-                    <Pie
-                      data={slide.chartData!.data}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {slide.chartData!.data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        background: theme.colors.card, 
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: '8px',
-                        color: theme.colors.foreground
-                      }} 
-                    />
-                  </PieChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-          )}
+                    {slide.chartData!.type === 'pie' && (
+                      <PieChart>
+                        <Pie
+                          data={slide.chartData!.data}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={120}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {slide.chartData!.data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            background: theme.colors.card,
+                            border: `1px solid ${theme.colors.border}`,
+                            borderRadius: '8px',
+                            color: theme.colors.foreground
+                          }}
+                        />
+                      </PieChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
 
-          {/* Stats Grid - Premium Glassmorphism KPI Cards with Animations */}
-          {slide.stats && slide.stats.length > 0 && (
-            <div className={`grid gap-6 mt-10 ${slide.stats.length === 2 ? 'grid-cols-2' : slide.stats.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
-              {slide.stats.map((stat, idx) => {
-                // Assign different icons based on index or stat type
-                const statIcons = ['TrendUp', 'Users', 'DollarSign', 'Award', 'Target', 'Clock', 'Star', 'Rocket'];
-                const iconName = statIcons[idx % statIcons.length];
-                const IconComp = getProIcon(iconName);
-                // Parse percentage value for animated bar
-                const numericValue = parseInt(stat.value.replace(/[^0-9]/g, '')) || 0;
-                const isPercentage = stat.value.includes('%');
-                
-                return (
-                  <div 
-                    key={idx}
-                    className="relative glass-card rounded-2xl p-8 text-center transition-all hover:scale-105 hover:shadow-2xl group overflow-hidden hover-lift scale-bounce"
-                    style={{ 
-                      animationDelay: `${idx * 0.1}s`,
-                      borderColor: `${theme.colors.accent}30`,
+              {/* Stats Grid - Premium Glassmorphism KPI Cards with Animations */}
+              {slide.stats && slide.stats.length > 0 && (
+                <div className={`grid gap-6 mt-10 ${slide.stats.length === 2 ? 'grid-cols-2' : slide.stats.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+                  {slide.stats.map((stat, idx) => {
+                    // Assign different icons based on index or stat type
+                    const statIcons = ['TrendUp', 'Users', 'DollarSign', 'Award', 'Target', 'Clock', 'Star', 'Rocket'];
+                    const iconName = statIcons[idx % statIcons.length];
+                    const IconComp = getProIcon(iconName);
+                    // Parse percentage value for animated bar
+                    const numericValue = parseInt(stat.value.replace(/[^0-9]/g, '')) || 0;
+                    const isPercentage = stat.value.includes('%');
+
+                    return (
+                      <div
+                        key={idx}
+                        className="relative glass-card rounded-2xl p-8 text-center transition-all hover:scale-105 hover:shadow-2xl group overflow-hidden hover-lift scale-bounce"
+                        style={{
+                          animationDelay: `${idx * 0.1}s`,
+                          borderColor: `${theme.colors.accent}30`,
+                          backgroundColor: `${theme.colors.background}30`
+                        }}
+                      >
+                        {/* Shimmer effect on hover */}
+                        <div className="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent" />
+                        <div className="relative z-10">
+                          {/* Icon with pulse glow */}
+                          {IconComp && (
+                            <div
+                              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:pulse-glow transition-all"
+                              style={{
+                                backgroundColor: `${theme.colors.accent}25`,
+                                border: `2px solid ${theme.colors.accent}40`,
+                                color: theme.colors.accent
+                              }}
+                            >
+                              <IconComp className="w-8 h-8" color={theme.colors.accent} />
+                            </div>
+                          )}
+                          <div
+                            className="text-5xl md:text-6xl font-black mb-3 tracking-tight gradient-text-animated"
+                            style={{
+                              background: `linear-gradient(135deg, ${theme.colors.accent}, ${theme.colors.foreground})`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text'
+                            }}
+                          >
+                            {stat.value}
+                          </div>
+                          <div className="text-lg font-semibold opacity-90" style={{ color: textColor }}>{stat.label}</div>
+                          {/* Animated progress bar for percentages */}
+                          {isPercentage && numericValue <= 100 && (
+                            <div className="mt-4 h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${textColor}20` }}>
+                              <div
+                                className="h-full rounded-full transition-all duration-1000 ease-out"
+                                style={{
+                                  width: `${numericValue}%`,
+                                  backgroundColor: theme.colors.accent,
+                                  boxShadow: `0 0 10px ${theme.colors.accent}`
+                                }}
+                              />
+                            </div>
+                          )}
+                          {stat.context && (
+                            <div className="text-sm mt-3 opacity-60" style={{ color: textColor }}>{stat.context}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Comparison View - Side by Side */}
+              {slide.comparison && (
+                <div className="grid grid-cols-2 gap-8 mt-10">
+                  <div
+                    className="backdrop-blur-md rounded-2xl p-8 border"
+                    style={{
+                      borderColor: `${textColor}20`,
                       backgroundColor: `${theme.colors.background}30`
                     }}
                   >
-                    {/* Shimmer effect on hover */}
-                    <div className="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent" />
-                    <div className="relative z-10">
-                      {/* Icon with pulse glow */}
-                      {IconComp && (
-                        <div 
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:pulse-glow transition-all"
-                          style={{ 
-                            backgroundColor: `${theme.colors.accent}25`,
-                            border: `2px solid ${theme.colors.accent}40`,
-                            color: theme.colors.accent
-                          }}
-                        >
-                          <IconComp className="w-8 h-8" color={theme.colors.accent} />
-                        </div>
-                      )}
-                      <div 
-                        className="text-5xl md:text-6xl font-black mb-3 tracking-tight gradient-text-animated"
-                        style={{ 
-                          background: `linear-gradient(135deg, ${theme.colors.accent}, ${theme.colors.foreground})`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text'
-                        }}
-                      >
-                        {stat.value}
-                      </div>
-                      <div className="text-lg font-semibold opacity-90" style={{ color: textColor }}>{stat.label}</div>
-                      {/* Animated progress bar for percentages */}
-                      {isPercentage && numericValue <= 100 && (
-                        <div className="mt-4 h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${textColor}20` }}>
-                          <div 
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
-                            style={{ 
-                              width: `${numericValue}%`,
-                              backgroundColor: theme.colors.accent,
-                              boxShadow: `0 0 10px ${theme.colors.accent}`
-                            }}
-                          />
-                        </div>
-                      )}
-                      {stat.context && (
-                        <div className="text-sm mt-3 opacity-60" style={{ color: textColor }}>{stat.context}</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Comparison View - Side by Side */}
-          {slide.comparison && (
-            <div className="grid grid-cols-2 gap-8 mt-10">
-              <div 
-                className="backdrop-blur-md rounded-2xl p-8 border"
-                style={{ 
-                  borderColor: `${textColor}20`,
-                  backgroundColor: `${theme.colors.background}30`
-                }}
-              >
-                <h4 
-                  className="text-2xl font-bold mb-6 pb-4 border-b"
-                  style={{ color: textColor, borderColor: `${textColor}20` }}
-                >
-                  {slide.comparison.leftTitle || 'Before'}
-                </h4>
-                <ul className="space-y-4">
-                  {slide.comparison.left.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 text-lg" style={{ color: textColor }}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div 
-                className="backdrop-blur-md rounded-2xl p-8 border"
-                style={{ 
-                  borderColor: `${theme.colors.accent}40`,
-                  backgroundColor: `${theme.colors.accent}10`
-                }}
-              >
-                <h4 
-                  className="text-2xl font-bold mb-6 pb-4 border-b"
-                  style={{ color: textColor, borderColor: `${textColor}20` }}
-                >
-                  {slide.comparison.rightTitle || 'After'}
-                </h4>
-                <ul className="space-y-4">
-                  {slide.comparison.right.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 text-lg" style={{ color: textColor }}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Timeline View - Premium Animated Version */}
-          {slide.timeline && slide.timeline.length > 0 && (
-            <div className="mt-10 relative">
-              {/* Animated flowing line */}
-              <div className="absolute left-8 top-0 bottom-0 w-1 rounded-full overflow-hidden" style={{ backgroundColor: `${theme.colors.accent}20` }}>
-                <div 
-                  className="w-full h-full rounded-full"
-                  style={{ 
-                    background: `linear-gradient(180deg, ${theme.colors.accent}, transparent, ${theme.colors.accent})`,
-                    backgroundSize: '100% 200%',
-                    animation: 'gradient-shift 3s ease infinite'
-                  }}
-                />
-              </div>
-              <div className="space-y-8">
-                {slide.timeline.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex gap-6 items-start relative scale-bounce"
-                    style={{ animationDelay: `${idx * 0.15}s` }}
-                  >
-                    {/* Pulsing node */}
-                    <div 
-                      className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold z-10 shadow-lg shrink-0 relative"
-                      style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
+                    <h4
+                      className="text-2xl font-bold mb-6 pb-4 border-b"
+                      style={{ color: textColor, borderColor: `${textColor}20` }}
                     >
-                      <div 
-                        className="absolute inset-0 rounded-full animate-ping opacity-30"
-                        style={{ backgroundColor: theme.colors.accent }}
-                      />
-                      <span className="relative z-10">{item.date}</span>
-                    </div>
-                    <div 
-                      className="flex-1 glass-card rounded-2xl p-6 hover-lift shimmer-border"
-                      style={{ 
-                        borderColor: `${theme.colors.accent}30`,
-                        backgroundColor: `${theme.colors.background}30`
-                      }}
-                    >
-                      <h5 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: textColor }}>
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.colors.accent }} />
-                        {item.title}
-                      </h5>
-                      {item.description && (
-                        <p className="text-base opacity-80" style={{ color: textColor }}>{item.description}</p>
-                      )}
-                    </div>
+                      {slide.comparison.leftTitle || 'Before'}
+                    </h4>
+                    <ul className="space-y-4">
+                      {slide.comparison.left.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-3 text-lg" style={{ color: textColor }}>
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Device Mockup - Phone/Laptop/Browser */}
-          {slide.mockup && (
-            <div className="mt-10 flex justify-center">
-              {slide.mockup.type === 'phone' && (
-                <div className="relative w-72 h-[580px] rounded-[3rem] border-8 border-gray-800 bg-gray-900 shadow-2xl overflow-hidden">
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-6 bg-gray-800 rounded-full" />
-                  <div 
-                    className="absolute top-12 left-2 right-2 bottom-2 rounded-[2rem] overflow-hidden"
-                    style={{ backgroundColor: theme.colors.background }}
+                  <div
+                    className="backdrop-blur-md rounded-2xl p-8 border"
+                    style={{
+                      borderColor: `${theme.colors.accent}40`,
+                      backgroundColor: `${theme.colors.accent}10`
+                    }}
                   >
-                    <div className="p-4 h-full flex flex-col">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: theme.colors.accent }} />
-                        <span className="font-bold text-sm" style={{ color: textColor }}>{slide.mockup.title || 'App'}</span>
-                      </div>
-                      <div className="space-y-3 flex-1">
-                        {slide.mockup.elements.map((el, idx) => (
-                          <div key={idx}>
-                            {el.type === 'header' && (
-                              <div className="text-lg font-bold" style={{ color: textColor }}>{el.content}</div>
-                            )}
-                            {el.type === 'card' && (
-                              <div className="p-3 rounded-xl border" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
-                                <span className="text-sm" style={{ color: textColor }}>{el.content}</span>
-                              </div>
-                            )}
-                            {el.type === 'button' && (
-                              <div className="px-4 py-2 rounded-lg text-center text-sm font-semibold text-white" style={{ backgroundColor: theme.colors.accent }}>
-                                {el.content}
-                              </div>
-                            )}
-                            {el.type === 'input' && (
-                              <div className="px-3 py-2 rounded-lg border text-sm opacity-60" style={{ borderColor: `${textColor}30`, color: textColor }}>
-                                {el.content}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <h4
+                      className="text-2xl font-bold mb-6 pb-4 border-b"
+                      style={{ color: textColor, borderColor: `${textColor}20` }}
+                    >
+                      {slide.comparison.rightTitle || 'After'}
+                    </h4>
+                    <ul className="space-y-4">
+                      {slide.comparison.right.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-3 text-lg" style={{ color: textColor }}>
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               )}
-              {slide.mockup.type === 'laptop' && (
-                <div className="relative">
-                  <div className="w-[600px] h-[380px] rounded-t-xl border-8 border-gray-800 bg-gray-900 shadow-2xl overflow-hidden">
-                    <div 
-                      className="h-full"
-                      style={{ backgroundColor: theme.colors.background }}
-                    >
-                      <div className="h-8 border-b flex items-center gap-2 px-4" style={{ borderColor: `${textColor}20` }}>
+
+              {/* Timeline View - Premium Animated Version */}
+              {slide.timeline && slide.timeline.length > 0 && (
+                <div className="mt-10 relative">
+                  {/* Animated flowing line */}
+                  <div className="absolute left-8 top-0 bottom-0 w-1 rounded-full overflow-hidden" style={{ backgroundColor: `${theme.colors.accent}20` }}>
+                    <div
+                      className="w-full h-full rounded-full"
+                      style={{
+                        background: `linear-gradient(180deg, ${theme.colors.accent}, transparent, ${theme.colors.accent})`,
+                        backgroundSize: '100% 200%',
+                        animation: 'gradient-shift 3s ease infinite'
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-8">
+                    {slide.timeline.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-6 items-start relative scale-bounce"
+                        style={{ animationDelay: `${idx * 0.15}s` }}
+                      >
+                        {/* Pulsing node */}
+                        <div
+                          className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold z-10 shadow-lg shrink-0 relative"
+                          style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
+                        >
+                          <div
+                            className="absolute inset-0 rounded-full animate-ping opacity-30"
+                            style={{ backgroundColor: theme.colors.accent }}
+                          />
+                          <span className="relative z-10">{item.date}</span>
+                        </div>
+                        <div
+                          className="flex-1 glass-card rounded-2xl p-6 hover-lift shimmer-border"
+                          style={{
+                            borderColor: `${theme.colors.accent}30`,
+                            backgroundColor: `${theme.colors.background}30`
+                          }}
+                        >
+                          <h5 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: textColor }}>
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.colors.accent }} />
+                            {item.title}
+                          </h5>
+                          {item.description && (
+                            <p className="text-base opacity-80" style={{ color: textColor }}>{item.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Device Mockup - Phone/Laptop/Browser */}
+              {slide.mockup && (
+                <div className="mt-10 flex justify-center">
+                  {slide.mockup.type === 'phone' && (
+                    <div className="relative w-72 h-[580px] rounded-[3rem] border-8 border-gray-800 bg-gray-900 shadow-2xl overflow-hidden">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-6 bg-gray-800 rounded-full" />
+                      <div
+                        className="absolute top-12 left-2 right-2 bottom-2 rounded-[2rem] overflow-hidden"
+                        style={{ backgroundColor: theme.colors.background }}
+                      >
+                        <div className="p-4 h-full flex flex-col">
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 rounded-full" style={{ backgroundColor: theme.colors.accent }} />
+                            <span className="font-bold text-sm" style={{ color: textColor }}>{slide.mockup.title || 'App'}</span>
+                          </div>
+                          <div className="space-y-3 flex-1">
+                            {slide.mockup.elements.map((el, idx) => (
+                              <div key={idx}>
+                                {el.type === 'header' && (
+                                  <div className="text-lg font-bold" style={{ color: textColor }}>{el.content}</div>
+                                )}
+                                {el.type === 'card' && (
+                                  <div className="p-3 rounded-xl border" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
+                                    <span className="text-sm" style={{ color: textColor }}>{el.content}</span>
+                                  </div>
+                                )}
+                                {el.type === 'button' && (
+                                  <div className="px-4 py-2 rounded-lg text-center text-sm font-semibold text-white" style={{ backgroundColor: theme.colors.accent }}>
+                                    {el.content}
+                                  </div>
+                                )}
+                                {el.type === 'input' && (
+                                  <div className="px-3 py-2 rounded-lg border text-sm opacity-60" style={{ borderColor: `${textColor}30`, color: textColor }}>
+                                    {el.content}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {slide.mockup.type === 'laptop' && (
+                    <div className="relative">
+                      <div className="w-[600px] h-[380px] rounded-t-xl border-8 border-gray-800 bg-gray-900 shadow-2xl overflow-hidden">
+                        <div
+                          className="h-full"
+                          style={{ backgroundColor: theme.colors.background }}
+                        >
+                          <div className="h-8 border-b flex items-center gap-2 px-4" style={{ borderColor: `${textColor}20` }}>
+                            <div className="flex gap-1.5">
+                              <div className="w-3 h-3 rounded-full bg-red-500" />
+                              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                              <div className="w-3 h-3 rounded-full bg-green-500" />
+                            </div>
+                            <div className="flex-1 mx-4 h-5 rounded-full" style={{ backgroundColor: `${textColor}10` }} />
+                          </div>
+                          <div className="p-6">
+                            <div className="text-xl font-bold mb-4" style={{ color: textColor }}>{slide.mockup.title}</div>
+                            <div className="grid grid-cols-3 gap-4">
+                              {slide.mockup.elements.map((el, idx) => (
+                                <div key={idx} className="p-4 rounded-xl border" style={{ borderColor: `${textColor}20` }}>
+                                  <span className="text-sm" style={{ color: textColor }}>{el.content}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-[700px] h-4 bg-gray-800 rounded-b-lg mx-auto" />
+                      <div className="w-[200px] h-2 bg-gray-700 rounded-b-lg mx-auto" />
+                    </div>
+                  )}
+                  {slide.mockup.type === 'browser' && (
+                    <div className="w-full max-w-4xl rounded-xl border-2 overflow-hidden shadow-2xl" style={{ borderColor: `${textColor}30` }}>
+                      <div className="h-10 border-b flex items-center gap-2 px-4" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
                         <div className="flex gap-1.5">
                           <div className="w-3 h-3 rounded-full bg-red-500" />
                           <div className="w-3 h-3 rounded-full bg-yellow-500" />
                           <div className="w-3 h-3 rounded-full bg-green-500" />
                         </div>
-                        <div className="flex-1 mx-4 h-5 rounded-full" style={{ backgroundColor: `${textColor}10` }} />
+                        <div className="flex-1 mx-4 h-6 rounded-full px-3 flex items-center text-sm" style={{ backgroundColor: `${textColor}10`, color: `${textColor}60` }}>
+                          {slide.mockup.title || 'https://example.com'}
+                        </div>
                       </div>
-                      <div className="p-6">
-                        <div className="text-xl font-bold mb-4" style={{ color: textColor }}>{slide.mockup.title}</div>
-                        <div className="grid grid-cols-3 gap-4">
+                      <div className="p-8" style={{ backgroundColor: theme.colors.background }}>
+                        <div className="space-y-4">
                           {slide.mockup.elements.map((el, idx) => (
-                            <div key={idx} className="p-4 rounded-xl border" style={{ borderColor: `${textColor}20` }}>
-                              <span className="text-sm" style={{ color: textColor }}>{el.content}</span>
+                            <div key={idx}>
+                              {el.type === 'hero' && (
+                                <div className="text-center py-8">
+                                  <h3 className="text-3xl font-bold mb-4" style={{ color: textColor }}>{el.content}</h3>
+                                </div>
+                              )}
+                              {el.type === 'nav' && (
+                                <div className="flex gap-6 justify-center text-sm" style={{ color: `${textColor}80` }}>
+                                  {el.content.split(',').map((item, i) => (
+                                    <span key={i} className="hover:opacity-100">{item.trim()}</span>
+                                  ))}
+                                </div>
+                              )}
+                              {el.type === 'feature' && (
+                                <div className="grid grid-cols-3 gap-4 py-4">
+                                  {el.content.split(',').map((feature, i) => (
+                                    <div key={i} className="p-4 rounded-xl text-center border" style={{ borderColor: `${textColor}20` }}>
+                                      <span className="text-sm" style={{ color: textColor }}>{feature.trim()}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="w-[700px] h-4 bg-gray-800 rounded-b-lg mx-auto" />
-                  <div className="w-[200px] h-2 bg-gray-700 rounded-b-lg mx-auto" />
-                </div>
-              )}
-              {slide.mockup.type === 'browser' && (
-                <div className="w-full max-w-4xl rounded-xl border-2 overflow-hidden shadow-2xl" style={{ borderColor: `${textColor}30` }}>
-                  <div className="h-10 border-b flex items-center gap-2 px-4" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                    </div>
-                    <div className="flex-1 mx-4 h-6 rounded-full px-3 flex items-center text-sm" style={{ backgroundColor: `${textColor}10`, color: `${textColor}60` }}>
-                      {slide.mockup.title || 'https://example.com'}
-                    </div>
-                  </div>
-                  <div className="p-8" style={{ backgroundColor: theme.colors.background }}>
-                    <div className="space-y-4">
-                      {slide.mockup.elements.map((el, idx) => (
-                        <div key={idx}>
-                          {el.type === 'hero' && (
-                            <div className="text-center py-8">
-                              <h3 className="text-3xl font-bold mb-4" style={{ color: textColor }}>{el.content}</h3>
+                  )}
+                  {slide.mockup.type === 'dashboard' && (
+                    <div className="w-full max-w-4xl rounded-xl border-2 overflow-hidden shadow-2xl" style={{ borderColor: `${textColor}30` }}>
+                      <div className="flex">
+                        <div className="w-48 border-r p-4 space-y-3" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
+                          <div className="font-bold text-lg mb-4" style={{ color: textColor }}>Dashboard</div>
+                          {['Overview', 'Analytics', 'Reports', 'Settings'].map((item, idx) => (
+                            <div
+                              key={idx}
+                              className={`px-3 py-2 rounded-lg text-sm ${idx === 0 ? 'font-medium' : 'opacity-60'}`}
+                              style={{
+                                backgroundColor: idx === 0 ? `${theme.colors.accent}20` : 'transparent',
+                                color: textColor
+                              }}
+                            >
+                              {item}
                             </div>
-                          )}
-                          {el.type === 'nav' && (
-                            <div className="flex gap-6 justify-center text-sm" style={{ color: `${textColor}80` }}>
-                              {el.content.split(',').map((item, i) => (
-                                <span key={i} className="hover:opacity-100">{item.trim()}</span>
-                              ))}
-                            </div>
-                          )}
-                          {el.type === 'feature' && (
-                            <div className="grid grid-cols-3 gap-4 py-4">
-                              {el.content.split(',').map((feature, i) => (
-                                <div key={i} className="p-4 rounded-xl text-center border" style={{ borderColor: `${textColor}20` }}>
-                                  <span className="text-sm" style={{ color: textColor }}>{feature.trim()}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                        <div className="flex-1 p-6" style={{ backgroundColor: theme.colors.background }}>
+                          <div className="grid grid-cols-3 gap-4 mb-6">
+                            {slide.mockup.elements.slice(0, 3).map((el, idx) => (
+                              <div key={idx} className="p-4 rounded-xl border" style={{ borderColor: `${textColor}20` }}>
+                                <div className="text-2xl font-bold" style={{ color: theme.colors.accent }}>{el.content}</div>
+                                <div className="text-sm opacity-60" style={{ color: textColor }}>{el.type}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="h-40 rounded-xl border flex items-center justify-center" style={{ borderColor: `${textColor}20` }}>
+                            <span className="text-sm opacity-40" style={{ color: textColor }}>📊 Chart Area</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
-              {slide.mockup.type === 'dashboard' && (
-                <div className="w-full max-w-4xl rounded-xl border-2 overflow-hidden shadow-2xl" style={{ borderColor: `${textColor}30` }}>
-                  <div className="flex">
-                    <div className="w-48 border-r p-4 space-y-3" style={{ borderColor: `${textColor}20`, backgroundColor: `${textColor}05` }}>
-                      <div className="font-bold text-lg mb-4" style={{ color: textColor }}>Dashboard</div>
-                      {['Overview', 'Analytics', 'Reports', 'Settings'].map((item, idx) => (
-                        <div 
-                          key={idx}
-                          className={`px-3 py-2 rounded-lg text-sm ${idx === 0 ? 'font-medium' : 'opacity-60'}`}
-                          style={{ 
-                            backgroundColor: idx === 0 ? `${theme.colors.accent}20` : 'transparent',
-                            color: textColor
+
+              {/* Icons Grid with Professional SVG Icons */}
+              {slide.icons && slide.icons.length > 0 && (
+                <div className={`grid gap-6 mt-10 ${slide.icons.length <= 3 ? 'grid-cols-3' : slide.icons.length === 4 ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-6'}`}>
+                  {slide.icons.map((item, idx) => {
+                    // Try to get SVG icon from the icon name or emoji
+                    const iconName = typeof item.icon === 'string' ? item.icon.replace(/[^\w]/g, '') : '';
+                    const IconComp = getProIcon(iconName) || getProIcon('Star');
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex flex-col items-center gap-4 p-6 rounded-2xl border backdrop-blur-md transition-all hover:scale-105 group"
+                        style={{
+                          borderColor: `${textColor}20`,
+                          backgroundColor: `${theme.colors.background}30`
+                        }}
+                      >
+                        <div
+                          className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                          style={{
+                            backgroundColor: `${theme.colors.accent}20`,
+                            border: `2px solid ${theme.colors.accent}40`
                           }}
                         >
-                          {item}
+                          {IconComp ? (
+                            <IconComp className="w-8 h-8" color={theme.colors.accent} />
+                          ) : (
+                            <span className="text-4xl">{item.icon}</span>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <div className="flex-1 p-6" style={{ backgroundColor: theme.colors.background }}>
-                      <div className="grid grid-cols-3 gap-4 mb-6">
-                        {slide.mockup.elements.slice(0, 3).map((el, idx) => (
-                          <div key={idx} className="p-4 rounded-xl border" style={{ borderColor: `${textColor}20` }}>
-                            <div className="text-2xl font-bold" style={{ color: theme.colors.accent }}>{el.content}</div>
-                            <div className="text-sm opacity-60" style={{ color: textColor }}>{el.type}</div>
-                          </div>
-                        ))}
+                        <span className="text-sm font-semibold text-center" style={{ color: textColor }}>{item.label}</span>
                       </div>
-                      <div className="h-40 rounded-xl border flex items-center justify-center" style={{ borderColor: `${textColor}20` }}>
-                        <span className="text-sm opacity-40" style={{ color: textColor }}>📊 Chart Area</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Icons Grid with Professional SVG Icons */}
-          {slide.icons && slide.icons.length > 0 && (
-            <div className={`grid gap-6 mt-10 ${slide.icons.length <= 3 ? 'grid-cols-3' : slide.icons.length === 4 ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-6'}`}>
-              {slide.icons.map((item, idx) => {
-                // Try to get SVG icon from the icon name or emoji
-                const iconName = typeof item.icon === 'string' ? item.icon.replace(/[^\w]/g, '') : '';
-                const IconComp = getProIcon(iconName) || getProIcon('Star');
-                
-                return (
-                  <div 
-                    key={idx}
-                    className="flex flex-col items-center gap-4 p-6 rounded-2xl border backdrop-blur-md transition-all hover:scale-105 group"
-                    style={{ 
+              {/* Testimonial */}
+              {slide.testimonial && (
+                <div className="mt-10 max-w-3xl mx-auto">
+                  <div
+                    className="relative backdrop-blur-md rounded-3xl p-10 border"
+                    style={{
                       borderColor: `${textColor}20`,
                       backgroundColor: `${theme.colors.background}30`
                     }}
                   >
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
-                      style={{ 
-                        backgroundColor: `${theme.colors.accent}20`,
-                        border: `2px solid ${theme.colors.accent}40`
-                      }}
-                    >
-                      {IconComp ? (
-                        <IconComp className="w-8 h-8" color={theme.colors.accent} />
-                      ) : (
-                        <span className="text-4xl">{item.icon}</span>
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-center" style={{ color: textColor }}>{item.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Testimonial */}
-          {slide.testimonial && (
-            <div className="mt-10 max-w-3xl mx-auto">
-              <div 
-                className="relative backdrop-blur-md rounded-3xl p-10 border"
-                style={{ 
-                  borderColor: `${textColor}20`,
-                  backgroundColor: `${theme.colors.background}30`
-                }}
-              >
-                <span className="absolute -top-6 -left-2 text-8xl opacity-20" style={{ color: theme.colors.accent }}>"</span>
-                <p className="text-2xl md:text-3xl font-medium italic leading-relaxed mb-8 relative z-10" style={{ color: textColor }}>
-                  {slide.testimonial.quote}
-                </p>
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
-                    style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
-                  >
-                    {slide.testimonial.author.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg" style={{ color: textColor }}>{slide.testimonial.author}</div>
-                    {slide.testimonial.role && (
-                      <div className="text-sm opacity-70" style={{ color: textColor }}>{slide.testimonial.role}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Smart AI Image Layout - Positions image based on slide type and content */}
-          {hasImage && (
-            (() => {
-              // Determine the best layout based on slide type and content
-              const hasBullets = slide.bullets && slide.bullets.length > 0;
-              const hasContent = slide.content && slide.content.length > 50;
-              const isImageFocused = slide.type === 'image' || slide.type === 'visual' || slide.type === 'photo';
-              const isContentHeavy = hasBullets || hasStats || hasComparison || hasTimeline || hasMockup || hasChart;
-              
-              // Layout types: 'full', 'split-left', 'split-right', 'top', 'bottom', 'background-accent'
-              let layout = 'full';
-              if (isHero) layout = 'background-accent';
-              else if (isImageFocused) layout = 'full';
-              else if (isContentHeavy) layout = 'split-right';
-              else if (hasContent && !hasBullets) layout = 'split-left';
-              else layout = 'top';
-
-              // Full width prominent image
-              if (layout === 'full') {
-                return (
-                  <div className="mt-8 mb-8 flex justify-center w-full">
-                    <div 
-                      className="relative rounded-3xl overflow-hidden shadow-2xl border-2 group/image transition-all hover:scale-[1.01] w-full max-w-4xl"
-                      style={{ borderColor: `${theme.colors.accent}30` }}
-                    >
-                      <div 
-                        className="absolute -inset-2 rounded-3xl blur-2xl opacity-20 group-hover/image:opacity-40 transition-opacity"
-                        style={{ backgroundColor: theme.colors.accent }}
-                      />
-                      <img 
-                        src={slide.imageUrl} 
-                        alt={slide.title}
-                        className="relative z-10 w-full h-auto object-cover rounded-3xl"
-                        style={{ maxHeight: '450px', minHeight: '250px' }}
-                      />
-                      <div 
-                        className="absolute bottom-4 right-4 z-20 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md flex items-center gap-1.5"
-                        style={{ 
-                          backgroundColor: `${theme.colors.background}90`,
-                          color: textColor,
-                          border: `1px solid ${theme.colors.accent}40`
-                        }}
+                    <span className="absolute -top-6 -left-2 text-8xl opacity-20" style={{ color: theme.colors.accent }}>"</span>
+                    <p className="text-2xl md:text-3xl font-medium italic leading-relaxed mb-8 relative z-10" style={{ color: textColor }}>
+                      {slide.testimonial.quote}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
+                        style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
                       >
-                        <Wand2 className="w-3 h-3" style={{ color: theme.colors.accent }} />
-                        AI Generated
+                        {slide.testimonial.author.charAt(0)}
                       </div>
-                    </div>
-                  </div>
-                );
-              }
-
-              // Hero/Cover - Accent background with image overlay
-              if (layout === 'background-accent') {
-                return (
-                  <div className="absolute inset-0 z-0">
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ 
-                        backgroundImage: `url(${slide.imageUrl})`,
-                        opacity: 0.15
-                      }}
-                    />
-                    <div 
-                      className="absolute inset-0"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${theme.colors.background}ee 0%, ${theme.colors.background}aa 50%, ${theme.colors.accent}30 100%)`
-                      }}
-                    />
-                  </div>
-                );
-              }
-
-              // Split layout - Image on right, content on left
-              if (layout === 'split-right') {
-                return null; // Will be rendered in the split layout section below
-              }
-
-              // Split layout - Image on left
-              if (layout === 'split-left') {
-                return null; // Will be rendered in the split layout section below
-              }
-
-              // Top position (default)
-              return (
-                <div className="mt-6 mb-8 flex justify-center">
-                  <div 
-                    className="relative rounded-2xl overflow-hidden shadow-xl border group/image transition-all hover:scale-[1.02] max-w-2xl"
-                    style={{ borderColor: `${theme.colors.accent}25` }}
-                  >
-                    <div 
-                      className="absolute -inset-1 rounded-2xl blur-xl opacity-20 group-hover/image:opacity-35 transition-opacity"
-                      style={{ backgroundColor: theme.colors.accent }}
-                    />
-                    <img 
-                      src={slide.imageUrl} 
-                      alt={slide.title}
-                      className="relative z-10 w-full h-auto object-cover rounded-2xl"
-                      style={{ maxHeight: '350px', minHeight: '180px' }}
-                    />
-                    <div 
-                      className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md flex items-center gap-1"
-                      style={{ 
-                        backgroundColor: `${theme.colors.background}85`,
-                        color: textColor,
-                        border: `1px solid ${theme.colors.accent}30`
-                      }}
-                    >
-                      <Wand2 className="w-2.5 h-2.5" style={{ color: theme.colors.accent }} />
-                      AI
-                    </div>
-                  </div>
-                </div>
-              );
-            })()
-          )}
-
-          {/* Content */}
-          {slide.content && !slide.bullets && !isFlowchart && !hasChart && !slide.stats && !slide.comparison && !slide.timeline && !slide.mockup && !slide.icons && !slide.testimonial && (
-            <p 
-              contentEditable={isEditable}
-              suppressContentEditableWarning
-              onBlur={(e) => onUpdate?.({ ...slide, content: e.currentTarget.textContent || slide.content })}
-              className={`${bodySize} leading-relaxed font-medium max-w-3xl mx-auto drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
-              style={{ color: textColor }}
-            >
-              {slide.content}
-            </p>
-          )}
-
-          {/* Bullets with Image - Smart Split Layout */}
-          {slide.bullets && slide.bullets.length > 0 && !isFlowchart && hasImage && !isHero && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 items-start">
-              {/* Bullets Column */}
-              <div className="space-y-4 order-2 lg:order-1">
-                {slide.bullets.map((bullet, idx) => {
-                  const parsed = parseIconBullet(bullet);
-                  const IconComp = parsed.IconComponent;
-                  
-                  return (
-                    <div 
-                      key={idx} 
-                      className="flex items-start gap-3 glass-card rounded-xl p-4 transition-all group/item hover:scale-[1.02] hover-lift"
-                      style={{ 
-                        animationDelay: `${idx * 0.1}s`,
-                        borderColor: `${theme.colors.accent}20`,
-                        backgroundColor: `${theme.colors.background}20`,
-                        color: textColor
-                      }}
-                    >
-                      <div 
-                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center group-hover/item:scale-110 transition-all shadow-md"
-                        style={{ 
-                          backgroundColor: `${theme.colors.accent}20`,
-                          border: `1.5px solid ${theme.colors.accent}40`,
-                          color: theme.colors.accent
-                        }}
-                      >
-                        {IconComp ? (
-                          <IconComp className="w-5 h-5" color={theme.colors.accent} />
-                        ) : (
-                          <span className="text-sm font-bold" style={{ color: theme.colors.accent }}>{idx + 1}</span>
+                      <div>
+                        <div className="font-bold text-lg" style={{ color: textColor }}>{slide.testimonial.author}</div>
+                        {slide.testimonial.role && (
+                          <div className="text-sm opacity-70" style={{ color: textColor }}>{slide.testimonial.role}</div>
                         )}
                       </div>
-                      <div className="flex-1 pt-1">
-                        <span className={`${bulletSize} leading-relaxed font-medium`}>{parsed.text}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Smart AI Image Layout - Positions image based on slide type and content */}
+              {hasImage && (
+                (() => {
+                  // Determine the best layout based on slide type and content
+                  const hasBullets = slide.bullets && slide.bullets.length > 0;
+                  const hasContent = slide.content && slide.content.length > 50;
+                  const isImageFocused = slide.type === 'image' || slide.type === 'visual' || slide.type === 'photo';
+                  const isContentHeavy = hasBullets || hasStats || hasComparison || hasTimeline || hasMockup || hasChart;
+
+                  // Layout types: 'full', 'split-left', 'split-right', 'top', 'bottom', 'background-accent'
+                  let layout = 'full';
+                  if (isHero) layout = 'background-accent';
+                  else if (isImageFocused) layout = 'full';
+                  else if (isContentHeavy) layout = 'split-right';
+                  else if (hasContent && !hasBullets) layout = 'split-left';
+                  else layout = 'top';
+
+                  // Full width prominent image
+                  if (layout === 'full') {
+                    return (
+                      <div className="mt-8 mb-8 flex justify-center w-full">
+                        <div
+                          className="relative rounded-3xl overflow-hidden shadow-2xl border-2 group/image transition-all hover:scale-[1.01] w-full max-w-4xl"
+                          style={{ borderColor: `${theme.colors.accent}30` }}
+                        >
+                          <div
+                            className="absolute -inset-2 rounded-3xl blur-2xl opacity-20 group-hover/image:opacity-40 transition-opacity"
+                            style={{ backgroundColor: theme.colors.accent }}
+                          />
+                          <img
+                            src={slide.imageUrl}
+                            alt={slide.title}
+                            className="relative z-10 w-full h-auto object-cover rounded-3xl"
+                            style={{ maxHeight: '450px', minHeight: '250px' }}
+                          />
+                          <div
+                            className="absolute bottom-4 right-4 z-20 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md flex items-center gap-1.5"
+                            style={{
+                              backgroundColor: `${theme.colors.background}90`,
+                              color: textColor,
+                              border: `1px solid ${theme.colors.accent}40`
+                            }}
+                          >
+                            <Wand2 className="w-3 h-3" style={{ color: theme.colors.accent }} />
+                            AI Generated
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Hero/Cover - Accent background with image overlay
+                  if (layout === 'background-accent') {
+                    return (
+                      <div className="absolute inset-0 z-0">
+                        <div
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${slide.imageUrl})`,
+                            opacity: 0.15
+                          }}
+                        />
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${theme.colors.background}ee 0%, ${theme.colors.background}aa 50%, ${theme.colors.accent}30 100%)`
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+
+                  // Split layout - Image on right, content on left
+                  if (layout === 'split-right') {
+                    return null; // Will be rendered in the split layout section below
+                  }
+
+                  // Split layout - Image on left
+                  if (layout === 'split-left') {
+                    return null; // Will be rendered in the split layout section below
+                  }
+
+                  // Top position (default)
+                  return (
+                    <div className="mt-6 mb-8 flex justify-center">
+                      <div
+                        className="relative rounded-2xl overflow-hidden shadow-xl border group/image transition-all hover:scale-[1.02] max-w-2xl"
+                        style={{ borderColor: `${theme.colors.accent}25` }}
+                      >
+                        <div
+                          className="absolute -inset-1 rounded-2xl blur-xl opacity-20 group-hover/image:opacity-35 transition-opacity"
+                          style={{ backgroundColor: theme.colors.accent }}
+                        />
+                        <img
+                          src={slide.imageUrl}
+                          alt={slide.title}
+                          className="relative z-10 w-full h-auto object-cover rounded-2xl"
+                          style={{ maxHeight: '350px', minHeight: '180px' }}
+                        />
+                        <div
+                          className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md flex items-center gap-1"
+                          style={{
+                            backgroundColor: `${theme.colors.background}85`,
+                            color: textColor,
+                            border: `1px solid ${theme.colors.accent}30`
+                          }}
+                        >
+                          <Wand2 className="w-2.5 h-2.5" style={{ color: theme.colors.accent }} />
+                          AI
+                        </div>
                       </div>
                     </div>
                   );
-                })}
-              </div>
-              
-              {/* Image Column */}
-              <div className="order-1 lg:order-2">
-                <div 
-                  className="relative rounded-2xl overflow-hidden shadow-xl border group/image transition-all hover:scale-[1.01] sticky top-8"
-                  style={{ borderColor: `${theme.colors.accent}25` }}
+                })()
+              )}
+
+              {/* Content */}
+              {slide.content && !slide.bullets && !isFlowchart && !hasChart && !slide.stats && !slide.comparison && !slide.timeline && !slide.mockup && !slide.icons && !slide.testimonial && (
+                <p
+                  contentEditable={isEditable}
+                  suppressContentEditableWarning
+                  onBlur={(e) => onUpdate?.({ ...slide, content: e.currentTarget.textContent || slide.content })}
+                  className={`${bodySize} leading-relaxed font-medium max-w-3xl mx-auto drop-shadow-sm opacity-90 ${isEditable ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-500/50 rounded-lg px-2 -mx-2' : ''}`}
+                  style={{ color: textColor }}
                 >
-                  <div 
-                    className="absolute -inset-1 rounded-2xl blur-xl opacity-20 group-hover/image:opacity-35 transition-opacity"
-                    style={{ backgroundColor: theme.colors.accent }}
-                  />
-                  <img 
-                    src={slide.imageUrl} 
-                    alt={slide.title}
-                    className="relative z-10 w-full h-auto object-cover rounded-2xl"
-                    style={{ maxHeight: '400px', minHeight: '200px' }}
-                  />
-                  <div 
-                    className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md flex items-center gap-1"
-                    style={{ 
-                      backgroundColor: `${theme.colors.background}85`,
-                      color: textColor,
-                      border: `1px solid ${theme.colors.accent}30`
-                    }}
-                  >
-                    <Wand2 className="w-2.5 h-2.5" style={{ color: theme.colors.accent }} />
-                    AI
+                  {slide.content}
+                </p>
+              )}
+
+              {/* Bullets with Image - Smart Split Layout */}
+              {slide.bullets && slide.bullets.length > 0 && !isFlowchart && hasImage && !isHero && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 items-start">
+                  {/* Bullets Column */}
+                  <div className="space-y-4 order-2 lg:order-1">
+                    {slide.bullets.map((bullet, idx) => {
+                      const parsed = parseIconBullet(bullet);
+                      const IconComp = parsed.IconComponent;
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-3 glass-card rounded-xl p-4 transition-all group/item hover:scale-[1.02] hover-lift"
+                          style={{
+                            animationDelay: `${idx * 0.1}s`,
+                            borderColor: `${theme.colors.accent}20`,
+                            backgroundColor: `${theme.colors.background}20`,
+                            color: textColor
+                          }}
+                        >
+                          <div
+                            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center group-hover/item:scale-110 transition-all shadow-md"
+                            style={{
+                              backgroundColor: `${theme.colors.accent}20`,
+                              border: `1.5px solid ${theme.colors.accent}40`,
+                              color: theme.colors.accent
+                            }}
+                          >
+                            {IconComp ? (
+                              <IconComp className="w-5 h-5" color={theme.colors.accent} />
+                            ) : (
+                              <span className="text-sm font-bold" style={{ color: theme.colors.accent }}>{idx + 1}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 pt-1">
+                            <span className={`${bulletSize} leading-relaxed font-medium`}>{parsed.text}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Image Column */}
+                  <div className="order-1 lg:order-2">
+                    <div
+                      className="relative rounded-2xl overflow-hidden shadow-xl border group/image transition-all hover:scale-[1.01] sticky top-8"
+                      style={{ borderColor: `${theme.colors.accent}25` }}
+                    >
+                      <div
+                        className="absolute -inset-1 rounded-2xl blur-xl opacity-20 group-hover/image:opacity-35 transition-opacity"
+                        style={{ backgroundColor: theme.colors.accent }}
+                      />
+                      <img
+                        src={slide.imageUrl}
+                        alt={slide.title}
+                        className="relative z-10 w-full h-auto object-cover rounded-2xl"
+                        style={{ maxHeight: '400px', minHeight: '200px' }}
+                      />
+                      <div
+                        className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md flex items-center gap-1"
+                        style={{
+                          backgroundColor: `${theme.colors.background}85`,
+                          color: textColor,
+                          border: `1px solid ${theme.colors.accent}30`
+                        }}
+                      >
+                        <Wand2 className="w-2.5 h-2.5" style={{ color: theme.colors.accent }} />
+                        AI
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Bullets WITHOUT Image - Original Layout */}
-          {slide.bullets && slide.bullets.length > 0 && !isFlowchart && (!hasImage || isHero) && (
-            <div className="grid gap-4 mt-10">
-              {slide.bullets.map((bullet, idx) => {
-                const parsed = parseIconBullet(bullet);
-                const IconComp = parsed.IconComponent;
-                
-                return (
-                  <div 
-                    key={idx} 
-                    className="flex items-start gap-4 glass-card rounded-2xl p-6 transition-all group/item hover:scale-[1.02] hover-lift scale-bounce"
-                    style={{ 
-                      animationDelay: `${idx * 0.1}s`,
-                      borderColor: `${theme.colors.accent}25`,
-                      backgroundColor: `${theme.colors.background}25`,
-                      color: textColor
-                    }}
-                  >
-                    {/* Icon with glow effect */}
-                    <div 
-                      className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center group-hover/item:scale-110 group-hover/item:pulse-glow transition-all shadow-lg relative overflow-hidden"
-                      style={{ 
-                        backgroundColor: `${theme.colors.accent}25`,
-                        border: `2px solid ${theme.colors.accent}50`,
-                        color: theme.colors.accent
-                      }}
-                    >
-                      {/* Inner glow */}
-                      <div 
-                        className="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity"
-                        style={{ 
-                          background: `radial-gradient(circle, ${theme.colors.accent}40 0%, transparent 70%)`
+              {/* Bullets WITHOUT Image - Original Layout */}
+              {slide.bullets && slide.bullets.length > 0 && !isFlowchart && (!hasImage || isHero) && (
+                <div className="grid gap-4 mt-10">
+                  {slide.bullets.map((bullet, idx) => {
+                    const parsed = parseIconBullet(bullet);
+                    const IconComp = parsed.IconComponent;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-4 glass-card rounded-2xl p-6 transition-all group/item hover:scale-[1.02] hover-lift scale-bounce"
+                        style={{
+                          animationDelay: `${idx * 0.1}s`,
+                          borderColor: `${theme.colors.accent}25`,
+                          backgroundColor: `${theme.colors.background}25`,
+                          color: textColor
                         }}
-                      />
-                      {IconComp ? (
-                        <IconComp className="w-7 h-7 relative z-10" color={theme.colors.accent} />
-                      ) : (
-                        <span className="text-xl font-bold relative z-10" style={{ color: theme.colors.accent }}>{idx + 1}</span>
+                      >
+                        {/* Icon with glow effect */}
+                        <div
+                          className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center group-hover/item:scale-110 group-hover/item:pulse-glow transition-all shadow-lg relative overflow-hidden"
+                          style={{
+                            backgroundColor: `${theme.colors.accent}25`,
+                            border: `2px solid ${theme.colors.accent}50`,
+                            color: theme.colors.accent
+                          }}
+                        >
+                          {/* Inner glow */}
+                          <div
+                            className="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                            style={{
+                              background: `radial-gradient(circle, ${theme.colors.accent}40 0%, transparent 70%)`
+                            }}
+                          />
+                          {IconComp ? (
+                            <IconComp className="w-7 h-7 relative z-10" color={theme.colors.accent} />
+                          ) : (
+                            <span className="text-xl font-bold relative z-10" style={{ color: theme.colors.accent }}>{idx + 1}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 pt-2">
+                          <span className={`${bulletSize} font-medium leading-relaxed opacity-95`} style={{ color: textColor }}>
+                            {parsed.text}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Flowchart/Process View */}
+              {isFlowchart && slide.bullets && slide.bullets.length > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-10 flex-wrap">
+                  {slide.bullets.map((step, idx) => (
+                    <div key={idx} className="flex items-center gap-4" style={{ color: textColor }}>
+                      <div
+                        className="relative px-6 py-4 rounded-xl backdrop-blur-sm border transition-all hover:scale-105"
+                        style={{
+                          borderColor: `${textColor}30`,
+                          backgroundColor: `${theme.colors.background}30`,
+                          color: textColor
+                        }}
+                      >
+                        <span className="absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                          style={{ backgroundColor: theme.colors.accent, color: '#fff' }}>
+                          {idx + 1}
+                        </span>
+                        <span className="text-lg font-medium">{step}</span>
+                      </div>
+                      {idx < (slide.bullets?.length || 0) - 1 && (
+                        <ArrowLeft className="w-6 h-6 rotate-180 opacity-50" />
                       )}
                     </div>
-                    <div className="flex-1 pt-2">
-                      <span className={`${bulletSize} font-medium leading-relaxed opacity-95`} style={{ color: textColor }}>
-                        {parsed.text}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Flowchart/Process View */}
-          {isFlowchart && slide.bullets && slide.bullets.length > 0 && (
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-10 flex-wrap">
-              {slide.bullets.map((step, idx) => (
-                <div key={idx} className="flex items-center gap-4" style={{ color: textColor }}>
-                  <div 
-                    className="relative px-6 py-4 rounded-xl backdrop-blur-sm border transition-all hover:scale-105"
-                    style={{ 
-                      borderColor: `${textColor}30`,
-                      backgroundColor: `${theme.colors.background}30`,
-                      color: textColor
-                    }}
-                  >
-                    <span className="absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                      style={{ backgroundColor: theme.colors.accent, color: '#fff' }}>
-                      {idx + 1}
-                    </span>
-                    <span className="text-lg font-medium">{step}</span>
-                  </div>
-                  {idx < (slide.bullets?.length || 0) - 1 && (
-                    <ArrowLeft className="w-6 h-6 rotate-180 opacity-50" />
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
 
-          {/* CTA */}
-          {slide.cta && (
-            <button 
-              className="mt-12 px-10 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center gap-3 mx-auto"
-              style={{ 
-                backgroundColor: textColor,
-                color: theme.colors.background
-              }}
-            >
-              {slide.cta} <ArrowLeft className="w-5 h-5 rotate-180" />
-            </button>
-          )}
+              {/* CTA */}
+              {slide.cta && (
+                <button
+                  className="mt-12 px-10 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center gap-3 mx-auto"
+                  style={{
+                    backgroundColor: textColor,
+                    color: theme.colors.background
+                  }}
+                >
+                  {slide.cta} <ArrowLeft className="w-5 h-5 rotate-180" />
+                </button>
+              )}
             </div>
           </div>
         </div>

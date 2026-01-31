@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,10 +46,10 @@ export function UpgradeModal({ open, onOpenChange, creditsInfo }: UpgradeModalPr
 
   const handleUpgrade = async (tier: string) => {
     if (tier === 'free') return;
-    
+
     setLoading(true);
     setSelectedTier(tier);
-    
+
     try {
       // Redirect to pricing page with selected tier
       router.push(`/pricing?tier=${tier}`);
@@ -127,13 +127,12 @@ export function UpgradeModal({ open, onOpenChange, creditsInfo }: UpgradeModalPr
             return (
               <div
                 key={tier}
-                className={`relative rounded-xl border p-4 transition-all ${
-                  tier === 'pro'
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                    : isCurrentTier
+                className={`relative rounded-xl border p-4 transition-all ${tier === 'pro'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                  : isCurrentTier
                     ? 'border-green-500 bg-green-500/5'
                     : 'border-muted/50 hover:border-muted'
-                }`}
+                  }`}
               >
                 {tier === 'pro' && (
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-xs">
@@ -147,9 +146,8 @@ export function UpgradeModal({ open, onOpenChange, creditsInfo }: UpgradeModalPr
                 )}
 
                 <div className="text-center mb-3">
-                  <TierIcon className={`w-8 h-8 mx-auto mb-2 ${
-                    tier === 'pro' ? 'text-primary' : 'text-muted-foreground'
-                  }`} />
+                  <TierIcon className={`w-8 h-8 mx-auto mb-2 ${tier === 'pro' ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
                   <h3 className="font-bold capitalize">{tier}</h3>
                   <div className="text-2xl font-bold">
                     ${pricing.price}
@@ -206,54 +204,66 @@ export function UpgradeModal({ open, onOpenChange, creditsInfo }: UpgradeModalPr
   );
 }
 
-// Hook to fetch and manage credits
+// Hook to fetch and manage credits with debouncing to prevent rate limiting
 export function useCredits() {
   const [credits, setCredits] = useState<CreditsInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchRef = useRef<number>(0);
+  const fetchingRef = useRef<boolean>(false);
 
-  const fetchCredits = async () => {
+  const fetchCredits = async (force: boolean = false) => {
+    // Debounce: prevent fetching within 5 seconds of last fetch unless forced
+    const now = Date.now();
+    if (!force && (now - lastFetchRef.current < 5000 || fetchingRef.current)) {
+      return;
+    }
+
     try {
+      fetchingRef.current = true;
       setLoading(true);
-      
-      // Get the user's session token from Supabase
+
+      // Get the user's session token from Supabase (uses local cache)
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.access_token) {
         setCredits(null);
         setLoading(false);
         return;
       }
-      
+
       const response = await fetch('/api/credits', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
-      
+
+      lastFetchRef.current = Date.now();
+
       if (response.status === 401) {
         setCredits(null);
         return;
       }
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch credits');
       }
-      
+
       const data = await response.json();
       setCredits(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchCredits();
+    fetchCredits(true); // Force fetch on mount
   }, []);
 
-  return { credits, loading, error, refetch: fetchCredits };
+  return { credits, loading, error, refetch: () => fetchCredits(true) };
 }

@@ -82,7 +82,7 @@ export default function PricingPlans() {
       plan_type: 'individual',
       billing_period: billingPeriod,
       price: billingPeriod === 'monthly' ? 9.99 : 95.88,
-      stripe_price_id: billingPeriod === 'monthly' 
+      stripe_price_id: billingPeriod === 'monthly'
         ? (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INDIVIDUAL_MONTHLY || '')
         : (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INDIVIDUAL_YEARLY || ''),
       features: features.individual,
@@ -94,7 +94,7 @@ export default function PricingPlans() {
       plan_type: 'individual',
       billing_period: billingPeriod,
       price: billingPeriod === 'monthly' ? 19.99 : 191.88,
-      stripe_price_id: billingPeriod === 'monthly' 
+      stripe_price_id: billingPeriod === 'monthly'
         ? (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || '')
         : (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || ''),
       features: features.pro,
@@ -122,9 +122,11 @@ export default function PricingPlans() {
 
     try {
       setLoading(plan.id);
-      
+
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() for rate limit avoidance
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         router.push('/auth/signin?redirect=/pricing');
@@ -190,8 +192,8 @@ export default function PricingPlans() {
       {/* Pricing Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto px-4 sm:px-0">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
+          <Card
+            key={plan.id}
             className={`relative hover:shadow-2xl transition-all duration-300 ${plan.popular ? 'border-blue-500 border-2 shadow-xl scale-105 md:scale-100' : ''}`}
           >
             {plan.popular && (
@@ -380,8 +382,8 @@ export default function PricingPlans() {
           <div>
             <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
             <p className="text-muted-foreground">
-              We accept all major credit and debit cards (Visa, Mastercard, American Express, Discover), 
-              plus digital wallets including Apple Pay, Google Pay, and Link for one-click checkout. 
+              We accept all major credit and debit cards (Visa, Mastercard, American Express, Discover),
+              plus digital wallets including Apple Pay, Google Pay, and Link for one-click checkout.
               All payments are securely processed through Stripe and are PCI compliant.
             </p>
           </div>

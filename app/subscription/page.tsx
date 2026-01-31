@@ -35,7 +35,9 @@ export default function SubscriptionPage() {
   const fetchSubscription = async () => {
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() for rate limit avoidance
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         router.push('/auth/signin');
