@@ -1,5 +1,5 @@
 {
-  "name": "docmagic-interview-dsa-prep",
+  "name": "draftdeckai-interview-dsa-prep",
   "version": "1.0.0",
   "description": "AI-powered browser extension for interview preparation, DSA problem solving, and job placement assistance",
   "main": "background.js",
@@ -28,16 +28,16 @@
     "job-search",
     "career"
   ],
-  "author": "DocMagic Team",
+  "author": "DraftDeckAI Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/docmagic-extension.git"
+    "url": "https://github.com/Muneerali199/DocMagic.git"
   },
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/docmagic-extension/issues"
+    "url": "https://github.com/Muneerali199/DocMagic/issues"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/docmagic-extension#readme",
+  "homepage": "https://draftdeckai.com",
   "engines": {
     "node": ">=14.0.0"
   },

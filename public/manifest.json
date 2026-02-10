@@ -1,6 +1,6 @@
 {
-  "name": "DocMagic - AI Document Creation Platform",
-  "short_name": "DocMagic",
+  "name": "DraftDeckAI - AI Document Creation Platform",
+  "short_name": "DraftDeckAI",
   "description": "Create beautiful resumes, presentations, CVs and letters with AI",
   "start_url": "/",
   "display": "standalone",
@@ -43,7 +43,7 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "DocMagic main interface"
+      "label": "DraftDeckAI main interface"
     },
     {
       "src": "/screenshots/Resume.png",

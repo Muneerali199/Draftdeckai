@@ -1,5 +1,5 @@
 {
-  "name": "docmagic",
+  "name": "draftdeckai",
   "version": "2.0.0",
   "description": "🪄 Open source AI-powered document creation platform - Create professional resumes, presentations, CVs, and letters in seconds",
   "keywords": [
@@ -14,13 +14,13 @@
     "gemini-ai",
     "supabase"
   ],
-  "homepage": "https://docmagic1.netlify.app",
+  "homepage": "https://draftdeckai.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/docmagic-ai/docmagic.git"
+    "url": "https://github.com/Muneerali199/DocMagic.git"
   },
   "bugs": {
-    "url": "https://github.com/docmagic-ai/docmagic/issues"
+    "url": "https://github.com/Muneerali199/DocMagic/issues"
   },
   "license": "MIT",
   "author": "Xenonesis",
