@@ -1,6 +1,6 @@
 # Email Verification Setup Guide
 
-This guide explains how to set up email verification for DocMagic so users receive verification emails when they sign up.
+This guide explains how to set up email verification for DraftDeckAI so users receive verification emails when they sign up.
 
 ## Quick Setup (5 minutes)
 
@@ -30,7 +30,7 @@ This guide explains how to set up email verification for DocMagic so users recei
 3. Customize the email:
 
 ```html
-<h2>Welcome to DocMagic!</h2>
+<h2>Welcome to DraftDeckAI!</h2>
 <p>Thanks for signing up! Please confirm your email address by clicking the button below:</p>
 <p><a href="{{ .ConfirmationURL }}" style="background:#22c55e;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Verify Email</a></p>
 <p>If you didn't create an account, you can safely ignore this email.</p>
@@ -65,10 +65,10 @@ For production, you should use your own SMTP server so emails come from your dom
    - **User**: Your email address
    - **Pass**: Your app password
    - **Sender email**: `noreply@yourdomain.com`
-   - **Sender name**: `DocMagic`
+   - **Sender name**: `DraftDeckAI`
 4. Click **Save**
 
-### Option B: Use DocMagic's Custom Email System
+### Option B: Use DraftDeckAI's Custom Email System
 
 If you want more control over email design, configure SMTP in your `.env.local`:
 
@@ -77,7 +77,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
-EMAIL_FROM=DocMagic <your-email@gmail.com>
+EMAIL_FROM=DraftDeckAI <your-email@gmail.com>
 ```
 
 #### Getting Gmail App Password:
@@ -146,7 +146,7 @@ EMAIL_FROM=DocMagic <your-email@gmail.com>
 
 ## Testing Email Locally
 
-When `EMAIL_HOST` is not configured, DocMagic uses [Ethereal](https://ethereal.email/) for testing.
+When `EMAIL_HOST` is not configured, DraftDeckAI uses [Ethereal](https://ethereal.email/) for testing.
 
 1. Sign up a new user
 2. Check the terminal/console for a preview URL like:

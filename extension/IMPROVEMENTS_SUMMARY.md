@@ -1,4 +1,4 @@
-# 🎉 DocMagic Extension - Major Improvements Complete!
+# 🎉 DraftDeckAI Extension - Major Improvements Complete!
 
 ## ✅ What's New
 
@@ -72,7 +72,7 @@ A **dedicated, responsive settings page** with:
 
 **Method 2:** Right-click extension icon → "Options"
 
-**Method 3:** Go to `chrome://extensions/` → Find DocMagic → Click "Details" → "Extension options"
+**Method 3:** Go to `chrome://extensions/` → Find DraftDeckAI → Click "Details" → "Extension options"
 
 ### **Step 2: Choose Your AI Provider**
 
@@ -242,8 +242,8 @@ Your extension is now:
 - ✅ **More user-friendly** - Intuitive configuration
 - ✅ **More responsive** - Works on all devices
 
-**Enjoy your enhanced DocMagic extension!** 🚀
+**Enjoy your enhanced DraftDeckAI extension!** 🚀
 
 ---
 
-**Made with ❤️ by DocMagic Team**
+**Made with ❤️ by DraftDeckAI Team**

@@ -178,8 +178,8 @@ export async function exportAsPPTX(
     const pptx = new PptxGenJS();
 
     pptx.layout = 'LAYOUT_16x9';
-    pptx.author = 'DocMagic AI';
-    pptx.company = 'DocMagic';
+    pptx.author = 'DraftDeckAI';
+    pptx.company = 'DraftDeckAI';
     pptx.revision = '1';
     pptx.subject = presentationName;
     pptx.title = presentationName;

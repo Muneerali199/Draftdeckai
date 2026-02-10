@@ -43,7 +43,7 @@ function SuccessContent() {
           <div className="mx-auto mb-4">
             <CheckCircle2 className="w-16 h-16 text-green-600" />
           </div>
-          <CardTitle className="text-2xl">Welcome to DocMagic!</CardTitle>
+          <CardTitle className="text-2xl">Welcome to DraftDeckAI!</CardTitle>
           <CardDescription>
             Your subscription has been successfully activated
           </CardDescription>

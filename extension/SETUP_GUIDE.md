@@ -1,4 +1,4 @@
-# 🚀 DocMagic Extension - Quick Setup Guide
+# 🚀 DraftDeckAI Extension - Quick Setup Guide
 
 ## ✅ Issue Fixed
 
@@ -30,12 +30,12 @@ The **"Failed to load resource: net::ERR_CONNECTION_REFUSED"** error has been re
 1. Open Chrome/Edge and go to `chrome://extensions/`
 2. Enable **"Developer mode"** (toggle in top-right corner)
 3. Click **"Load unpacked"**
-4. Select the folder: `C:\Users\Muneer Ali Subzwari\Desktop\docmagic\DocMagic\extension`
+4. Select the folder: `C:\Users\Muneer Ali Subzwari\Desktop\draftdeckai\DraftDeckAI\extension`
 5. The extension should now appear in your toolbar! 🎉
 
 ### Step 3: Configure API Key
 
-1. Click the **DocMagic extension icon** in your toolbar
+1. Click the **DraftDeckAI extension icon** in your toolbar
 2. Expand the **"⚙️ Configure API Key"** section
 3. Paste your Gemini API key
 4. Click **"Save Key"**
@@ -70,8 +70,8 @@ The **"Failed to load resource: net::ERR_CONNECTION_REFUSED"** error has been re
 1. Select any code or problem text on a webpage
 2. Right-click
 3. Choose:
-   - **🚀 Solve with DocMagic AI**
-   - **💡 Explain with DocMagic AI**
+   - **🚀 Solve with DraftDeckAI AI**
+   - **💡 Explain with DraftDeckAI AI**
    - **🎯 Get Hint**
 
 ---
@@ -172,8 +172,8 @@ Your extension is now:
 
 - Check the [README.md](./README.md) for detailed documentation
 - Open an issue on GitHub
-- Contact support at support@docmagic.com
+- Contact support at support@draftdeckai.com
 
 ---
 
-**Made with ❤️ by DocMagic Team**
+**Made with ❤️ by DraftDeckAI Team**

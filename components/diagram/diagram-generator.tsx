@@ -126,7 +126,7 @@ const DIAGRAM_EXAMPLES = {
     commit`,
   
   mindmap: `mindmap
-  root((DocMagic))
+  root((DraftDeckAI))
     Features
       Resume Builder
       Presentation Maker
@@ -366,8 +366,8 @@ export function DiagramGenerator() {
   const shareDiagram = async () => {
     try {
       const shareData = {
-        title: 'DocMagic Diagram',
-        text: 'Check out this diagram I created with DocMagic!',
+        title: 'DraftDeckAI Diagram',
+        text: 'Check out this diagram I created with DraftDeckAI!',
         url: window.location.href
       };
       

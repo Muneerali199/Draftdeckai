@@ -1,8 +1,8 @@
-✨ Documentation Code of Conduct — DocMagic ✨
+✨ Documentation Code of Conduct — DraftDeckAI ✨
 
 🌟 Our Commitment: 
 
-DocMagic is dedicated to creating a respectful, inclusive, and collaborative space where users of all backgrounds and expertise levels feel empowered to create, learn, and grow. Whether you’re generating documents or contributing to platform improvements, we aim to keep this space professional, safe, and inspiring.
+DraftDeckAI is dedicated to creating a respectful, inclusive, and collaborative space where users of all backgrounds and expertise levels feel empowered to create, learn, and grow. Whether you’re generating documents or contributing to platform improvements, we aim to keep this space professional, safe, and inspiring.
 
 ---
 
@@ -31,8 +31,8 @@ To maintain a positive environment, we do not tolerate:
 
 🧭 Where This Applies
 
-This Code of Conduct applies across all DocMagic spaces:
-- DocMagic Platform and Documentation
+This Code of Conduct applies across all DraftDeckAI spaces:
+- DraftDeckAI Platform and Documentation
 - GitHub repositories and issue discussions
 - Community channels (Discord)
 - Online workshops, webinars, and official events
@@ -57,7 +57,7 @@ Violations may lead to the following actions:
 
 🎯 Contributor Expectations
 
-When using or contributing to DocMagic, we expect you to:
+When using or contributing to DraftDeckAI, we expect you to:
 - ✔️ Be courteous, inclusive, and professional
 - ✔️ Avoid creating or sharing offensive or plagiarized documents
 - ✔️ Provide helpful and respectful feedback
@@ -68,13 +68,13 @@ When using or contributing to DocMagic, we expect you to:
 
 🌟 Our Vision:
 
-DocMagic is more than an AI document tool—it's a community of creators, learners, and innovators. Let’s work together to build a platform where everyone feels safe, respected, and inspired to turn ideas into impactful documents. 🪄📄
+DraftDeckAI is more than an AI document tool—it's a community of creators, learners, and innovators. Let’s work together to build a platform where everyone feels safe, respected, and inspired to turn ideas into impactful documents. 🪄📄
 
 ---
 
 📄 Attribution:
 
-This Code of Conduct is crafted for DocMagic in alignment with principles from the 
+This Code of Conduct is crafted for DraftDeckAI in alignment with principles from the 
 [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) and adapted for our AI-powered documentation ecosystem.
 
 Let’s empower creation with responsibility and respect! 💼✨

@@ -905,7 +905,7 @@ export default function RealTimeGenerator() {
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold professional-heading tracking-tight">DocMagic AI</h1>
+                <h1 className="text-lg font-bold professional-heading tracking-tight">DraftDeckAI</h1>
               </div>
             </div>
 
@@ -1723,7 +1723,7 @@ export default function RealTimeGenerator() {
                     Generating Your Presentation
                   </h3>
                   <p className="text-lg text-muted-foreground max-w-md text-center leading-relaxed">
-                    DocMagic is crafting your slides, designing layouts, and writing professional content...
+                    DraftDeckAI is crafting your slides, designing layouts, and writing professional content...
                   </p>
                 </div>
               )}

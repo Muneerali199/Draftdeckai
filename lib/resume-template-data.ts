@@ -39,7 +39,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.9,
     downloads: 18500,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -139,7 +139,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.9,
     downloads: 15420,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -159,7 +159,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.8,
     downloads: 12890,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -179,7 +179,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.7,
     downloads: 9560,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -199,7 +199,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.9,
     downloads: 11230,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -233,7 +233,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.8,
     downloads: 8750,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -270,7 +270,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.9,
     downloads: 12340,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -302,7 +302,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.7,
     downloads: 8920,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -334,7 +334,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.8,
     downloads: 10450,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -366,7 +366,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.6,
     downloads: 7680,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },
@@ -398,7 +398,7 @@ export const RESUME_TEMPLATES: ResumeTemplate[] = [
     rating: 4.8,
     downloads: 9340,
     author: {
-      name: 'DocMagic Team',
+      name: 'DraftDeckAI Team',
       verified: true,
     },
   },

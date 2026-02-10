@@ -22,7 +22,7 @@ export default function Footer() {
             <div className="flex items-center justify-center sm:justify-start gap-2">
               <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600 dark:text-blue-400" />
               <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                DocMagic
+                DraftDeckAI
               </h3>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xs mx-auto sm:mx-0">
@@ -171,13 +171,13 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
           <div className="text-sm sm:text-base text-muted-foreground text-center sm:text-left">
-            © {new Date().getFullYear()} <span className="font-bold text-gray-900 dark:text-white">DocMagic</span>. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-bold text-gray-900 dark:text-white">DraftDeckAI</span>. All rights reserved.
           </div>
           
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
             <span>Made with</span>
             <Heart className="h-4 w-4 text-red-500 fill-current animate-pulse" />
-            <span>by the DocMagic Team</span>
+            <span>by the DraftDeckAI Team</span>
           </div>
         </div>
 

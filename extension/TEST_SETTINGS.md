@@ -8,13 +8,13 @@
 3. Settings page should open in a new tab
 
 ### Method 2: Right-Click Extension Icon
-1. Right-click the DocMagic extension icon
+1. Right-click the DraftDeckAI extension icon
 2. Click "Options"
 3. Settings page should open
 
 ### Method 3: From Extensions Page
 1. Go to `chrome://extensions/`
-2. Find DocMagic extension
+2. Find DraftDeckAI extension
 3. Click "Details"
 4. Click "Extension options"
 5. Settings page should open
@@ -29,7 +29,7 @@
 
 When settings page opens, you should see:
 
-✅ **Header:** "⚙️ DocMagic Settings"
+✅ **Header:** "⚙️ DraftDeckAI Settings"
 
 ✅ **AI Provider Section:** 4 provider cards
 - 🔷 Google Gemini
@@ -64,7 +64,7 @@ When settings page opens, you should see:
 
 2. **Reload Extension:**
    - Go to `chrome://extensions/`
-   - Click the reload icon (🔄) on DocMagic extension
+   - Click the reload icon (🔄) on DraftDeckAI extension
    - Try again
 
 3. **Check File Exists:**

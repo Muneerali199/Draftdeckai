@@ -87,7 +87,7 @@ export function SiteHeader() {
                   <Sparkles className="absolute -top-1 -right-1 h-2 w-2 sm:h-3 sm:w-3 text-yellow-500 animate-pulse" />
                 </div>
                 <span className="font-bold text-lg sm:text-xl bolt-gradient-text hidden xs:block truncate max-w-[80px] sm:max-w-none">
-                  DocMagic
+                  DraftDeckAI
                 </span>
               </Link>
             </TooltipWithShortcut>
@@ -114,7 +114,7 @@ export function SiteHeader() {
                       <FileText className="h-5 w-5 bolt-gradient-text" />
                       <Sparkles className="absolute -top-0.5 -right-0.5 h-2 w-2 text-yellow-500 animate-pulse" />
                     </div>
-                    DocMagic
+                    DraftDeckAI
                   </SheetTitle>
                   <SheetDescription className="text-sm text-muted-foreground">
                     Access all document creation tools
@@ -226,7 +226,7 @@ export function SiteHeader() {
                             className="flex items-center gap-2"
                           >
                             <Zap className="h-4 w-4" />
-                            Sign In to DocMagic
+                            Sign In to DraftDeckAI
                           </Link>
                         </Button>
                       </SheetClose>
@@ -270,7 +270,7 @@ export function SiteHeader() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
             {/* PWA Install Button */}
-            <TooltipWithShortcut content="Install DocMagic as an app on your device">
+            <TooltipWithShortcut content="Install DraftDeckAI as an app on your device">
               <PWAInstallButton variant="ghost" size="sm" showText={false} />
             </TooltipWithShortcut>
 

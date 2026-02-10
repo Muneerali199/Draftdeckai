@@ -51,7 +51,7 @@ export function AuthGuard({
 
   const activityDescription = getActivityDescription(activity);
   const defaultTitle = title || `Sign in to ${activityDescription}`;
-  const defaultDescription = description || `You need to be signed in to ${activityDescription}. Join thousands of professionals using DocMagic.`;
+  const defaultDescription = description || `You need to be signed in to ${activityDescription}. Join thousands of professionals using DraftDeckAI.`;
 
   return (
     <div className={className}>
@@ -115,7 +115,7 @@ export function CreateDocumentGuard({
     <AuthGuard
       activity="create_document"
       title="Sign in to create documents"
-      description="Start creating professional documents with AI assistance. Join thousands of professionals using DocMagic."
+      description="Start creating professional documents with AI assistance. Join thousands of professionals using DraftDeckAI."
       className={className}
     >
       {children}

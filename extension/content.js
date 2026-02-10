@@ -1,10 +1,10 @@
-// DocMagic Smart Content Script
+// DraftDeckAI Smart Content Script
 // Auto-detects and crawls coding problems with AI assistance
 
 (function() {
     'use strict';
     
-    console.log('🚀 DocMagic Smart Extension activated!');
+    console.log('🚀 DraftDeckAI Smart Extension activated!');
     
     // Check if extension context is valid on load
     if (!chrome.runtime || !chrome.runtime.id) {
@@ -54,18 +54,18 @@
     function injectHelper(platform) {
         // Create floating helper button
         const helperButton = document.createElement('div');
-        helperButton.id = 'docmagic-helper';
+        helperButton.id = 'draftdeckai-helper';
         helperButton.innerHTML = `
-            <button class="docmagic-btn">
-                <span class="docmagic-icon">${platform === 'linkedin' ? '👔' : '📚'}</span>
-                <span class="docmagic-text">${platform === 'linkedin' ? 'Optimize Profile' : 'Get AI Help'}</span>
+            <button class="draftdeckai-btn">
+                <span class="draftdeckai-icon">${platform === 'linkedin' ? '👔' : '📚'}</span>
+                <span class="draftdeckai-text">${platform === 'linkedin' ? 'Optimize Profile' : 'Get AI Help'}</span>
             </button>
         `;
         
         document.body.appendChild(helperButton);
         
         // Add click handler
-        helperButton.querySelector('.docmagic-btn').addEventListener('click', () => {
+        helperButton.querySelector('.draftdeckai-btn').addEventListener('click', () => {
             const problemData = extractProblemData(platform);
             showHelpModal(problemData);
         });
@@ -202,7 +202,7 @@
                 console.log('🔄 Page changed, re-initializing...');
                 
                 // Remove old helper if exists
-                const oldHelper = document.getElementById('docmagic-helper');
+                const oldHelper = document.getElementById('draftdeckai-helper');
                 if (oldHelper) oldHelper.remove();
                 
                 // Re-inject helper
@@ -219,36 +219,36 @@
     function showHelpModal(problemData) {
         // Create modal
         const modal = document.createElement('div');
-        modal.id = 'docmagic-modal';
+        modal.id = 'draftdeckai-modal';
         modal.innerHTML = `
-            <div class="docmagic-modal-overlay">
-                <div class="docmagic-modal-content">
-                    <div class="docmagic-modal-header">
-                        <h2>📚 DocMagic AI Assistant</h2>
-                        <button class="docmagic-close">&times;</button>
+            <div class="draftdeckai-modal-overlay">
+                <div class="draftdeckai-modal-content">
+                    <div class="draftdeckai-modal-header">
+                        <h2>📚 DraftDeckAI AI Assistant</h2>
+                        <button class="draftdeckai-close">&times;</button>
                     </div>
-                    <div class="docmagic-modal-body">
+                    <div class="draftdeckai-modal-body">
                         <h3>${problemData.title}</h3>
-                        <div class="docmagic-actions">
-                            <button class="docmagic-action-btn" data-action="hint">
+                        <div class="draftdeckai-actions">
+                            <button class="draftdeckai-action-btn" data-action="hint">
                                 💡 Get Hint
                             </button>
-                            <button class="docmagic-action-btn" data-action="approach">
+                            <button class="draftdeckai-action-btn" data-action="approach">
                                 🧩 Show Approach
                             </button>
-                            <button class="docmagic-action-btn" data-action="solution">
+                            <button class="draftdeckai-action-btn" data-action="solution">
                                 ✅ Full Solution
                             </button>
-                            <button class="docmagic-action-btn" data-action="complexity">
+                            <button class="draftdeckai-action-btn" data-action="complexity">
                                 ⏱️ Complexity Analysis
                             </button>
                             ${problemData.platform === 'linkedin' ? `
-                            <button class="docmagic-action-btn" data-action="optimize-profile" style="background: #0A66C2; color: white;">
+                            <button class="draftdeckai-action-btn" data-action="optimize-profile" style="background: #0A66C2; color: white;">
                                 🚀 Optimize Profile
                             </button>
                             ` : ''}
                         </div>
-                        <div id="docmagic-result" class="docmagic-result"></div>
+                        <div id="draftdeckai-result" class="draftdeckai-result"></div>
                     </div>
                 </div>
             </div>
@@ -257,17 +257,17 @@
         document.body.appendChild(modal);
         
         // Add event listeners
-        modal.querySelector('.docmagic-close').addEventListener('click', () => {
+        modal.querySelector('.draftdeckai-close').addEventListener('click', () => {
             modal.remove();
         });
         
-        modal.querySelector('.docmagic-modal-overlay').addEventListener('click', (e) => {
-            if (e.target.classList.contains('docmagic-modal-overlay')) {
+        modal.querySelector('.draftdeckai-modal-overlay').addEventListener('click', (e) => {
+            if (e.target.classList.contains('draftdeckai-modal-overlay')) {
                 modal.remove();
             }
         });
         
-        modal.querySelectorAll('.docmagic-action-btn').forEach(btn => {
+        modal.querySelectorAll('.draftdeckai-action-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const action = btn.dataset.action;
                 await handleAction(action, problemData);
@@ -278,7 +278,7 @@
     // Show reload notification
     function showReloadNotification() {
         const notification = document.createElement('div');
-        notification.id = 'docmagic-reload-notification';
+        notification.id = 'draftdeckai-reload-notification';
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -294,7 +294,7 @@
             max-width: 300px;
         `;
         notification.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 8px;">⚠️ DocMagic Extension Disconnected</div>
+            <div style="font-weight: 600; margin-bottom: 8px;">⚠️ DraftDeckAI Extension Disconnected</div>
             <div style="margin-bottom: 12px; font-size: 13px;">Please refresh the page to reconnect.</div>
             <button onclick="location.reload()" style="width: 100%; padding: 8px; background: #EF4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                 Refresh Page Now
@@ -324,7 +324,7 @@
     
     // Smart action handler - uses background script with Gemini AI
     async function handleAction(action, problemData) {
-        const resultDiv = document.getElementById('docmagic-result');
+        const resultDiv = document.getElementById('draftdeckai-result');
         if (!resultDiv) {
             console.error('Result div not found!');
             return;
@@ -333,7 +333,7 @@
         // Check if extension context is still valid
         if (!isExtensionContextValid()) {
             resultDiv.innerHTML = `
-                <div class="docmagic-error">
+                <div class="draftdeckai-error">
                     ❌ Extension was reloaded. Please refresh this page (F5) to reconnect.
                     <br><br>
                     <button onclick="location.reload()" style="padding: 0.5rem 1rem; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
@@ -344,7 +344,7 @@
             return;
         }
         
-        resultDiv.innerHTML = '<div class="docmagic-loading">🤖 AI is analyzing your problem...</div>';
+        resultDiv.innerHTML = '<div class="draftdeckai-loading">🤖 AI is analyzing your problem...</div>';
         
         try {
             const prompts = {
@@ -362,7 +362,7 @@
             // Double-check context before sending
             if (!isExtensionContextValid()) {
                 resultDiv.innerHTML = `
-                    <div class="docmagic-error">
+                    <div class="draftdeckai-error">
                         ❌ Extension connection lost. 
                         <button onclick="location.reload()" style="margin-left: 10px; padding: 0.5rem 1rem; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer;">
                             Refresh Page
@@ -382,7 +382,7 @@
                         // Check if it's a context invalidation error
                         if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
                             resultDiv.innerHTML = `
-                                <div class="docmagic-error">
+                                <div class="draftdeckai-error">
                                     ❌ Extension was reloaded. Please refresh this page.
                                     <br><br>
                                     <button onclick="location.reload()" style="padding: 0.5rem 1rem; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
@@ -391,7 +391,7 @@
                                 </div>
                             `;
                         } else {
-                            resultDiv.innerHTML = `<div class="docmagic-error">❌ Extension error: ${chrome.runtime.lastError.message}</div>`;
+                            resultDiv.innerHTML = `<div class="draftdeckai-error">❌ Extension error: ${chrome.runtime.lastError.message}</div>`;
                         }
                         return;
                     }
@@ -399,23 +399,23 @@
                     console.log('📥 Received response:', response);
                     
                     if (!response) {
-                        resultDiv.innerHTML = '<div class="docmagic-error">❌ No response from AI. Please check your API key in settings.</div>';
+                        resultDiv.innerHTML = '<div class="draftdeckai-error">❌ No response from AI. Please check your API key in settings.</div>';
                         return;
                     }
                     
                     if (response.error) {
-                        resultDiv.innerHTML = `<div class="docmagic-error">❌ ${response.error}</div>`;
+                        resultDiv.innerHTML = `<div class="draftdeckai-error">❌ ${response.error}</div>`;
                     } else if (response.data) {
                         displayResult(action, response.data, resultDiv);
                     } else {
-                        resultDiv.innerHTML = '<div class="docmagic-error">❌ Invalid response from AI.</div>';
+                        resultDiv.innerHTML = '<div class="draftdeckai-error">❌ Invalid response from AI.</div>';
                     }
                 }
             );
             
         } catch (error) {
             console.error('Error in handleAction:', error);
-            resultDiv.innerHTML = `<div class="docmagic-error">❌ Failed to get AI help: ${error.message}</div>`;
+            resultDiv.innerHTML = `<div class="draftdeckai-error">❌ Failed to get AI help: ${error.message}</div>`;
         }
     }
     
@@ -446,11 +446,11 @@
     // Show result inline on the page
     function showInlineResult(title, data) {
         // Remove existing result if any
-        const existing = document.getElementById('docmagic-inline-result');
+        const existing = document.getElementById('draftdeckai-inline-result');
         if (existing) existing.remove();
         
         const resultBox = document.createElement('div');
-        resultBox.id = 'docmagic-inline-result';
+        resultBox.id = 'draftdeckai-inline-result';
         resultBox.style.cssText = `
             position: fixed;
             top: 80px;
@@ -504,11 +504,11 @@
     // Display MCP Analysis
     function displayMCPAnalysis(analysis) {
         // Remove existing analysis if any
-        const existing = document.getElementById('docmagic-mcp-analysis');
+        const existing = document.getElementById('draftdeckai-mcp-analysis');
         if (existing) existing.remove();
         
         const analysisBox = document.createElement('div');
-        analysisBox.id = 'docmagic-mcp-analysis';
+        analysisBox.id = 'draftdeckai-mcp-analysis';
         analysisBox.style.cssText = `
             position: fixed;
             bottom: 20px;
@@ -558,11 +558,11 @@
     
     // Update voice indicator
     function updateVoiceIndicator(isListening) {
-        let indicator = document.getElementById('docmagic-voice-indicator');
+        let indicator = document.getElementById('draftdeckai-voice-indicator');
         
         if (!indicator) {
             indicator = document.createElement('div');
-            indicator.id = 'docmagic-voice-indicator';
+            indicator.id = 'draftdeckai-voice-indicator';
             indicator.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -649,11 +649,11 @@
     
     function showJobAssistant(jobData) {
         // Remove existing assistant
-        const existing = document.getElementById('docmagic-job-assistant');
+        const existing = document.getElementById('draftdeckai-job-assistant');
         if (existing) existing.remove();
         
         const assistant = document.createElement('div');
-        assistant.id = 'docmagic-job-assistant';
+        assistant.id = 'draftdeckai-job-assistant';
         assistant.style.cssText = `
             position: fixed;
             bottom: 20px;
@@ -670,7 +670,7 @@
         
         assistant.innerHTML = `
             <div style="font-weight: 700; font-size: 1.1em; margin-bottom: 8px;">
-                🎯 DocMagic Job Assistant
+                🎯 DraftDeckAI Job Assistant
             </div>
             <div style="font-size: 0.9em; margin-bottom: 12px; opacity: 0.95;">
                 Detected: ${jobData.title} at ${jobData.company}
@@ -855,14 +855,14 @@
         
         switch(action) {
             case 'hint':
-                html = `<div class="docmagic-hint">
+                html = `<div class="draftdeckai-hint">
                     <h4>💡 Hint:</h4>
                     <p>${data.hint || data.content || 'Think about the problem step by step...'}</p>
                 </div>`;
                 break;
                 
             case 'approach':
-                html = `<div class="docmagic-approach">
+                html = `<div class="draftdeckai-approach">
                     <h4>🧩 Approach:</h4>
                     <p>${data.approach || data.content || 'Analyzing problem...'}</p>
                 </div>`;
@@ -870,11 +870,11 @@
                 
             case 'solution':
                 const code = data.code || data.content || '// Solution code here';
-                html = `<div class="docmagic-solution">
+                html = `<div class="draftdeckai-solution">
                     <h4>✅ Solution:</h4>
                     ${data.approach ? `<p><strong>Approach:</strong> ${data.approach}</p>` : ''}
                     <pre style="background: #f5f5f5; padding: 10px; border-radius: 6px; overflow-x: auto;"><code>${escapeHtml(code)}</code></pre>
-                    <button class="docmagic-copy-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(code)}'))" style="margin-top: 10px; padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    <button class="draftdeckai-copy-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(code)}'))" style="margin-top: 10px; padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 6px; cursor: pointer;">
                         📋 Copy Code
                     </button>
                     ${data.timeComplexity ? `<p style="margin-top: 10px;"><strong>⏱️ Time:</strong> ${data.timeComplexity}</p>` : ''}
@@ -882,7 +882,7 @@
                 </div>`;
                 break;
                 
-                html = `<div class="docmagic-complexity">
+                html = `<div class="draftdeckai-complexity">
                     <h4>⏱️ Complexity Analysis:</h4>
                     <p><strong>Time:</strong> ${data.timeComplexity || data.content || 'O(n)'}</p>
                     <p><strong>Space:</strong> ${data.spaceComplexity || 'O(1)'}</p>
@@ -891,7 +891,7 @@
                 break;
 
             case 'optimize-profile':
-                html = `<div class="docmagic-solution">
+                html = `<div class="draftdeckai-solution">
                     <h4>🚀 Profile Optimization:</h4>
                     <div style="white-space: pre-wrap;">${data.content || data.reply || JSON.stringify(data, null, 2)}</div>
                 </div>`;

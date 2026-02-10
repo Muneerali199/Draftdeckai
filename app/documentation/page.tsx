@@ -8,7 +8,7 @@ export default function DocumentationPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Getting Started</h2>
             <p className="text-gray-600">
-              Welcome to DocMagic! This documentation will help you get started with creating and managing your documents.
+              Welcome to DraftDeckAI! This documentation will help you get started with creating and managing your documents.
             </p>
           </section>
           
@@ -25,7 +25,7 @@ export default function DocumentationPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Need Help?</h2>
             <p className="text-gray-600">
-              If you need assistance, please contact our support team at support@docmagic.com
+              If you need assistance, please contact our support team at support@draftdeckai.com
             </p>
           </section>
         </div>

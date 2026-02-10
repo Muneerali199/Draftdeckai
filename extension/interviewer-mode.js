@@ -1,4 +1,4 @@
-// DocMagic Interviewer Mode
+// DraftDeckAI Interviewer Mode
 // Interactive interviewer that asks questions, evaluates answers, and provides feedback
 
 class InterviewerMode {

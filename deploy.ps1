@@ -1,7 +1,7 @@
-# DocMagic Production Deployment Script
+# DraftDeckAI Production Deployment Script
 # PowerShell script to build and deploy to production
 
-Write-Host "🚀 DocMagic Production Deployment" -ForegroundColor Cyan
+Write-Host "🚀 DraftDeckAI Production Deployment" -ForegroundColor Cyan
 Write-Host "=================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -110,4 +110,4 @@ Write-Host "2. Configure custom domain (optional)" -ForegroundColor White
 Write-Host "3. Test all features in production" -ForegroundColor White
 Write-Host "4. Monitor logs for errors" -ForegroundColor White
 Write-Host ""
-Write-Host "🎉 DocMagic is ready for production!" -ForegroundColor Green
+Write-Host "🎉 DraftDeckAI is ready for production!" -ForegroundColor Green

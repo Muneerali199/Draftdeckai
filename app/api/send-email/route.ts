@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     // Send email
     const info = await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail || process.env.EMAIL_FROM || 'noreply@docmagic.com'}>`,
+      from: `"${fromName}" <${fromEmail || process.env.EMAIL_FROM || 'noreply@draftdeckai.com'}>`,
       to,
       subject,
       html: `${formattedContent}${personalMessage}`,

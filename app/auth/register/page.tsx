@@ -383,7 +383,7 @@ function RegisterForm() {
               <h1 className="modern-display text-2xl sm:text-3xl font-bold mb-2 text-shadow-professional animate-fade-in-up">
                 Create Your{" "}
                 <span className="bolt-gradient-text animate-text-glow">
-                  DocMagic
+                  DraftDeckAI
                 </span>{" "}
                 Account
               </h1>
@@ -799,7 +799,7 @@ function RegisterForm() {
                   type="submit"
                   disabled={isLoading || isOAuthLoading !== null || !isFormValid}
                   className="w-full bolt-gradient text-white font-semibold py-4 sm:py-5 rounded-xl relative text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:scale-105 transition-all duration-300 focus:ring-4 focus:ring-blue-300 focus:outline-none"
-                  aria-label="Create your DocMagic account"
+                  aria-label="Create your DraftDeckAI account"
                 >
                   <div className="flex items-center justify-center gap-3 relative z-20">
                     {isLoading ? (

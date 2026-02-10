@@ -81,7 +81,7 @@ export default function PublicResumePage() {
               {resumeData.name || "Professional Resume"}
             </h1>
             <p className="text-sm text-gray-600">
-              {subdomain}.docmagic.app
+              {subdomain}.draftdeckai.app
             </p>
           </div>
           <div className="flex gap-2">
@@ -108,7 +108,7 @@ export default function PublicResumePage() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600 mb-4">
-            Powered by <Link href="/" className="font-semibold text-blue-600 hover:underline">DocMagic</Link>
+            Powered by <Link href="/" className="font-semibold text-blue-600 hover:underline">DraftDeckAI</Link>
           </p>
           <Link href="/resume">
             <Button className="bolt-gradient text-white shadow-lg hover:scale-105 transition-transform">

@@ -70,7 +70,7 @@ export default function SettingsPage() {
                 size="lg"
               >
                 <Zap className="h-5 w-5 mr-2" />
-                Sign In to DocMagic
+                Sign In to DraftDeckAI
               </Button>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function SettingsPage() {
           </div>
           
           <h1 className="text-3xl font-bold mb-2">
-            Your <span className="bg-gradient-to-r from-yellow-400 to-blue-600 bg-clip-text text-transparent">DocMagic</span> Account
+            Your <span className="bg-gradient-to-r from-yellow-400 to-blue-600 bg-clip-text text-transparent">DraftDeckAI</span> Account
           </h1>
           <p className="text-muted-foreground">
             Manage your profile, subscription, and preferences

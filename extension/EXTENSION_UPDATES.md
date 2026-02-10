@@ -1,4 +1,4 @@
-# 🚀 DocMagic Extension v3.0 - REVOLUTIONARY UPDATE!
+# 🚀 DraftDeckAI Extension v3.0 - REVOLUTIONARY UPDATE!
 
 ## 🎉 GAME-CHANGING FEATURES ADDED!
 

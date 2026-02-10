@@ -1182,7 +1182,7 @@ Keywords for ATS: ${jobData.keywords?.join(', ') || jobData.skills?.join(', ') |
 
     const shareData = {
       title: `${resumeData?.name || 'My'} Professional ${isCV ? 'CV' : 'Resume'}`,
-      text: `Check out my professional ${isCV ? 'CV' : 'resume'} created with DocMagic!`,
+      text: `Check out my professional ${isCV ? 'CV' : 'resume'} created with DraftDeckAI!`,
       url: publishedUrl,
     };
 
@@ -1222,7 +1222,7 @@ Keywords for ATS: ${jobData.keywords?.join(', ') || jobData.skills?.join(', ') |
   const shareViaEmail = () => {
     if (!publishedUrl) return;
     const subject = encodeURIComponent(`My Professional ${isCV ? 'CV' : 'Resume'}`);
-    const body = encodeURIComponent(`Hi,\n\nI'd like to share my professional ${isCV ? 'CV' : 'resume'} with you:\n\n${publishedUrl}\n\nCreated with DocMagic - Professional Document Builder`);
+    const body = encodeURIComponent(`Hi,\n\nI'd like to share my professional ${isCV ? 'CV' : 'resume'} with you:\n\n${publishedUrl}\n\nCreated with DraftDeckAI - Professional Document Builder`);
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
@@ -2553,7 +2553,7 @@ Certified AWS Solutions Architect
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
                                 <span className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">
-                                  {publishedUrl || `${subdomain}.docmagic.app`}
+                                  {publishedUrl || `${subdomain}.draftdeckai.app`}
                                 </span>
                               </div>
                               <div className="flex gap-2">
@@ -2679,7 +2679,7 @@ Certified AWS Solutions Architect
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Free Subdomain</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">yourname.docmagic.app</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">yourname.draftdeckai.app</p>
                 </div>
               </div>
 
@@ -2694,7 +2694,7 @@ Certified AWS Solutions Architect
                     className="flex-1"
                   />
                   <span className="flex items-center text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                    .docmagic.app
+                    .draftdeckai.app
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">

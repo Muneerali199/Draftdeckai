@@ -1,28 +1,28 @@
-# 🪄 Contributing to DocMagic
-Thank you for your interest in contributing to **DocMagic**!   
+# 🪄 Contributing to DraftDeckAI
+Thank you for your interest in contributing to **DraftDeckAI**!   
 We’re thrilled to have you onboard. Your ideas, code, and feedback are all valuable to us.
 
 This document will help you get started with contributing in a smooth and respectful way.
 
 <div align="center">
 
-**Welcome to DocMagic - Where AI Meets Document Creation Magic!** ✨
+**Welcome to DraftDeckAI - Where AI Meets Document Creation Magic!** ✨
 
-![DocMagic Contributors](https://img.shields.io/github/contributors/Muneerali199/DocMagic?style=for-the-badge&color=6366f1)
-![GitHub Issues](https://img.shields.io/github/issues/Muneerali199/DocMagic?style=for-the-badge&color=10b981)
+![DraftDeckAI Contributors](https://img.shields.io/github/contributors/Muneerali199/DraftDeckAI?style=for-the-badge&color=6366f1)
+![GitHub Issues](https://img.shields.io/github/issues/Muneerali199/DraftDeckAI?style=for-the-badge&color=10b981)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)
 
 </div>
 
-Whether you're a seasoned developer, a design enthusiast, a documentation wizard, or someone taking their first steps into open source - **we wholeheartedly welcome you!** This guide will help you make meaningful contributions to DocMagic with confidence and joy. 🚀
+Whether you're a seasoned developer, a design enthusiast, a documentation wizard, or someone taking their first steps into open source - **we wholeheartedly welcome you!** This guide will help you make meaningful contributions to DraftDeckAI with confidence and joy. 🚀
 
-> 💡 **New to open source?** Perfect! DocMagic is designed to be contributor-friendly. We provide mentorship, detailed feedback, and celebrate every contribution-no matter how small!
+> 💡 **New to open source?** Perfect! DraftDeckAI is designed to be contributor-friendly. We provide mentorship, detailed feedback, and celebrate every contribution-no matter how small!
 
 ---
 
 ## 🎯 Table of Contents
 
-- [🌟 About DocMagic](#-about-docmagic)
+- [🌟 About DraftDeckAI](#-about-draftdeckai)
 - [🌟 GirlScript Summer of Code 2025 (GSSoC)](#-girlscript-summer-of-code-2025-gssoc)
 - [🚀 Quick Start Guide](#-quick-start-guide)
 - [🔍 Finding Your First Issue](#-finding-your-first-issue)
@@ -36,9 +36,9 @@ Whether you're a seasoned developer, a design enthusiast, a documentation wizard
 
 ---
 
-## 🌟 About DocMagic
+## 🌟 About DraftDeckAI
 
-**DocMagic** is a cutting-edge, open-source AI-powered document creation platform that transforms how professionals create stunning documents. Built with modern technologies and community-first principles, we're revolutionizing document generation for the world.
+**DraftDeckAI** is a cutting-edge, open-source AI-powered document creation platform that transforms how professionals create stunning documents. Built with modern technologies and community-first principles, we're revolutionizing document generation for the world.
 
 ### 🛠️ **Tech Stack**
 
@@ -49,17 +49,17 @@ Whether you're a seasoned developer, a design enthusiast, a documentation wizard
 - **Payments**: Stripe
 - **Deployment**: Netlify/Vercel
 
-**🌐 Live Demo**: [https://doc-magic-heob.vercel.app/](https://doc-magic-heob.vercel.app/)
+**🌐 Live Demo**: [https://draftdeckai.com/](https://draftdeckai.com/)
 
 ---
 
 ## 🌟 GirlScript Summer of Code 2025 (GSSoC)
 
-**DocMagic is proudly participating in GirlScript Summer of Code 2025** 🎉
+**DraftDeckAI is proudly participating in GirlScript Summer of Code 2025** 🎉
 
 If you're a GSSoC contributor:
 
-- **Look for labels**: Search for issues labeled `GSSoC 2025`, `good first issue`, and `documentation` in [issues](https://github.com/Muneerali199/DocMagic/issues)
+- **Look for labels**: Search for issues labeled `GSSoC 2025`, `good first issue`, and `documentation` in [issues](https://github.com/Muneerali199/DraftDeckAI/issues)
 - **Ask to be assigned**: Always request assignment before starting work on any issue
 - **Mention GSSoC**: Include "GSSoC" in your PR description to help us track contributions
 - **We're excited to mentor and grow with you!** 🚀
@@ -78,7 +78,7 @@ Ready to contribute? Here's the fastest way to get started:
 1.Fork the repository using the **Fork** button (top right of the GitHub page).
 2.Clone your fork:
    ```bash
-   git clone https://github.com/your-username/DocMagic.git 
+   git clone https://github.com/your-username/DraftDeckAI.git 
 ```
 📝 Note: Replace your-username with your actual GitHub username.
 
@@ -101,7 +101,7 @@ npm install
 
 ### 3️⃣ **Set Up Environment**
 
-DocMagic requires several API keys for full functionality. Follow these steps:
+DraftDeckAI requires several API keys for full functionality. Follow these steps:
 
 #### **Create Environment File**
 
@@ -113,7 +113,7 @@ Copy the following into your `.env.local` file and replace the placeholder value
 
 ```bash
 # App Configuration
-NEXT_PUBLIC_APP_NAME=DocMagic
+NEXT_PUBLIC_APP_NAME=DraftDeckAI
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Supabase (Database & Auth) - Required
@@ -154,7 +154,7 @@ PEXELS_API_KEY=your_pexels_api_key
 
 **Need Help?** 🤝 Contact our mentors and Project Admins:
 - Comment on your assigned issue or PR
-- Reach out on Discord: [DocMagic Community Server]
+- Reach out on Discord: [DraftDeckAI Community Server]
 - Connect on LinkedIn: [Project Admin Profiles]
 - We're here to help you succeed!
 
@@ -164,9 +164,9 @@ PEXELS_API_KEY=your_pexels_api_key
 npm run dev
 ```
 
-### 5️⃣ **Visit Your Local DocMagic**
+### 5️⃣ **Visit Your Local DraftDeckAI**
 
-Open [http://localhost:3000](http://localhost:3000) - you should see DocMagic running locally! 🎉
+Open [http://localhost:3000](http://localhost:3000) - you should see DraftDeckAI running locally! 🎉
 
 ---
 
@@ -188,7 +188,7 @@ New to the project? We've got you covered! Here's how to find the perfect first 
 
 ### 🔍 **How to Find Issues**
 
-1. **Visit our Issues page**: [GitHub Issues](https://github.com/Muneerali199/DocMagic/issues)
+1. **Visit our Issues page**: [GitHub Issues](https://github.com/Muneerali199/DraftDeckAI/issues)
 2. **Filter by labels**: Click on `good first issue` for beginner-friendly tasks
 3. **Read the issue description** carefully
 4. **Ask questions** if anything is unclear
@@ -212,7 +212,7 @@ New to the project? We've got you covered! Here's how to find the perfect first 
 
 ## 🤝 Ways to Contribute
 
-We believe every contribution matters! Here's how you can help make DocMagic even more magical:
+We believe every contribution matters! Here's how you can help make DraftDeckAI even more magical:
 
 | 🎨 **Contribution Type**    | 📝 **Description**                                 | 🎯 **Perfect For**           |
 | --------------------------- | -------------------------------------------------- | ---------------------------- |
@@ -232,7 +232,7 @@ We believe every contribution matters! Here's how you can help make DocMagic eve
 
 ## 🕒 Automated Dependency Updates
 
-DocMagic leverages automated tools to keep its dependencies up-to-date, ensuring security, performance, and compatibility. This process is managed through **Dependabot** and **GitHub Actions**, providing a seamless workflow for maintaining the project’s ecosystem.
+DraftDeckAI leverages automated tools to keep its dependencies up-to-date, ensuring security, performance, and compatibility. This process is managed through **Dependabot** and **GitHub Actions**, providing a seamless workflow for maintaining the project’s ecosystem.
 
 ### 🛠️ Setup and Configuration
 
@@ -331,7 +331,7 @@ chore/dependency-updates
 
 ```bash
 # Add upstream remote (do this once)
-git remote add upstream https://github.com/Muneerali199/DocMagic.git
+git remote add upstream https://github.com/Muneerali199/DraftDeckAI.git
 
 # Sync your fork before starting work
 git checkout main
@@ -616,9 +616,9 @@ We're committed to providing a welcoming and inclusive environment for everyone.
 
 ### 🔗 **Useful Links**
 
-- **Live Demo**: [https://doc-magic-heob.vercel.app/](https://doc-magic-heob.vercel.app/)
-- **About Page**: [https://doc-magic-heob.vercel.app/about](https://doc-magic-heob.vercel.app/about)
-- **GitHub Repository**: [https://github.com/Muneerali199/DocMagic](https://github.com/Muneerali199/DocMagic)
+- **Live Demo**: [https://draftdeckai.com](https://draftdeckai.com)
+- **About Page**: [https://draftdeckai.com/about](https://draftdeckai.com/about)
+- **GitHub Repository**: [https://github.com/Muneerali199/DraftDeckAI](https://github.com/Muneerali199/DraftDeckAI)
 
 ### 🛠️ **Development Resources**
 
@@ -639,7 +639,7 @@ Read our full [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## 📄 License
 
-By contributing to DocMagic, you agree that your contributions will be licensed under the [MIT License](./LICENSE).
+By contributing to DraftDeckAI, you agree that your contributions will be licensed under the [MIT License](./LICENSE).
 
 ### 🙌 Need Help?
 
@@ -652,7 +652,7 @@ We’re here to support each other and grow together! 💬
 
 <div align="center">
 
-**Thank you for being part of the DocMagic community!** ✨
+**Thank you for being part of the DraftDeckAI community!** ✨
 
 _Together, we're making document creation magical for everyone._
 

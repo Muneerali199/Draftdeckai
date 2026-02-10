@@ -1,4 +1,4 @@
-// DocMagic Settings Page Script
+// DraftDeckAI Settings Page Script
 
 // Storage keys
 const STORAGE_KEYS = {
