@@ -14,7 +14,7 @@ export function useSendUpdateEmail() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: emails,
-          subject: 'Latest Updates from DocMagic',
+          subject: 'Latest Updates from DraftDeckAI',
           text: 'Check out our new features and offers!',
           html: '<h2>Latest Updates</h2><p>Check out our new features and offers!</p>'
         })

@@ -59,9 +59,9 @@ export function PWABanner({ className }: PWABannerProps) {
         </div>
         <div className="flex-1 space-y-2">
           <div>
-            <h4 className="text-sm font-semibold">Install DocMagic</h4>
+            <h4 className="text-sm font-semibold">Install DraftDeckAI</h4>
             <p className="text-xs text-muted-foreground">
-              Add DocMagic to your home screen for quick access and offline use.
+              Add DraftDeckAI to your home screen for quick access and offline use.
             </p>
           </div>
           <div className="flex gap-2">

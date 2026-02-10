@@ -18,7 +18,7 @@ export function FeedbackPopup() {
     useEffect(() => {
         const timer = setTimeout(() => {
             // Check if user has already submitted feedback this session
-            const submitted = sessionStorage.getItem('docmagic_feedback_submitted');
+            const submitted = sessionStorage.getItem('draftdeckai_feedback_submitted');
             if (!submitted) {
                 setShowTrigger(true);
             }
@@ -48,7 +48,7 @@ export function FeedbackPopup() {
             // });
 
             setHasSubmitted(true);
-            sessionStorage.setItem('docmagic_feedback_submitted', 'true');
+            sessionStorage.setItem('draftdeckai_feedback_submitted', 'true');
             toast.success('Thank you for your feedback!');
 
             // Close after showing thank you message
@@ -67,7 +67,7 @@ export function FeedbackPopup() {
     const handleClose = () => {
         setIsOpen(false);
         // Hide trigger for current session if closed without submitting
-        sessionStorage.setItem('docmagic_feedback_dismissed', 'true');
+        sessionStorage.setItem('draftdeckai_feedback_dismissed', 'true');
         setShowTrigger(false);
     };
 
@@ -112,13 +112,13 @@ export function FeedbackPopup() {
                                 </div>
                                 <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Thank You!</h4>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    Your feedback helps us improve DocMagic.
+                                    Your feedback helps us improve DraftDeckAI.
                                 </p>
                             </div>
                         ) : (
                             <>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    How's your experience with DocMagic?
+                                    How's your experience with DraftDeckAI?
                                 </p>
 
                                 {/* Rating buttons */}

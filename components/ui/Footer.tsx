@@ -171,13 +171,13 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
           <div className="text-sm sm:text-base text-muted-foreground text-center sm:text-left">
-            © {new Date().getFullYear()} <span className="font-bold text-gray-900 dark:text-white">DocMagic</span>. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-bold text-gray-900 dark:text-white">DraftDeckAI</span>. All rights reserved.
           </div>
           
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
             <span>Made with</span>
             <Heart className="h-4 w-4 text-red-500 fill-current animate-pulse" />
-            <span>by the DocMagic Team</span>
+            <span>by the DraftDeckAI Team</span>
           </div>
         </div>
 

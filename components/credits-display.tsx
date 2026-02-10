@@ -119,7 +119,7 @@ export function CreditsDisplay() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join DocMagic',
+          title: 'Join DraftDeckAI',
           text: 'Create professional documents with AI! Use my referral link:',
           url: referralInfo.referralLink,
         });

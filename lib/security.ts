@@ -137,7 +137,7 @@ export function isAllowedOrigin(origin: string | null, host: string): boolean {
 
   const allowedOrigins = [
     `https://${host}`,
-    'https://docmagic1.netlify.app',
+    'https://draftdeckai.com',
     'https://your-vercel-url.vercel.app',
   ];
 

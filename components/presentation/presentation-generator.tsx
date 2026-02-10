@@ -1066,17 +1066,17 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent('Check out this presentation!');
-    const body = encodeURIComponent(`I created this amazing presentation using DocMagic. Check it out:\n\n${shareUrl}`);
+    const body = encodeURIComponent(`I created this amazing presentation using DraftDeckAI. Check it out:\n\n${shareUrl}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   };
 
   const shareViaWhatsApp = () => {
-    const text = encodeURIComponent(`Check out this presentation I created with DocMagic: ${shareUrl}`);
+    const text = encodeURIComponent(`Check out this presentation I created with DraftDeckAI: ${shareUrl}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const shareViaTwitter = () => {
-    const text = encodeURIComponent('Check out this amazing presentation I created with DocMagic!');
+    const text = encodeURIComponent('Check out this amazing presentation I created with DraftDeckAI!');
     const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
   };
@@ -1092,7 +1092,7 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
   };
 
   const shareViaTelegram = () => {
-    const text = encodeURIComponent('Check out this presentation I created with DocMagic!');
+    const text = encodeURIComponent('Check out this presentation I created with DraftDeckAI!');
     const url = encodeURIComponent(shareUrl);
     window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
   };
@@ -1101,7 +1101,7 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'DocMagic Presentation',
+          title: 'DraftDeckAI Presentation',
           text: 'Check out this presentation I created!',
           url: shareUrl
         });

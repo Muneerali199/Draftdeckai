@@ -226,7 +226,7 @@ export function SiteHeader() {
                             className="flex items-center gap-2"
                           >
                             <Zap className="h-4 w-4" />
-                            Sign In to DocMagic
+                            Sign In to DraftDeckAI
                           </Link>
                         </Button>
                       </SheetClose>
@@ -270,7 +270,7 @@ export function SiteHeader() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
             {/* PWA Install Button */}
-            <TooltipWithShortcut content="Install DocMagic as an app on your device">
+            <TooltipWithShortcut content="Install DraftDeckAI as an app on your device">
               <PWAInstallButton variant="ghost" size="sm" showText={false} />
             </TooltipWithShortcut>
 

@@ -18,7 +18,7 @@ export function FeaturesSection() {
           </div>
 
           <h2 className="modern-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl mb-6 sm:mb-8 leading-tight px-4">
-            <span className="block mb-2">How DocMagic</span>
+            <span className="block mb-2">How DraftDeckAI</span>
             <span className="bolt-gradient-text">Works Its Magic</span>
           </h2>
 

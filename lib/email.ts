@@ -9,7 +9,7 @@ async function createTransporter() {
   const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || '587';
   const user = process.env.EMAIL_USER || process.env.SMTP_USER;
   const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
-  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@docmagic.com';
+  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@draftdeckai.com';
 
   if (host && user && pass) {
     console.log(`[Email] Using SMTP: ${host}:${port}`);
@@ -42,7 +42,7 @@ async function createTransporter() {
  * Get the "from" email address from environment variables
  */
 function getFromAddress(): string {
-  return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'DocMagic <noreply@docmagic.com>';
+  return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'DraftDeckAI <noreply@draftdeckai.com>';
 }
 
 /**
@@ -55,7 +55,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
   try {
     const transporter = await createTransporter();
 
-    const subject = 'Welcome to DocMagic! 🎉';
+    const subject = 'Welcome to DraftDeckAI! 🎉';
     const html = `
 <!DOCTYPE html>
 <html>
@@ -68,14 +68,14 @@ export async function sendWelcomeEmail(to: string, name?: string) {
     <div style="background:#0f172a;border-radius:16px;padding:40px;border:1px solid #1e293b;">
       <!-- Header -->
       <div style="text-align:center;margin-bottom:32px;">
-        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#facc15,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DocMagic</h1>
+        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#facc15,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DraftDeckAI</h1>
         <p style="color:#94a3b8;font-size:14px;margin-top:8px;">AI-powered document creation</p>
       </div>
       
       <!-- Content -->
       <h2 style="color:#ffffff;font-size:22px;margin-bottom:16px;">Welcome${name ? `, ${name}` : ''}! 🎉</h2>
       <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:16px;">
-        Thank you for joining <strong style="color:#facc15;">DocMagic</strong>! You're now ready to create professional documents with AI.
+        Thank you for joining <strong style="color:#facc15;">DraftDeckAI</strong>! You're now ready to create professional documents with AI.
       </p>
       <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:24px;">
         Create stunning resumes, presentations, cover letters, and diagrams in seconds.
@@ -83,7 +83,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
       
       <!-- CTA Button -->
       <div style="text-align:center;margin:32px 0;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://docmagic.me'}" 
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://draftdeckai.com'}" 
            style="display:inline-block;background:linear-gradient(90deg,#facc15,#3b82f6);color:#000;padding:14px 32px;border-radius:12px;font-weight:600;text-decoration:none;font-size:16px;">
           Start Creating ✨
         </a>
@@ -102,7 +102,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
 </body>
 </html>`;
 
-    const text = `Welcome${name ? `, ${name}` : ''}!\n\nThank you for joining DocMagic! You're now ready to create professional documents with AI.\n\nCreate stunning resumes, presentations, cover letters, and diagrams in seconds.\n\nVisit: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://docmagic.me'}\n\nCheers,\nThe DocMagic Team`;
+    const text = `Welcome${name ? `, ${name}` : ''}!\n\nThank you for joining DraftDeckAI! You're now ready to create professional documents with AI.\n\nCreate stunning resumes, presentations, cover letters, and diagrams in seconds.\n\nVisit: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://draftdeckai.com'}\n\nCheers,\nThe DraftDeckAI Team`;
 
     const info = await transporter.sendMail({
       from: getFromAddress(),
@@ -133,7 +133,7 @@ export async function sendVerificationEmail(to: string, confirmationUrl: string,
     const transporter = await createTransporter();
 
     const safeName = name ? `, ${name}` : '';
-    const subject = 'Verify your email to start using DocMagic ✉️';
+    const subject = 'Verify your email to start using DraftDeckAI ✉️';
 
     const html = `
 <!DOCTYPE html>
@@ -147,14 +147,14 @@ export async function sendVerificationEmail(to: string, confirmationUrl: string,
     <div style="background:#0f172a;border-radius:16px;padding:40px;border:1px solid #1e293b;">
       <!-- Header -->
       <div style="text-align:center;margin-bottom:32px;">
-        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#22c55e,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DocMagic</h1>
+        <h1 style="margin:0;font-size:28px;background:linear-gradient(90deg,#22c55e,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">DraftDeckAI</h1>
         <p style="color:#94a3b8;font-size:14px;margin-top:8px;">AI-powered document creation</p>
       </div>
       
       <!-- Content -->
-      <h2 style="color:#ffffff;font-size:22px;margin-bottom:16px;">Welcome to DocMagic 👋${safeName}</h2>
+      <h2 style="color:#ffffff;font-size:22px;margin-bottom:16px;">Welcome to DraftDeckAI 👋${safeName}</h2>
       <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:16px;">
-        Thanks for joining <strong style="color:#22c55e;">DocMagic</strong>! You're just one step away from creating powerful resumes and documents with AI.
+        Thanks for joining <strong style="color:#22c55e;">DraftDeckAI</strong>! You're just one step away from creating powerful resumes and documents with AI.
       </p>
       <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:24px;">
         Please verify your email address to activate your account.
@@ -177,17 +177,17 @@ export async function sendVerificationEmail(to: string, confirmationUrl: string,
       <!-- Footer -->
       <hr style="border:none;border-top:1px solid #1e293b;margin:32px 0;">
       <p style="color:#64748b;font-size:12px;text-align:center;">
-        If you didn't create a DocMagic account, you can safely ignore this email.
+        If you didn't create a DraftDeckAI account, you can safely ignore this email.
       </p>
       <p style="color:#64748b;font-size:12px;text-align:center;margin-top:16px;">
-        © 2026 DocMagic · docmagic.me
+        © 2026 DraftDeckAI · draftdeckai.com
       </p>
     </div>
   </div>
 </body>
 </html>`;
 
-    const text = `Welcome to DocMagic${safeName}!\n\nThanks for joining DocMagic! You're just one step away from creating powerful resumes and documents with AI.\n\nPlease verify your email to activate your account:\n${confirmationUrl}\n\nIf you didn't create a DocMagic account, you can safely ignore this email.\n\n© 2026 DocMagic`;
+    const text = `Welcome to DraftDeckAI${safeName}!\n\nThanks for joining DraftDeckAI! You're just one step away from creating powerful resumes and documents with AI.\n\nPlease verify your email to activate your account:\n${confirmationUrl}\n\nIf you didn't create a DraftDeckAI account, you can safely ignore this email.\n\n© 2026 DraftDeckAI`;
 
     const info = await transporter.sendMail({
       from: getFromAddress(),

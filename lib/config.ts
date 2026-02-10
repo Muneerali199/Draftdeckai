@@ -1,7 +1,7 @@
 // lib/config.ts
 
 // Primary production URL (your canonical domain)
-const PRODUCTION_URL = "https://docmagic1.netlify.app";
+const PRODUCTION_URL = "https://draftdeckai.com";
 
 // Environment detection helpers
 const isProduction = process.env.NODE_ENV === "production";

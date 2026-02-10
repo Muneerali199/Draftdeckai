@@ -68,7 +68,7 @@ export default function PricingPlans() {
     {
       id: '1',
       name: 'Free',
-      description: 'Perfect for trying out DocMagic',
+      description: 'Perfect for trying out DraftDeckAI',
       plan_type: 'individual',
       billing_period: 'monthly',
       price: 0,
@@ -396,7 +396,7 @@ export default function PricingPlans() {
           <div>
             <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
             <p className="text-muted-foreground">
-              We offer a 30-day money-back guarantee. If you're not satisfied with DocMagic, contact us within 30 days for a full refund.
+              We offer a 30-day money-back guarantee. If you're not satisfied with DraftDeckAI, contact us within 30 days for a full refund.
             </p>
           </div>
         </div>
