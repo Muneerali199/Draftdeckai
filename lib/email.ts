@@ -95,7 +95,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
         If you have any questions, just reply to this email—we're happy to help!
       </p>
       <p style="color:#64748b;font-size:12px;text-align:center;margin-top:16px;">
-        © 2026 DocMagic · docmagic.me
+        © 2026 DraftDeckAI · draftdeckai.com
       </p>
     </div>
   </div>

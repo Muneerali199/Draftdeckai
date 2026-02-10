@@ -22,7 +22,7 @@ export default function Footer() {
             <div className="flex items-center justify-center sm:justify-start gap-2">
               <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600 dark:text-blue-400" />
               <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                DocMagic
+                DraftDeckAI
               </h3>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xs mx-auto sm:mx-0">
