@@ -17,10 +17,10 @@
   "homepage": "https://draftdeckai.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Muneerali199/DocMagic.git"
+    "url": "https://github.com/Muneerali199/DraftDeckAI.git"
   },
   "bugs": {
-    "url": "https://github.com/Muneerali199/DocMagic/issues"
+    "url": "https://github.com/Muneerali199/DraftDeckAI/issues"
   },
   "license": "MIT",
   "author": "Xenonesis",

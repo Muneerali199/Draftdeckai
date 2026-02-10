@@ -26,7 +26,7 @@ DraftDeckAI is built with:
 - Hosting: Vercel/Netlify
 
 ### How do I self-host DraftDeckAI?
-See our [Self-Hosting Guide](https://github.com/Muneerali199/DocMagic#-self-hosting) in the README for detailed instructions on setting up your own instance.
+See our [Self-Hosting Guide](https://github.com/Muneerali199/DraftDeckAI#-self-hosting) in the README for detailed instructions on setting up your own instance.
 
 ### What are the system requirements?
 - Node.js 18+
@@ -66,10 +66,10 @@ Yes! You can fork the repository and modify the template files to match your pre
 ## 🤝 Community & Support
 
 ### How can I contribute?
-We love contributions! Check out our [Contributing Guidelines](https://github.com/Muneerali199/DocMagic/blob/main/CONTRIBUTING.md) to get started.
+We love contributions! Check out our [Contributing Guidelines](https://github.com/Muneerali199/DraftDeckAI/blob/main/CONTRIBUTING.md) to get started.
 
 ### Where can I report bugs or request features?
-Please open an issue on our [GitHub repository](https://github.com/Muneerali199/DocMagic/issues).
+Please open an issue on our [GitHub repository](https://github.com/Muneerali199/DraftDeckAI/issues).
 
 ### Is there a community or forum?
 Yes! Join our [Discord community](https://discord.gg/draftdeckai) to connect with other users and developers.
@@ -87,7 +87,7 @@ Try these tips:
 1. Check your internet connection
 2. Make sure you're using a supported browser
 3. Clear your browser cache and refresh
-4. If the problem persists, please [report the issue](https://github.com/Muneerali199/DocMagic/issues)
+4. If the problem persists, please [report the issue](https://github.com/Muneerali199/DraftDeckAI/issues)
 
 ### The document formatting looks off
 1. Try downloading in a different format
@@ -107,4 +107,4 @@ Yes! DraftDeckAI provides an API that you can use to integrate with other tools 
 
 ---
 
-Still have questions? Feel free to [open an issue](https://github.com/Muneerali199/DocMagic/issues) or [join our community](https://discord.gg/draftdeckai) for help!
+Still have questions? Feel free to [open an issue](https://github.com/Muneerali199/DraftDeckAI/issues) or [join our community](https://discord.gg/draftdeckai) for help!

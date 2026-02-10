@@ -446,14 +446,14 @@ export default function AboutPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild className="bolt-gradient text-white font-semibold px-6 py-3 rounded-full hover:scale-105 transition-all duration-300">
-                  <Link href="https://github.com/Muneerali199/DocMagic/" className="flex items-center gap-2">
+                  <Link href="https://github.com/Muneerali199/DraftDeckAI/" className="flex items-center gap-2">
                     <Github className="h-4 w-4" />
                     View on GitHub
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="gradient-border px-6 py-3 rounded-full hover:scale-105 transition-all duration-300">
-                  <Link href="https://github.com/Muneerali199/DocMagic/issues" className="flex items-center gap-2">
+                  <Link href="https://github.com/Muneerali199/DraftDeckAI/issues" className="flex items-center gap-2">
                     <Heart className="h-4 w-4" />
                     Start Contributing
                     <ArrowRight className="h-4 w-4" />
@@ -713,7 +713,7 @@ const communityLinks = [
   {
     name: "GitHub",
     description: "Source code & issues",
-    href: "https://github.com/Muneerali199/DocMagic",
+    href: "https://github.com/Muneerali199/DraftDeckAI",
     icon: <Github className="h-6 w-6 text-white" />,
     gradientClass: "sunset-gradient"
   },
@@ -727,7 +727,7 @@ const communityLinks = [
   {
     name: "Documentation",
     description: "Guides & tutorials",
-    href: "https://github.com/Muneerali199/DocMagic/blob/main/README.md",
+    href: "https://github.com/Muneerali199/DraftDeckAI/blob/main/README.md",
     icon: <BookOpen className="h-6 w-6 text-white" />,
     gradientClass: "forest-gradient"
   },

@@ -59,7 +59,7 @@ Whether you're a seasoned developer, a design enthusiast, a documentation wizard
 
 If you're a GSSoC contributor:
 
-- **Look for labels**: Search for issues labeled `GSSoC 2025`, `good first issue`, and `documentation` in [issues](https://github.com/Muneerali199/DocMagic/issues)
+- **Look for labels**: Search for issues labeled `GSSoC 2025`, `good first issue`, and `documentation` in [issues](https://github.com/Muneerali199/DraftDeckAI/issues)
 - **Ask to be assigned**: Always request assignment before starting work on any issue
 - **Mention GSSoC**: Include "GSSoC" in your PR description to help us track contributions
 - **We're excited to mentor and grow with you!** 🚀
@@ -188,7 +188,7 @@ New to the project? We've got you covered! Here's how to find the perfect first 
 
 ### 🔍 **How to Find Issues**
 
-1. **Visit our Issues page**: [GitHub Issues](https://github.com/Muneerali199/DocMagic/issues)
+1. **Visit our Issues page**: [GitHub Issues](https://github.com/Muneerali199/DraftDeckAI/issues)
 2. **Filter by labels**: Click on `good first issue` for beginner-friendly tasks
 3. **Read the issue description** carefully
 4. **Ask questions** if anything is unclear
@@ -331,7 +331,7 @@ chore/dependency-updates
 
 ```bash
 # Add upstream remote (do this once)
-git remote add upstream https://github.com/Muneerali199/DocMagic.git
+git remote add upstream https://github.com/Muneerali199/DraftDeckAI.git
 
 # Sync your fork before starting work
 git checkout main
@@ -618,7 +618,7 @@ We're committed to providing a welcoming and inclusive environment for everyone.
 
 - **Live Demo**: [https://draftdeckai.com](https://draftdeckai.com)
 - **About Page**: [https://draftdeckai.com/about](https://draftdeckai.com/about)
-- **GitHub Repository**: [https://github.com/Muneerali199/DocMagic](https://github.com/Muneerali199/DocMagic)
+- **GitHub Repository**: [https://github.com/Muneerali199/DraftDeckAI](https://github.com/Muneerali199/DraftDeckAI)
 
 ### 🛠️ **Development Resources**
 
