@@ -59,8 +59,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Muneerali199/DocMagic.git
-cd DocMagic
+git clone https://github.com/Muneerali199/DraftDeckAI.git
+cd DraftDeckAI
 
 # Install dependencies
 npm install

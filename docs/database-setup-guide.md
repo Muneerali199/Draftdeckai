@@ -8,7 +8,7 @@ The 404 error you're seeing indicates that the `documents` table doesn't exist i
 Go to your Supabase Dashboard → SQL Editor and run this script:
 
 ```sql
--- Create documents table for DocMagic
+-- Create documents table for DraftDeckAI
 CREATE TABLE IF NOT EXISTS documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -132,14 +132,14 @@ Once you run these scripts, refresh your profile page and you should see:
 
 <div align="center">
 
-📄 [Docs](https://github.com/Muneerali199/DocMagic/tree/main/docs) • 
-🐛 [Issues](https://github.com/Muneerali199/DocMagic/issues) • 
-🤝 [Contributions](https://github.com/Muneerali199/DocMagic/graphs/contributors) • 
-💬 [Community](https://github.com/Muneerali199/DocMagic/discussions)
+📄 [Docs](https://github.com/Muneerali199/DraftDeckAI/tree/main/docs) • 
+🐛 [Issues](https://github.com/Muneerali199/DraftDeckAI/issues) • 
+🤝 [Contributions](https://github.com/Muneerali199/DraftDeckAI/graphs/contributors) • 
+💬 [Community](https://github.com/Muneerali199/DraftDeckAI/discussions)
 
-<p>© 2025 DocMagic. All rights reserved.</p>
+<p>© 2025 DraftDeckAI. All rights reserved.</p>
 
- Licensed under the [MIT License](https://github.com/Muneerali199/DocMagic/blob/main/LICENSE)
+ Licensed under the [MIT License](https://github.com/Muneerali199/DraftDeckAI/blob/main/LICENSE)
  
 </div>
 

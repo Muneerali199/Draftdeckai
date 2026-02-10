@@ -1,9 +1,9 @@
-# DocMagic Email Templates
+# DraftDeckAI Email Templates
 
 Copy and paste these HTML templates into your Supabase Dashboard under **Authentication > Email Templates**.
 
 ## 1. Confirm Signup
-**Subject:** Confirm your DocMagic account
+**Subject:** Confirm your DraftDeckAI account
 
 ```html
 <!DOCTYPE html>
@@ -22,7 +22,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
           <!-- Header -->
           <tr>
             <td style="padding:28px; text-align:center; background:linear-gradient(135deg,#2563eb,#22c55e);">
-              <h1 style="margin:0; font-size:22px; font-weight:700; color:#ffffff;">Docmagic</h1>
+              <h1 style="margin:0; font-size:22px; font-weight:700; color:#ffffff;">DraftDeckAI</h1>
               <p style="margin:6px 0 0; font-size:13px; color:#e0f2fe;">AI-powered documents & resumes</p>
             </td>
           </tr>
@@ -31,7 +31,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
             <td style="padding:28px;">
               <h2 style="margin:0 0 12px; font-size:20px; color:#ffffff;">Confirm your email</h2>
               <p style="margin:0 0 18px; font-size:14px; line-height:1.6; color:#d1d5db;">
-                Welcome to Docmagic! You're just one step away from creating professional documents with AI.
+                Welcome to DraftDeckAI! You're just one step away from creating professional documents with AI.
                 Please confirm your email address to activate your account.
               </p>
               <!-- Button -->
@@ -55,7 +55,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
           <!-- Footer -->
           <tr>
             <td style="padding:18px 24px; background:#0b1220; text-align:center;">
-              <p style="margin:0; font-size:12px; color:#6b7280;">© 2026 Docmagic • All rights reserved</p>
+              <p style="margin:0; font-size:12px; color:#6b7280;">© 2026 DraftDeckAI • All rights reserved</p>
               <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">This is an automated message. Please do not reply.</p>
             </td>
           </tr>
@@ -88,7 +88,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
           <!-- Header -->
           <tr>
             <td style="padding:28px; text-align:center; background:linear-gradient(135deg,#2563eb,#22c55e);">
-              <h1 style="margin:0; font-size:22px; font-weight:700; color:#ffffff;">Docmagic</h1>
+              <h1 style="margin:0; font-size:22px; font-weight:700; color:#ffffff;">DraftDeckAI</h1>
               <p style="margin:6px 0 0; font-size:13px; color:#e0f2fe;">AI-powered documents & resumes</p>
             </td>
           </tr>
@@ -97,7 +97,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
             <td style="padding:28px;">
               <h2 style="margin:0 0 12px; font-size:20px; color:#ffffff;">Reset your password</h2>
               <p style="margin:0 0 18px; font-size:14px; line-height:1.6; color:#d1d5db;">
-                We received a request to reset the password for your Docmagic account.
+                We received a request to reset the password for your DraftDeckAI account.
                 Click the button below to create a new password.
               </p>
               <!-- Button -->
@@ -122,7 +122,7 @@ Copy and paste these HTML templates into your Supabase Dashboard under **Authent
           <!-- Footer -->
           <tr>
             <td style="padding:18px 24px; background:#0b1220; text-align:center;">
-              <p style="margin:0; font-size:12px; color:#6b7280;">© 2026 Docmagic • All rights reserved</p>
+              <p style="margin:0; font-size:12px; color:#6b7280;">© 2026 DraftDeckAI • All rights reserved</p>
               <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">This is an automated message. Please do not reply.</p>
             </td>
           </tr>

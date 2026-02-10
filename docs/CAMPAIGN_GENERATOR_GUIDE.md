@@ -103,14 +103,14 @@ Enter your campaign objective, for example:
 
 **Input:**
 ```
-URL: https://docmagic.me
+URL: https://draftdeckai.me
 Goal: Launch AI-powered resume builder feature
 ```
 
 **Output:**
 ```
 ✅ Brand DNA Extracted:
-- Brand: DocMagic
+- Brand: DraftDeckAI
 - Tone: Professional, Innovative
 - Colors: #6366f1, #8b5cf6, #0ea5e9
 - Keywords: AI, documents, productivity, templates
@@ -134,14 +134,14 @@ Goal: Launch AI-powered resume builder feature
 
 ```typescript
 {
-  brandName: "DocMagic",
+  brandName: "DraftDeckAI",
   tagline: "Create amazing documents with AI",
   colors: ["#6366f1", "#8b5cf6", "#0ea5e9"],
   fonts: ["Inter", "Plus Jakarta Sans"],
   tone: "professional",
   keywords: ["AI", "documents", "templates"],
   description: "AI-powered document creation platform",
-  logo: "https://docmagic.me/logo.png",
+  logo: "https://draftdeckai.me/logo.png",
   timestamp: "2025-11-11T00:00:00.000Z"
 }
 ```
@@ -325,13 +325,13 @@ Generate AI marketing campaigns.
 ## 📞 Support
 
 Need help? Have questions?
-- 📧 Email: support@docmagic.me
+- 📧 Email: support@draftdeckai.me
 - 📖 Documentation: `/docs/campaign-generator`
 - 💬 GitHub Issues: Report bugs or request features
 
 ---
 
-**Built with ❤️ by DocMagic Team**
+**Built with ❤️ by DraftDeckAI Team**
 *Powered by Groq AI & Next.js*
 
 Last Updated: November 11, 2025

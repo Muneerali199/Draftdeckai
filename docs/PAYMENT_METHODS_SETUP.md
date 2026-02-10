@@ -4,7 +4,7 @@ This guide explains how to enable and configure multiple payment methods in your
 
 ## 🌍 Available Payment Methods
 
-Your DocMagic application now supports the following payment methods:
+Your DraftDeckAI application now supports the following payment methods:
 
 ### 1. **Cards** 💳
 - **Supported**: Visa, Mastercard, American Express, Discover, Diners Club, JCB, UnionPay

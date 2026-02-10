@@ -391,7 +391,7 @@ npm run lint
 
 ### Development:
 ```bash
-cd DocMagic
+cd DraftDeckAI
 npm install
 npm run dev
 ```
