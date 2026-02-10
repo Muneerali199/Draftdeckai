@@ -4,18 +4,18 @@
 ### Changed
 - Updated version to 2.0.0 in package.json
 
-All notable changes to DocMagic will be documented in this file.
+All notable changes to DraftDeckAI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0] - 2025-07-27
 
-### 🎉 **Major Release - DocMagic 1.0.0** 🎉
-We're thrilled to announce the official 1.0.0 release of DocMagic! This marks a significant milestone in our open-source AI-powered document creation platform.
+### 🎉 **Major Release - DraftDeckAI 1.0.0** 🎉
+We're thrilled to announce the official 1.0.0 release of DraftDeckAI! This marks a significant milestone in our open-source AI-powered document creation platform.
 
 ### Summary
-This major release completes our transition from beta to a fully-featured, production-ready document creation platform. DocMagic 1.0.0 represents months of development, community feedback, and continuous improvement.
+This major release completes our transition from beta to a fully-featured, production-ready document creation platform. DraftDeckAI 1.0.0 represents months of development, community feedback, and continuous improvement.
 
 ### Key Achievements
 - **Feature Complete**: All planned document types and features are now implemented

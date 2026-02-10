@@ -343,8 +343,8 @@ export async function exportPremiumPPTX(
 
   // Setup presentation
   pptx.layout = 'LAYOUT_16x9';
-  pptx.author = 'DocMagic AI';
-  pptx.company = 'DocMagic';
+  pptx.author = 'DraftDeckAI';
+  pptx.company = 'DraftDeckAI';
   pptx.title = presentationName;
   pptx.subject = 'AI Generated Presentation';
 
@@ -356,7 +356,7 @@ export async function exportPremiumPPTX(
 
   // Define master slide with theme
   pptx.defineSlideMaster({
-    title: 'DOCMAGIC_MASTER',
+    title: 'DRAFTDECKAI_MASTER',
     background: { color: bgColor },
     objects: [
       // Decorative gradient circle (top right)
@@ -370,7 +370,7 @@ export async function exportPremiumPPTX(
   });
 
   for (const slideData of slides) {
-    const slide = pptx.addSlide({ masterName: 'DOCMAGIC_MASTER' });
+    const slide = pptx.addSlide({ masterName: 'DRAFTDECKAI_MASTER' });
     
     // Background
     slide.background = { color: bgColor };

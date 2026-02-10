@@ -16,7 +16,7 @@ $files = @(
     "app\api\auth\register\route.ts"
 )
 
-$rootPath = "C:\Users\Muneer Ali Subzwari\Desktop\docmagic\DocMagic"
+$rootPath = "C:\Users\Muneer Ali Subzwari\Desktop\draftdeckai\DraftDeckAI"
 
 foreach ($file in $files) {
     $fullPath = Join-Path $rootPath $file

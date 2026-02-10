@@ -33,7 +33,7 @@ The connection breaks between the page and the extension.
 
 ## ✅ After Refreshing:
 
-1. You should see in console: `🚀 DocMagic Smart Extension activated!`
+1. You should see in console: `🚀 DraftDeckAI Smart Extension activated!`
 2. Click "📚 Get AI Help" button again
 3. Click "💡 Get Hint" or any button
 4. It should work now!
@@ -46,12 +46,12 @@ The connection breaks between the page and the extension.
 
 **1. Is Extension Active?**
 ```
-chrome://extensions/ → Find DocMagic → Should be enabled ✅
+chrome://extensions/ → Find DraftDeckAI → Should be enabled ✅
 ```
 
 **2. Is Service Worker Active?**
 ```
-chrome://extensions/ → DocMagic → Click "service worker" 
+chrome://extensions/ → DraftDeckAI → Click "service worker" 
 Should show "Active" (not "Inactive")
 ```
 

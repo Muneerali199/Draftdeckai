@@ -1,66 +1,205 @@
 'use client';
 
-import { Textarea } from '@/components/ui/textarea';
+import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { Loader2, Play, Download, Copy, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { getLatexForTemplate } from '@/lib/latex-templates';
 
 interface ResumeLatexEditorProps {
   data: any;
+  templateId?: string;
   onChange: (data: any) => void;
+  onPdfGenerated?: (pdfUrl: string | null) => void;
+  isLocked?: boolean; // When true, LaTeX is auto-generated from form data (user cannot edit)
 }
 
-export function ResumeLatexEditor({ data, onChange }: ResumeLatexEditorProps) {
+// Generate LaTeX from resume data - exported for use in other components
+export function generateLatexFromData(data: any, templateId: string = 'professional'): string {
+  return getLatexForTemplate(templateId, data);
+}
+
+export function ResumeLatexEditor({ data, templateId = 'professional', onChange, onPdfGenerated, isLocked = true }: ResumeLatexEditorProps) {
   const [latexCode, setLatexCode] = useState('');
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compileError, setCompileError] = useState<string | null>(null);
+  const [compileSuccess, setCompileSuccess] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const editorRef = useRef<any>(null);
 
+  // Initialize LaTeX from data
   useEffect(() => {
-    // Convert data to LaTeX format
-    const latex = `\\documentclass[11pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage{geometry}
-\\geometry{margin=1in}
-
-\\begin{document}
-
-\\begin{center}
-{\\Large \\textbf{${data.name}}}\\\\
-${data.email} | ${data.phone} | ${data.location}\\\\
-${data.linkedin} | ${data.github}
-\\end{center}
-
-\\section*{Professional Summary}
-${data.summary}
-
-\\section*{Work Experience}
-${data.experience?.map((exp: any) => `
-\\textbf{${exp.title}} | ${exp.company} \\hfill ${exp.date}\\\\
-${exp.location}\\\\
-${exp.description?.[0] || ''}
-`).join('\n') || ''}
-
-\\end{document}`;
-    
+    const latex = generateLatexFromData(data, templateId);
     setLatexCode(latex);
-  }, [data]);
+  }, [data, templateId]);
 
-  const handleApply = () => {
-    toast.success('LaTeX code applied!');
-    // Parse LaTeX back to data (simplified)
+  // Handle compilation
+  const handleCompile = useCallback(async () => {
+    if (!latexCode.trim()) {
+      toast.error('Please enter some LaTeX code');
+      return;
+    }
+
+    setIsCompiling(true);
+    setCompileError(null);
+    setCompileSuccess(false);
+
+    try {
+      const response = await fetch('/api/latex/compile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ latex: latexCode }),
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+
+        if (contentType?.includes('application/pdf')) {
+          // PDF returned directly
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setPdfUrl(url);
+          onPdfGenerated?.(url);
+          setCompileSuccess(true);
+          toast.success('LaTeX compiled successfully!');
+        } else {
+          // JSON response (likely an error or status message)
+          const result = await response.json();
+          if (result.success === false) {
+            throw new Error(result.message || 'Compilation failed');
+          }
+        }
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Compilation failed');
+      }
+    } catch (error: any) {
+      console.error('Compilation error:', error);
+      setCompileError(error.message || 'Failed to compile LaTeX');
+      toast.error(error.message || 'Failed to compile LaTeX');
+    } finally {
+      setIsCompiling(false);
+    }
+  }, [latexCode, onPdfGenerated]);
+
+  // Copy LaTeX to clipboard
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(latexCode);
+      toast.success('LaTeX code copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy to clipboard');
+    }
+  }, [latexCode]);
+
+  // Download LaTeX as .tex file
+  const handleDownload = useCallback(() => {
+    const blob = new Blob([latexCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resume.tex';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded resume.tex');
+  }, [latexCode]);
+
+  // Editor mount handler
+  const handleEditorMount = (editor: any) => {
+    editorRef.current = editor;
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">LaTeX Code Editor</h2>
-        <Button onClick={handleApply} size="sm">Apply Changes</Button>
+    <div className="space-y-4 h-full flex flex-col">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold">LaTeX Code Editor</h2>
+          {compileSuccess && (
+            <span className="flex items-center gap-1 text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              <CheckCircle2 className="w-4 h-4" />
+              Compiled
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleCopy}>
+            <Copy className="w-4 h-4 mr-1" />
+            Copy
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownload}>
+            <Download className="w-4 h-4 mr-1" />
+            Download .tex
+          </Button>
+          <Button
+            onClick={handleCompile}
+            size="sm"
+            disabled={isCompiling}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {isCompiling ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Compiling...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 mr-1" />
+                Compile PDF
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-      
-      <Textarea
-        value={latexCode}
-        onChange={(e) => setLatexCode(e.target.value)}
-        className="font-mono text-sm h-[600px]"
-        placeholder="LaTeX code..."
-      />
+
+      {/* Error Display */}
+      {compileError && (
+        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex-shrink-0">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Compilation Error</p>
+            <p className="text-red-600">{compileError}</p>
+            <p className="text-xs text-red-500 mt-1">
+              Tip: You can download the .tex file and compile it in Overleaf for detailed error messages.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Monaco Editor */}
+      <div className="flex-1 border rounded-lg overflow-hidden min-h-[400px]">
+        <Editor
+          height="100%"
+          defaultLanguage="latex"
+          value={latexCode}
+          onChange={(value) => setLatexCode(value || '')}
+          onMount={handleEditorMount}
+          theme="vs-light"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 13,
+            lineNumbers: 'on',
+            wordWrap: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            folding: true,
+            renderWhitespace: 'selection',
+            readOnly: isLocked, // Prevent manual edits when locked
+          }}
+        />
+      </div>
+
+      {/* Help Text */}
+      <p className="text-xs text-gray-500 flex-shrink-0">
+        <RefreshCw className="w-3 h-3 inline mr-1" />
+        Changes to the form will regenerate the LaTeX code. Click "Compile PDF" to preview the output.
+      </p>
     </div>
   );
 }

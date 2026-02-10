@@ -1,4 +1,4 @@
-// Package script for DocMagic Extension
+// Package script for DraftDeckAI Extension
 // Creates ZIP and TAR.GZ releases
 
 const fs = require('fs');
@@ -9,7 +9,7 @@ const { execSync } = require('child_process');
 const args = process.argv.slice(2);
 const format = args.find(arg => arg.startsWith('--format='))?.split('=')[1] || 'zip';
 
-console.log('📦 Packaging DocMagic Extension...\n');
+console.log('📦 Packaging DraftDeckAI Extension...\n');
 
 // Get version from manifest
 const extensionRoot = path.join(__dirname, '..');
@@ -100,7 +100,7 @@ function shouldIncludeFile(filePath) {
 }
 
 // Create archive name
-const archiveName = `docmagic-extension-v${version}`;
+const archiveName = `draftdeckai-extension-v${version}`;
 
 // Package function
 function createZip() {
@@ -211,7 +211,7 @@ if (format === 'tar' || format === 'all') {
 console.log('✨ Packaging complete!');
 console.log(`\n📁 Output directory: ${distDir}`);
 console.log('\n🚀 Ready to release! Upload to GitHub:');
-console.log('   1. Go to https://github.com/YOUR_USERNAME/docmagic-extension/releases/new');
+console.log('   1. Go to https://github.com/YOUR_USERNAME/draftdeckai-extension/releases/new');
 console.log(`   2. Tag version: v${version}`);
 console.log('   3. Upload the archive(s) from dist/');
 console.log('   4. Publish release');

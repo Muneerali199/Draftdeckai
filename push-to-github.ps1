@@ -1,6 +1,6 @@
 # Quick script to commit and push to GitHub
 
-Write-Host "🚀 Pushing DocMagic to GitHub" -ForegroundColor Cyan
+Write-Host "🚀 Pushing DraftDeckAI to GitHub" -ForegroundColor Cyan
 Write-Host "=============================" -ForegroundColor Cyan
 Write-Host ""
 

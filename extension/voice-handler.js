@@ -1,4 +1,4 @@
-// DocMagic Voice Interaction Handler
+// DraftDeckAI Voice Interaction Handler
 // Full voice communication with speech recognition and synthesis
 
 class VoiceHandler {

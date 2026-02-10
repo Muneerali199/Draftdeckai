@@ -35,7 +35,9 @@ export default function SubscriptionPage() {
   const fetchSubscription = async () => {
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() for rate limit avoidance
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         router.push('/auth/signin');
@@ -124,7 +126,7 @@ export default function SubscriptionPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Subscription Management</h1>
           <p className="text-muted-foreground">
-            Manage your DocMagic subscription and billing
+            Manage your DraftDeckAI subscription and billing
           </p>
         </div>
 

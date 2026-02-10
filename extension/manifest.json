@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DocMagic Interview & DSA Prep",
+  "name": "DraftDeckAI Interview & DSA Prep",
   "version": "1.0.0",
   "description": "AI-powered interview preparation, DSA problem solver, and job placement assistant",
   "icons": {

@@ -69,7 +69,7 @@ export const getDefaultTemplateContent = (type: string): any => {
             type: 'title',
             content: {
               title: 'Untitled Presentation',
-              subtitle: 'Created with DocMagic',
+              subtitle: 'Created with DraftDeckAI',
             },
           },
         ],

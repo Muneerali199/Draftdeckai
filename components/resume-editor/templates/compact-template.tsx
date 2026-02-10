@@ -1,12 +1,29 @@
+import { latexStyles } from '../latex-styles';
+
 export function CompactTemplate({ data }: { data: any }) {
+  // Compact-specific styles - smaller spacing for dense content
+  const compactSection = {
+    ...latexStyles.section,
+    fontSize: '12pt',
+    marginTop: '8pt',
+    marginBottom: '4pt',
+  };
+
   return (
-    <div style={{ color: '#000000', fontFamily: 'Calibri, Arial, sans-serif', lineHeight: '1.4' }}>
+    <div style={{
+      fontFamily: latexStyles.font.family,
+      fontSize: latexStyles.font.sizeBase,
+      lineHeight: latexStyles.font.lineHeight,
+      color: latexStyles.font.color,
+      textAlign: latexStyles.text.align,
+      hyphens: latexStyles.text.hyphens,
+    }}>
       {/* Compact Header */}
-      <div style={{ marginBottom: '16px', paddingBottom: '8px', borderBottom: '2px solid #000000' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: '#000000', marginBottom: '4px' }}>
+      <div style={{ marginBottom: '10pt', paddingBottom: '6pt', borderBottom: '0.4pt solid #000000' }}>
+        <h1 style={{ ...latexStyles.name, fontSize: '15pt' }}>
           {data.name}
         </h1>
-        <div style={{ fontSize: '9px', color: '#000000' }}>
+        <div style={{ ...latexStyles.contact, marginTop: '2pt' }}>
           {data.email} | {data.phone} | {data.location}
           {data.linkedin && ` | ${data.linkedin}`}
           {data.github && ` | ${data.github}`}
@@ -15,31 +32,34 @@ export function CompactTemplate({ data }: { data: any }) {
 
       {/* Summary */}
       {data.summary && (
-        <div style={{ marginBottom: '14px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '4px', textTransform: 'uppercase' }}>
+        <div>
+          <h2 style={compactSection}>
             Summary
           </h2>
-          <p style={{ fontSize: '9px', color: '#000000', lineHeight: '1.5' }}>
+          <p style={{
+            ...latexStyles.paragraph,
+            textAlign: 'justify',
+          }}>
             {data.summary}
           </p>
         </div>
       )}
 
       {/* Skills */}
-      {data.skills && (
-        <div style={{ marginBottom: '14px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '4px', textTransform: 'uppercase' }}>
+      {data.skills && Object.keys(data.skills).length > 0 && (
+        <div>
+          <h2 style={compactSection}>
             Skills
           </h2>
-          <div style={{ fontSize: '9px', color: '#000000' }}>
+          <div style={{ lineHeight: 1.2 }}>
             {data.skills.programming && data.skills.programming.length > 0 && (
-              <div style={{ marginBottom: '3px' }}>
+              <div style={{ marginBottom: '3pt' }}>
                 <span style={{ fontWeight: 'bold' }}>Languages: </span>
                 {data.skills.programming.join(', ')}
               </div>
             )}
             {data.skills.technical && data.skills.technical.length > 0 && (
-              <div style={{ marginBottom: '3px' }}>
+              <div style={{ marginBottom: '3pt' }}>
                 <span style={{ fontWeight: 'bold' }}>Technologies: </span>
                 {data.skills.technical.join(', ')}
               </div>
@@ -50,19 +70,37 @@ export function CompactTemplate({ data }: { data: any }) {
 
       {/* Experience */}
       {data.experience && data.experience.length > 0 && (
-        <div style={{ marginBottom: '14px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '6px', textTransform: 'uppercase' }}>
+        <div>
+          <h2 style={compactSection}>
             Experience
           </h2>
           {data.experience.map((exp: any, i: number) => (
-            <div key={i} style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>
-                {exp.title} | {exp.company} | {exp.date}
+            <div key={i} style={{ marginTop: i > 0 ? '6pt' : 0 }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}>
+                <div>
+                  <span style={latexStyles.jobTitle}>
+                    {exp.title}
+                  </span>
+                  <span style={latexStyles.company}>
+                    {' | '}{exp.company}
+                  </span>
+                </div>
+                <span style={latexStyles.date}>
+                  {exp.date}
+                </span>
               </div>
-              {exp.description && exp.description[0] && (
-                <ul style={{ marginLeft: '14px', marginTop: '3px', fontSize: '9px', color: '#000000' }}>
+
+              {exp.description && exp.description.length > 0 && (
+                <ul style={latexStyles.bulletList}>
                   {exp.description.map((desc: string, j: number) => (
-                    <li key={j} style={{ marginBottom: '2px', lineHeight: '1.4' }}>{desc}</li>
+                    <li key={j} style={latexStyles.bulletItem}>
+                      <span style={latexStyles.bulletMarker}>•</span>
+                      {desc}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -73,14 +111,16 @@ export function CompactTemplate({ data }: { data: any }) {
 
       {/* Education */}
       {data.education && data.education.length > 0 && (
-        <div style={{ marginBottom: '14px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '4px', textTransform: 'uppercase' }}>
+        <div>
+          <h2 style={compactSection}>
             Education
           </h2>
           {data.education.map((edu: any, i: number) => (
-            <div key={i} style={{ fontSize: '9px', color: '#000000', marginBottom: '4px' }}>
-              <span style={{ fontWeight: 'bold' }}>{edu.degree}</span> | {edu.institution || edu.school} | {edu.date}
-              {edu.gpa && ` | GPA: ${edu.gpa}`}
+            <div key={i} style={{ marginTop: i > 0 ? '4pt' : 0, lineHeight: 1.2 }}>
+              <span style={latexStyles.jobTitle}>{edu.degree}</span>
+              <span style={latexStyles.company}>{', '}{edu.institution || edu.school}</span>
+              <span>{', '}{edu.date}</span>
+              {edu.gpa && <span>{' | GPA: '}{edu.gpa}</span>}
             </div>
           ))}
         </div>
@@ -88,14 +128,18 @@ export function CompactTemplate({ data }: { data: any }) {
 
       {/* Projects */}
       {data.projects && data.projects.length > 0 && (
-        <div style={{ marginBottom: '14px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '6px', textTransform: 'uppercase' }}>
+        <div>
+          <h2 style={compactSection}>
             Projects
           </h2>
           {data.projects.map((proj: any, i: number) => (
-            <div key={i} style={{ marginBottom: '8px', fontSize: '9px', color: '#000000' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>{proj.name}</div>
-              <div style={{ lineHeight: '1.4' }}>{proj.description}</div>
+            <div key={i} style={{ marginTop: i > 0 ? '6pt' : 0 }}>
+              <div style={latexStyles.subsection}>
+                {proj.name}
+              </div>
+              <p style={{ ...latexStyles.paragraph, textAlign: 'justify' }}>
+                {proj.description}
+              </p>
             </div>
           ))}
         </div>
@@ -104,11 +148,11 @@ export function CompactTemplate({ data }: { data: any }) {
       {/* Certifications */}
       {data.certifications && data.certifications.length > 0 && (
         <div>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '4px', textTransform: 'uppercase' }}>
+          <h2 style={compactSection}>
             Certifications
           </h2>
           {data.certifications.map((cert: any, i: number) => (
-            <div key={i} style={{ fontSize: '9px', color: '#000000', marginBottom: '3px' }}>
+            <div key={i} style={{ marginTop: i > 0 ? '3pt' : 0, lineHeight: 1.2 }}>
               {cert.name} | {cert.issuer} | {cert.date}
             </div>
           ))}

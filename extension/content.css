@@ -1,13 +1,13 @@
 /* Content script styles for coding platforms */
 
-#docmagic-helper {
+#draftdeckai-helper {
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 10000;
 }
 
-.docmagic-btn {
+.draftdeckai-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -23,17 +23,17 @@
     transition: all 0.3s;
 }
 
-.docmagic-btn:hover {
+.draftdeckai-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
 }
 
-.docmagic-icon {
+.draftdeckai-icon {
     font-size: 1.25rem;
 }
 
 /* Modal Styles */
-.docmagic-modal-overlay {
+.draftdeckai-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -52,7 +52,7 @@
     to { opacity: 1; }
 }
 
-.docmagic-modal-content {
+.draftdeckai-modal-content {
     background: white;
     border-radius: 1rem;
     width: 90%;
@@ -74,7 +74,7 @@
     }
 }
 
-.docmagic-modal-header {
+.draftdeckai-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -83,12 +83,12 @@
     color: white;
 }
 
-.docmagic-modal-header h2 {
+.draftdeckai-modal-header h2 {
     margin: 0;
     font-size: 1.25rem;
 }
 
-.docmagic-close {
+.draftdeckai-close {
     background: none;
     border: none;
     color: white;
@@ -105,30 +105,30 @@
     transition: background 0.3s;
 }
 
-.docmagic-close:hover {
+.draftdeckai-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
-.docmagic-modal-body {
+.draftdeckai-modal-body {
     padding: 1.5rem;
     overflow-y: auto;
     max-height: calc(80vh - 100px);
 }
 
-.docmagic-modal-body h3 {
+.draftdeckai-modal-body h3 {
     margin: 0 0 1rem 0;
     color: #1F2937;
     font-size: 1.125rem;
 }
 
-.docmagic-actions {
+.draftdeckai-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
     margin-bottom: 1.5rem;
 }
 
-.docmagic-action-btn {
+.draftdeckai-action-btn {
     padding: 0.75rem 1rem;
     background: white;
     border: 2px solid #E5E7EB;
@@ -140,26 +140,26 @@
     text-align: left;
 }
 
-.docmagic-action-btn:hover {
+.draftdeckai-action-btn:hover {
     border-color: #3B82F6;
     background: #EFF6FF;
     transform: translateY(-2px);
 }
 
-.docmagic-result {
+.draftdeckai-result {
     background: #F3F4F6;
     border-radius: 0.5rem;
     padding: 1rem;
     min-height: 100px;
 }
 
-.docmagic-loading {
+.draftdeckai-loading {
     text-align: center;
     padding: 2rem;
     color: #6B7280;
 }
 
-.docmagic-error {
+.draftdeckai-error {
     text-align: center;
     padding: 1rem;
     color: #EF4444;
@@ -167,23 +167,23 @@
     border-radius: 0.375rem;
 }
 
-.docmagic-hint,
-.docmagic-approach,
-.docmagic-solution,
-.docmagic-complexity {
+.draftdeckai-hint,
+.draftdeckai-approach,
+.draftdeckai-solution,
+.draftdeckai-complexity {
     line-height: 1.6;
 }
 
-.docmagic-hint h4,
-.docmagic-approach h4,
-.docmagic-solution h4,
-.docmagic-complexity h4 {
+.draftdeckai-hint h4,
+.draftdeckai-approach h4,
+.draftdeckai-solution h4,
+.draftdeckai-complexity h4 {
     margin: 0 0 0.75rem 0;
     color: #3B82F6;
     font-size: 1rem;
 }
 
-.docmagic-solution pre {
+.draftdeckai-solution pre {
     background: #1F2937;
     color: #10B981;
     padding: 1rem;
@@ -192,13 +192,13 @@
     margin: 1rem 0;
 }
 
-.docmagic-solution code {
+.draftdeckai-solution code {
     font-family: 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.5;
 }
 
-.docmagic-copy-btn {
+.draftdeckai-copy-btn {
     padding: 0.5rem 1rem;
     background: #3B82F6;
     color: white;
@@ -209,14 +209,14 @@
     transition: background 0.3s;
 }
 
-.docmagic-copy-btn:hover {
+.draftdeckai-copy-btn:hover {
     background: #2563EB;
 }
 
-.docmagic-complexity p {
+.draftdeckai-complexity p {
     margin: 0.5rem 0;
 }
 
-.docmagic-complexity strong {
+.draftdeckai-complexity strong {
     color: #1F2937;
 }

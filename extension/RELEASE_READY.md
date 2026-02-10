@@ -1,4 +1,4 @@
-# 📦 DocMagic Extension - Release Ready Summary
+# 📦 DraftDeckAI Extension - Release Ready Summary
 
 ## ✅ Completed Tasks
 
@@ -69,7 +69,7 @@ npm run package:all
 
 1. **Create GitHub repository**:
    ```powershell
-   cd "C:\Users\miet\Desktop\DocMagic\extension"
+   cd "C:\Users\miet\Desktop\DraftDeckAI\extension"
    git init
    git add .
    git commit -m "Initial release v1.0.0"
@@ -131,7 +131,7 @@ Once published, users can install by:
 
 ## 📊 Extension Details
 
-- **Name**: DocMagic Interview & DSA Prep
+- **Name**: DraftDeckAI Interview & DSA Prep
 - **Version**: 1.0.0
 - **Manifest**: Version 3
 - **License**: MIT
@@ -250,6 +250,6 @@ Your extension will help people land their dream jobs and ace technical intervie
 
 ---
 
-Made with ❤️ for the DocMagic Extension
+Made with ❤️ for the DraftDeckAI Extension
 
 Last Updated: 2026-01-07

@@ -1,10 +1,10 @@
-// Build script for DocMagic Extension
+// Build script for DraftDeckAI Extension
 // Validates manifest and prepares for packaging
 
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔨 Building DocMagic Extension...\n');
+console.log('🔨 Building DraftDeckAI Extension...\n');
 
 // Define extension root
 const extensionRoot = path.join(__dirname, '..');

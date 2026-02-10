@@ -14,15 +14,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/site-header';
 import { ReferralSection } from '@/components/referral-section';
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  MapPin, 
-  Phone, 
-  Globe, 
-  Edit3, 
-  Save, 
+import {
+  User,
+  Mail,
+  Calendar,
+  MapPin,
+  Phone,
+  Globe,
+  Edit3,
+  Save,
   X,
   Shield,
   FileText,
@@ -77,11 +77,12 @@ export default function ProfilePage() {
   const loadUserProfile = async () => {
     try {
       setLoading(true);
-      
-      // Get current user
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !authUser) {
+
+      // Use getSession() for rate limit avoidance (reads from local cache)
+      const { data: { session } } = await supabase.auth.getSession();
+      const authUser = session?.user;
+
+      if (!authUser) {
         router.push('/auth/signin');
         return;
       }
@@ -295,7 +296,7 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     if (!user) return;
-    
+
     setFormData({
       name: user.name || '',
       bio: user.bio || '',

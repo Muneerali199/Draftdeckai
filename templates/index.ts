@@ -1,4 +1,4 @@
-// Professional Template Index for DocMagic
+// Professional Template Index for DraftDeckAI
 // This file exports all available professional templates organized by category
 
 export interface TemplateMetadata {

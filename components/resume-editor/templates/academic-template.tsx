@@ -1,18 +1,27 @@
+import { latexStyles } from '../latex-styles';
+
 export function AcademicTemplate({ data }: { data: any }) {
   return (
-    <div style={{ color: '#000000', fontFamily: 'Times New Roman, serif', lineHeight: '1.6' }}>
+    <div style={{
+      fontFamily: latexStyles.font.family,
+      fontSize: latexStyles.font.sizeBase,
+      lineHeight: latexStyles.font.lineHeight,
+      color: latexStyles.font.color,
+      textAlign: latexStyles.text.align,
+      hyphens: latexStyles.text.hyphens,
+    }}>
       {/* Academic Header */}
-      <div style={{ textAlign: 'center', marginBottom: '24px', paddingBottom: '12px', borderBottom: '1px solid #000000' }}>
-        <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: '#000000', marginBottom: '8px' }}>
+      <div style={latexStyles.header}>
+        <h1 style={latexStyles.name}>
           {data.name}
         </h1>
-        <div style={{ fontSize: '10px', color: '#000000', lineHeight: '1.8' }}>
-          <div>{data.email} • {data.phone}</div>
+        <div style={latexStyles.contact}>
+          <div>{data.email} | {data.phone}</div>
           <div>{data.location}</div>
           {(data.linkedin || data.github) && (
             <div>
               {data.linkedin && <span>{data.linkedin}</span>}
-              {data.linkedin && data.github && <span> • </span>}
+              {data.linkedin && data.github && <span> | </span>}
               {data.github && <span>{data.github}</span>}
             </div>
           )}
@@ -21,11 +30,14 @@ export function AcademicTemplate({ data }: { data: any }) {
 
       {/* Research Interests / Summary */}
       {data.summary && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase' }}>
+        <div>
+          <h2 style={latexStyles.section}>
             Professional Profile
           </h2>
-          <p style={{ fontSize: '11px', color: '#000000', lineHeight: '1.7', textAlign: 'justify' }}>
+          <p style={{
+            ...latexStyles.paragraph,
+            textAlign: 'justify',
+          }}>
             {data.summary}
           </p>
         </div>
@@ -33,27 +45,31 @@ export function AcademicTemplate({ data }: { data: any }) {
 
       {/* Education - First for Academic */}
       {data.education && data.education.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase', borderBottom: '1px solid #000000', paddingBottom: '4px' }}>
+        <div>
+          <h2 style={latexStyles.section}>
             Education
           </h2>
           {data.education.map((edu: any, i: number) => (
-            <div key={i} style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '2px' }}>
+            <div key={i} style={{ marginTop: i > 0 ? latexStyles.subsection.marginTop : 0 }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}>
+                <div>
+                  <span style={latexStyles.jobTitle}>
                     {edu.degree}
-                  </h3>
-                  <p style={{ fontSize: '11px', color: '#000000', fontStyle: 'italic' }}>
-                    {edu.institution || edu.school}
-                  </p>
+                  </span>
+                  <span style={latexStyles.company}>
+                    {', '}{edu.institution || edu.school}
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#000000', textAlign: 'right' }}>
+                <span style={latexStyles.date}>
                   {edu.date}
-                </div>
+                </span>
               </div>
               {edu.gpa && (
-                <p style={{ fontSize: '10px', color: '#000000', marginTop: '2px' }}>
+                <p style={{ marginTop: '2pt', lineHeight: 1.2 }}>
                   GPA: {edu.gpa}
                 </p>
               )}
@@ -64,29 +80,38 @@ export function AcademicTemplate({ data }: { data: any }) {
 
       {/* Professional Experience */}
       {data.experience && data.experience.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase', borderBottom: '1px solid #000000', paddingBottom: '4px' }}>
+        <div>
+          <h2 style={latexStyles.section}>
             Professional Experience
           </h2>
           {data.experience.map((exp: any, i: number) => (
-            <div key={i} style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '2px' }}>
+            <div key={i} style={{ marginTop: i > 0 ? latexStyles.subsection.marginTop : 0 }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '2pt',
+              }}>
+                <div>
+                  <span style={latexStyles.jobTitle}>
                     {exp.title}
-                  </h3>
-                  <p style={{ fontSize: '11px', color: '#000000', fontStyle: 'italic' }}>
-                    {exp.company}, {exp.location}
-                  </p>
+                  </span>
+                  <span style={latexStyles.company}>
+                    {', '}{exp.company}{exp.location && `, ${exp.location}`}
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#000000', textAlign: 'right' }}>
+                <span style={latexStyles.date}>
                   {exp.date}
-                </div>
+                </span>
               </div>
-              {exp.description && exp.description[0] && (
-                <ul style={{ marginLeft: '20px', marginTop: '6px', fontSize: '10px', color: '#000000' }}>
+
+              {exp.description && exp.description.length > 0 && (
+                <ul style={latexStyles.bulletList}>
                   {exp.description.map((desc: string, j: number) => (
-                    <li key={j} style={{ marginBottom: '4px', lineHeight: '1.6' }}>{desc}</li>
+                    <li key={j} style={latexStyles.bulletItem}>
+                      <span style={latexStyles.bulletMarker}>•</span>
+                      {desc}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -95,23 +120,24 @@ export function AcademicTemplate({ data }: { data: any }) {
         </div>
       )}
 
-      {/* Research Projects / Projects */}
+      {/* Research Projects */}
       {data.projects && data.projects.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase', borderBottom: '1px solid #000000', paddingBottom: '4px' }}>
+        <div>
+          <h2 style={latexStyles.section}>
             Research & Projects
           </h2>
           {data.projects.map((proj: any, i: number) => (
-            <div key={i} style={{ marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#000000', marginBottom: '4px' }}>
+            <div key={i} style={{ marginTop: i > 0 ? latexStyles.subsection.marginTop : 0 }}>
+              <div style={latexStyles.subsection}>
                 {proj.name}
-              </h3>
-              <p style={{ fontSize: '10px', color: '#000000', lineHeight: '1.6', textAlign: 'justify' }}>
+              </div>
+              <p style={{ ...latexStyles.paragraph, textAlign: 'justify' }}>
                 {proj.description}
               </p>
               {proj.technologies && proj.technologies.length > 0 && (
-                <p style={{ fontSize: '10px', color: '#000000', marginTop: '3px', fontStyle: 'italic' }}>
-                  <span style={{ fontWeight: 'bold' }}>Technologies:</span> {proj.technologies.join(', ')}
+                <p style={{ marginTop: '2pt', lineHeight: 1.2 }}>
+                  <span style={latexStyles.company}>Technologies: </span>
+                  <span>{proj.technologies.join(', ')}</span>
                 </p>
               )}
             </div>
@@ -120,28 +146,28 @@ export function AcademicTemplate({ data }: { data: any }) {
       )}
 
       {/* Technical Skills */}
-      {data.skills && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase', borderBottom: '1px solid #000000', paddingBottom: '4px' }}>
+      {data.skills && Object.keys(data.skills).length > 0 && (
+        <div>
+          <h2 style={latexStyles.section}>
             Technical Skills
           </h2>
-          <div style={{ fontSize: '10px', color: '#000000', lineHeight: '1.8' }}>
+          <div style={{ lineHeight: 1.2 }}>
             {data.skills.programming && data.skills.programming.length > 0 && (
-              <div style={{ marginBottom: '4px' }}>
-                <span style={{ fontWeight: 'bold' }}>Programming Languages: </span>
-                {data.skills.programming.join(', ')}
+              <div style={{ marginBottom: '4pt' }}>
+                <span style={latexStyles.jobTitle}>Programming Languages: </span>
+                <span>{data.skills.programming.join(', ')}</span>
               </div>
             )}
             {data.skills.technical && data.skills.technical.length > 0 && (
-              <div style={{ marginBottom: '4px' }}>
-                <span style={{ fontWeight: 'bold' }}>Technologies & Frameworks: </span>
-                {data.skills.technical.join(', ')}
+              <div style={{ marginBottom: '4pt' }}>
+                <span style={latexStyles.jobTitle}>Technologies & Frameworks: </span>
+                <span>{data.skills.technical.join(', ')}</span>
               </div>
             )}
             {data.skills.tools && data.skills.tools.length > 0 && (
-              <div style={{ marginBottom: '4px' }}>
-                <span style={{ fontWeight: 'bold' }}>Tools & Platforms: </span>
-                {data.skills.tools.join(', ')}
+              <div style={{ marginBottom: '4pt' }}>
+                <span style={latexStyles.jobTitle}>Tools & Platforms: </span>
+                <span>{data.skills.tools.join(', ')}</span>
               </div>
             )}
           </div>
@@ -151,14 +177,14 @@ export function AcademicTemplate({ data }: { data: any }) {
       {/* Certifications & Awards */}
       {data.certifications && data.certifications.length > 0 && (
         <div>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: '#000000', marginBottom: '8px', textTransform: 'uppercase', borderBottom: '1px solid #000000', paddingBottom: '4px' }}>
+          <h2 style={latexStyles.section}>
             Certifications & Awards
           </h2>
           {data.certifications.map((cert: any, i: number) => (
-            <div key={i} style={{ marginBottom: '6px' }}>
-              <div style={{ fontSize: '10px', color: '#000000' }}>
-                <span style={{ fontWeight: 'bold' }}>{cert.name}</span>, {cert.issuer}, {cert.date}
-              </div>
+            <div key={i} style={{ marginTop: i > 0 ? '4pt' : 0 }}>
+              <span style={latexStyles.jobTitle}>{cert.name}</span>
+              {cert.issuer && <span style={latexStyles.company}>, {cert.issuer}</span>}
+              <span>, {cert.date}</span>
             </div>
           ))}
         </div>

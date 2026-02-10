@@ -191,7 +191,7 @@ const DIAGRAM_TEMPLATES: DiagramTemplate[] = [
     icon: <Sparkles className="h-5 w-5" />,
     preview: "Central Idea → Branches → Details",
     code: `mindmap
-  root((DocMagic Features))
+  root((DraftDeckAI Features))
     Documents
       Resumes
       Presentations

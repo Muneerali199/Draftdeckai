@@ -48,7 +48,7 @@ export function TestimonialsSection() {
           </h2>
 
           <p className="modern-body text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium px-4 sm:px-0">
-            Join thousands of satisfied users who have transformed their document creation process with DocMagic's AI-powered platform.
+            Join thousands of satisfied users who have transformed their document creation process with DraftDeckAI's AI-powered platform.
           </p>
 
           {/* Social proof stats */}
@@ -190,14 +190,14 @@ const testimonials = [
     name: "Priya Sharma",
     title: "Product Manager",
     company: "TechCorp Inc.",
-    content: "DocMagic has revolutionized how I create product proposals. The AI understands context perfectly and generates professional documents that impress stakeholders every time.",
+    content: "DraftDeckAI has revolutionized how I create product proposals. The AI understands context perfectly and generates professional documents that impress stakeholders every time.",
     avatar: "https://images.pexels.com/photos/1758531/pexels-photo-1758531.jpeg?auto=compress&cs=tinysrgb&w=600"
   },
   {
     name: "Johnathan Lee",
     title: "Senior Writer",
     company: "Creative Agency",
-    content: "As a professional writer, I'm amazed by DocMagic's ability to generate compelling content. It's like having a writing partner that never runs out of ideas.",
+    content: "As a professional writer, I'm amazed by DraftDeckAI's ability to generate compelling content. It's like having a writing partner that never runs out of ideas.",
     avatar: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=600"
   },
   {
@@ -211,7 +211,7 @@ const testimonials = [
     name: "Emily White",
     title: "HR Director",
     company: "Global Solutions",
-    content: "DocMagic streamlines our HR processes. From offer letters to policy documents, everything is professional, consistent, and created in minutes instead of hours.",
+    content: "DraftDeckAI streamlines our HR processes. From offer letters to policy documents, everything is professional, consistent, and created in minutes instead of hours.",
     avatar: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600"
   },
   {
@@ -225,7 +225,7 @@ const testimonials = [
     name: "Olivia Martinez",
     title: "Graduate Student",
     company: "Stanford University",
-    content: "DocMagic has been essential for my academic work. It helps me create professional presentations and research documents that meet university standards.",
+    content: "DraftDeckAI has been essential for my academic work. It helps me create professional presentations and research documents that meet university standards.",
     avatar: "https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=600"
   }
 ];

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🪄 DocMagic
+# 🎨 DraftDeckAI
 
 ### AI-Powered Document Creation Platform
 
@@ -12,7 +12,7 @@
 
 **Create stunning resumes, presentations, letters, and diagrams with AI magic ✨**
 
-[Live Demo](https://docmagic1.netlify.app) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Live Demo](https://draftdeckai.com) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
@@ -59,8 +59,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Muneerali199/DocMagic.git
-cd DocMagic
+git clone https://github.com/Muneerali199/DraftDeckAI.git
+cd DraftDeckAI
 
 # Install dependencies
 npm install
@@ -115,7 +115,7 @@ STRIPE_SECRET_KEY=your_stripe_key
 ## 📁 Project Structure
 
 ```
-DocMagic/
+DraftDeckAI/
 ├── app/                    # Next.js App Router pages
 │   ├── api/               # API routes
 │   ├── auth/              # Authentication pages
@@ -138,7 +138,7 @@ DocMagic/
 
 ## 🔐 Authentication
 
-DocMagic uses Supabase Auth with:
+DraftDeckAI uses Supabase Auth with:
 - Email/Password login
 - Password reset via email
 - Protected routes with middleware

@@ -1,12 +1,12 @@
-# 🚀 DocMagic Interview & DSA Prep Extension
+# 🚀 DraftDeckAI Interview & DSA Prep Extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/YOUR_USERNAME/docmagic-extension/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/YOUR_USERNAME/draftdeckai-extension/releases)
 [![Chrome](https://img.shields.io/badge/Chrome-Extension-green.svg)](https://www.google.com/chrome/)
 
 > **AI-powered browser extension for interview preparation, DSA problem solving, and job placement assistance**
 
-Never struggle with coding interviews again! DocMagic uses powerful AI (Gemini, OpenAI, Claude, Mistral) to help you master DSA problems, prepare for interviews, and land your dream job.
+Never struggle with coding interviews again! DraftDeckAI uses powerful AI (Gemini, OpenAI, Claude, Mistral) to help you master DSA problems, prepare for interviews, and land your dream job.
 
 ## ✨ Features
 
@@ -46,12 +46,12 @@ Never struggle with coding interviews again! DocMagic uses powerful AI (Gemini, 
 ### Option 1: Install from GitHub Release (Recommended)
 
 1. **Download the latest release**:
-   - Go to [Releases](https://github.com/YOUR_USERNAME/docmagic-extension/releases)
-   - Download `docmagic-extension-v1.0.0.zip` or `docmagic-extension-v1.0.0.tar.gz`
+   - Go to [Releases](https://github.com/YOUR_USERNAME/draftdeckai-extension/releases)
+   - Download `draftdeckai-extension-v1.0.0.zip` or `draftdeckai-extension-v1.0.0.tar.gz`
 
 2. **Extract the archive**:
    - **ZIP**: Right-click → Extract All
-   - **TAR.GZ**: Use 7-Zip, WinRAR, or command line: `tar -xzf docmagic-extension-v1.0.0.tar.gz`
+   - **TAR.GZ**: Use 7-Zip, WinRAR, or command line: `tar -xzf draftdeckai-extension-v1.0.0.tar.gz`
 
 3. **Load in Chrome/Edge**:
    - Open browser and navigate to `chrome://extensions/`
@@ -64,8 +64,8 @@ Never struggle with coding interviews again! DocMagic uses powerful AI (Gemini, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/docmagic-extension.git
-cd docmagic-extension/extension
+git clone https://github.com/YOUR_USERNAME/draftdeckai-extension.git
+cd draftdeckai-extension/extension
 
 # Load in browser
 # 1. Open chrome://extensions/
@@ -103,7 +103,7 @@ Choose your preferred AI provider (at least one required):
 
 ### 2. Configure the Extension
 
-1. Click the **DocMagic extension icon** in your browser toolbar
+1. Click the **DraftDeckAI extension icon** in your browser toolbar
 2. Click **Open Settings** (gear icon)
 3. Select your **AI Provider**
 4. Paste your **API Key**
@@ -116,7 +116,7 @@ Choose your preferred AI provider (at least one required):
 - Visit any supported coding platform (LeetCode, HackerRank, etc.)
 - Click the **"Get AI Help"** button on problem pages
 - Or use the extension popup for standalone features
-- Right-click any code → **Solve with DocMagic AI**
+- Right-click any code → **Solve with DraftDeckAI AI**
 
 ## 🎯 How to Use
 
@@ -143,7 +143,7 @@ Choose your preferred AI provider (at least one required):
 1. Visit LeetCode, HackerRank, etc.
 2. Look for the **floating "Get AI Help" button**
 3. Click for instant hints, approach, or solution
-4. Or **right-click selected text** → "Solve with DocMagic AI"
+4. Or **right-click selected text** → "Solve with DraftDeckAI AI"
 
 ### Resume & Career Tools
 
@@ -192,8 +192,8 @@ Choose your preferred AI provider (at least one required):
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/docmagic-extension.git
-cd docmagic-extension/extension
+git clone https://github.com/YOUR_USERNAME/draftdeckai-extension.git
+cd draftdeckai-extension/extension
 
 # Install dependencies (optional, for build scripts)
 npm install
@@ -312,9 +312,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Support & Contact
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/YOUR_USERNAME/docmagic-extension/issues)
-- **Email**: support@docmagic.com
-- **Discussions**: [Join community discussions](https://github.com/YOUR_USERNAME/docmagic-extension/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/YOUR_USERNAME/draftdeckai-extension/issues)
+- **Email**: support@draftdeckai.com
+- **Discussions**: [Join community discussions](https://github.com/YOUR_USERNAME/draftdeckai-extension/discussions)
 
 ## ⭐ Show Your Support
 
@@ -329,4 +329,4 @@ If this extension helped you land a job or ace an interview, please:
 
 **Happy Coding! May you ace all your interviews! 🚀**
 
-Made with ❤️ by the DocMagic Team
+Made with ❤️ by the DraftDeckAI Team

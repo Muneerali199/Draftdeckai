@@ -87,7 +87,7 @@ export function ReferralSection() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join DocMagic',
+          title: 'Join DraftDeckAI',
           text: 'Create professional documents with AI! Use my referral link to sign up:',
           url: referralInfo.referralLink,
         });
@@ -136,7 +136,7 @@ export function ReferralSection() {
           </Badge>
         </CardTitle>
         <CardDescription>
-          Share DocMagic with friends and earn {referralInfo.creditsPerReferral} bonus credits for each signup!
+          Share DraftDeckAI with friends and earn {referralInfo.creditsPerReferral} bonus credits for each signup!
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">

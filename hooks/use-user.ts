@@ -10,8 +10,10 @@ export function useUser() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        // Use getSession() instead of getUser() to avoid network requests
+        // getSession() reads from local cache, getUser() makes API call to Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
       } catch (error) {
         console.error('Error fetching user:', error);
       } finally {

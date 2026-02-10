@@ -1,23 +1,11 @@
-﻿import { z } from 'zod';
-
-const TRUSTED_EMAIL_DOMAINS = [
-  'gmail.com', 'googlemail.com', 'outlook.com', 'hotmail.com', 'live.com', 'yahoo.com',
-  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'protonmail.com', 'proton.me',
-  'zoho.com', 'mail.com', 'gmx.com', 'yandex.com', 'tutanota.com'
-];
+import { z } from 'zod';
 
 const isValidEmailDomain = (email: string): boolean => {
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain) return false;
-  
-  if (TRUSTED_EMAIL_DOMAINS.includes(domain)) return true;
-  
-  if (domain.endsWith('.edu') || domain.endsWith('.ac.uk') || domain.endsWith('.edu.au') || 
-      domain.endsWith('.edu.cn') || domain.endsWith('.edu.in')) return true;
-  
+  // Only block obvious spam patterns (numeric-only QQ emails and suspicious numeric usernames)
   if (/^\d+@qq\.com$/.test(email) || /^\d{10,}@/.test(email)) return false;
   
-  return false;
+  // Allow all other valid email formats including custom domains
+  return true;
 };
 
 export const emailSchema = z
@@ -25,7 +13,7 @@ export const emailSchema = z
   .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email address')
   .max(254, 'Email address is too long')
   .refine(isValidEmailDomain, {
-    message: 'Please use a valid email from a recognized provider (Gmail, Outlook, Yahoo, etc.)'
+    message: 'Please enter a valid email address'
   });
 
 export const passwordSchema = z

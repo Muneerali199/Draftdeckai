@@ -30,7 +30,7 @@ The LinkedIn Profile Import feature allows users to automatically generate profe
 2. Make sure your profile is set to **Public**:
    - Settings → Visibility → Public Profile → ON
 3. Copy your profile URL (e.g., `https://www.linkedin.com/in/billgates`)
-4. In DocMagic:
+4. In DraftDeckAI:
    - Navigate to Resume Builder
    - Click "LinkedIn" tab
    - Click "Import from LinkedIn" button
@@ -71,7 +71,7 @@ The LinkedIn Profile Import feature allows users to automatically generate profe
    - Download the ZIP file
    - Extract and find the JSON files
 
-5. **Import to DocMagic:**
+5. **Import to DraftDeckAI:**
    - Click "Import from LinkedIn"
    - Select "JSON Data" tab
    - Open the JSON file in a text editor
@@ -82,7 +82,7 @@ The LinkedIn Profile Import feature allows users to automatically generate profe
 ### Method 3: File Upload (Easy)
 
 1. Get your LinkedIn data export (see Method 2 steps 1-4)
-2. In DocMagic:
+2. In DraftDeckAI:
    - Click "Import from LinkedIn"
    - Select "Upload File" tab
    - Click to upload or drag & drop
@@ -196,8 +196,8 @@ This feature is **100% legal and compliant** because:
 - Visit: [LinkedIn Help Center](https://www.linkedin.com/help/linkedin)
 - Topic: "Downloading Your Data"
 
-### DocMagic Import Issues:
-- Contact: support@docmagic.com
+### DraftDeckAI Import Issues:
+- Contact: support@draftdeckai.com
 - Include: Error message, import method used
 
 ## 🔄 Updates & Improvements

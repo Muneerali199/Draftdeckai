@@ -7,7 +7,7 @@
 #### 1. **Reload the Extension** ⚡
 ```
 1. Go to chrome://extensions/
-2. Find "DocMagic Interview & DSA Prep"
+2. Find "DraftDeckAI Interview & DSA Prep"
 3. Click the refresh icon 🔄
 4. Reload the webpage
 ```
@@ -46,7 +46,7 @@
 **Fix:**
 1. Go to `chrome://extensions/`
 2. Enable "Developer mode" (top right)
-3. Click "Reload" on DocMagic extension
+3. Click "Reload" on DraftDeckAI extension
 4. Check "Service Worker" - should say "Active"
 5. If it says "Inactive", click on it to wake it up
 
@@ -68,7 +68,7 @@
    - codeforces.com
    - geeksforgeeks.org
 2. Refresh the page
-3. Check console for "DocMagic Smart Extension activated!" message
+3. Check console for "DraftDeckAI Smart Extension activated!" message
 
 ### Testing Steps
 
@@ -97,7 +97,7 @@ Enable detailed logging:
 **In Console (F12), run:**
 ```javascript
 // Enable debug mode
-localStorage.setItem('docmagic_debug', 'true');
+localStorage.setItem('draftdeckai_debug', 'true');
 
 // Then refresh page
 location.reload();
@@ -131,11 +131,11 @@ Expected output: Should see response object with data.
 ### Check Background Script
 
 1. Go to `chrome://extensions/`
-2. Find DocMagic extension
+2. Find DraftDeckAI extension
 3. Click "Service worker" or "background page"
 4. New DevTools window opens
 5. Check Console tab for errors
-6. Should see: "DocMagic Smart AI Extension loaded - Ready to help! 🚀"
+6. Should see: "DraftDeckAI Smart AI Extension loaded - Ready to help! 🚀"
 
 ### Verify Files
 
@@ -201,7 +201,7 @@ If none of these work, collect:
 4. Background script logs (screenshot)
 5. API provider (Gemini/OpenAI/etc.)
 
-Then report at: support@docmagic.com
+Then report at: support@draftdeckai.com
 
 ---
 

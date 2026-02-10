@@ -1,4 +1,4 @@
-// DocMagic Job Hunter - Auto Job Application System
+// DraftDeckAI Job Hunter - Auto Job Application System
 // Fetches jobs, analyzes descriptions, and auto-applies with tailored resumes
 
 class JobHunter {

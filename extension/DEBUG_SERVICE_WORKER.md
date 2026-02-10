@@ -15,7 +15,7 @@ In the DevTools Console tab, you'll see one of these:
 
 #### ✅ **If you see:**
 ```
-🚀 DocMagic Smart AI Extension loaded - Ready to help!
+🚀 DraftDeckAI Smart AI Extension loaded - Ready to help!
 ```
 **Good!** Service worker is actually working. The "Inactive" is normal when idle.
 

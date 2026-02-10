@@ -1,4 +1,4 @@
-# DocMagic Professional Templates
+# DraftDeckAI Professional Templates
 
 This directory contains **real, professional-quality templates** for various document types. These templates are designed to help users create high-quality documents quickly and efficiently, featuring actual industry-standard content rather than placeholder text.
 
