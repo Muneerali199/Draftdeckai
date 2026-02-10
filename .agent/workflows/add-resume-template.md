@@ -26,7 +26,7 @@ Ensure you provide a unique `id`, `title`, `description`, `category`, `type: 're
   isFeatured: false,
   rating: 4.5,
   downloads: 0,
-  author: { name: 'DocMagic Team', verified: true },
+  author: { name: 'DraftDeckAI Team', verified: true },
 },
 ```
 
