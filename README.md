@@ -59,7 +59,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Muneerali199/DraftDeckAI.git
+git clone https://github.com/Muneerali199/DocMagic.git
 cd DraftDeckAI
 
 # Install dependencies

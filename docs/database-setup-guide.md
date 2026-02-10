@@ -132,14 +132,14 @@ Once you run these scripts, refresh your profile page and you should see:
 
 <div align="center">
 
-📄 [Docs](https://github.com/Muneerali199/DraftDeckAI/tree/main/docs) • 
-🐛 [Issues](https://github.com/Muneerali199/DraftDeckAI/issues) • 
-🤝 [Contributions](https://github.com/Muneerali199/DraftDeckAI/graphs/contributors) • 
-💬 [Community](https://github.com/Muneerali199/DraftDeckAI/discussions)
+📄 [Docs](https://github.com/Muneerali199/DocMagic/tree/main/docs) • 
+🐛 [Issues](https://github.com/Muneerali199/DocMagic/issues) • 
+🤝 [Contributions](https://github.com/Muneerali199/DocMagic/graphs/contributors) • 
+💬 [Community](https://github.com/Muneerali199/DocMagic/discussions)
 
 <p>© 2025 DraftDeckAI. All rights reserved.</p>
 
- Licensed under the [MIT License](https://github.com/Muneerali199/DraftDeckAI/blob/main/LICENSE)
+ Licensed under the [MIT License](https://github.com/Muneerali199/DocMagic/blob/main/LICENSE)
  
 </div>
 

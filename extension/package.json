@@ -32,10 +32,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Muneerali199/DraftDeckAI.git"
+    "url": "https://github.com/Muneerali199/DocMagic.git"
   },
   "bugs": {
-    "url": "https://github.com/Muneerali199/DraftDeckAI/issues"
+    "url": "https://github.com/Muneerali199/DocMagic/issues"
   },
   "homepage": "https://draftdeckai.com",
   "engines": {
