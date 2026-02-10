@@ -22,7 +22,7 @@ Whether you're a seasoned developer, a design enthusiast, a documentation wizard
 
 ## 🎯 Table of Contents
 
-- [🌟 About DocMagic](#-about-draftdeckai)
+- [🌟 About DraftDeckAI](#-about-draftdeckai)
 - [🌟 GirlScript Summer of Code 2025 (GSSoC)](#-girlscript-summer-of-code-2025-gssoc)
 - [🚀 Quick Start Guide](#-quick-start-guide)
 - [🔍 Finding Your First Issue](#-finding-your-first-issue)
