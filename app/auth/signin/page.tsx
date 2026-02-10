@@ -138,7 +138,7 @@ export default function SignIn() {
       if (data.user) {
         toast({
           title: "Welcome back! ✨",
-          description: "You've successfully signed in to DocMagic.",
+          description: "You've successfully signed in to DraftDeckAI.",
         });
 
         router.push("/");
@@ -229,7 +229,7 @@ export default function SignIn() {
               <h1 className="modern-display text-2xl sm:text-3xl font-bold mb-2 text-shadow-professional animate-fade-in-up">
                 Sign In to{" "}
                 <span className="bolt-gradient-text animate-text-glow">
-                  DocMagic
+                  DraftDeckAI
                 </span>
               </h1>
               <p className="modern-body text-muted-foreground text-sm sm:text-base animate-fade-in-up delay-100">

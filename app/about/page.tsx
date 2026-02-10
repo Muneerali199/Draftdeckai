@@ -56,7 +56,7 @@ export default function AboutPage() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-border mb-6 sm:mb-8 animate-bounce-in will-change-transform">
                 <div className="relative z-10 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-yellow-500 animate-text-glow" />
-                  <span className="text-sm font-medium bolt-gradient-text">About DocMagic</span>
+                  <span className="text-sm font-medium bolt-gradient-text">About DraftDeckAI</span>
                   <Heart className="h-4 w-4 text-red-500" style={{animation: 'sparkle 2s ease-in-out infinite'}} />
                 </div>
               </div>
@@ -74,7 +74,7 @@ export default function AboutPage() {
               
               {/* Subtitle */}
               <p className="modern-body text-lg sm:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 animate-slide-in-right delay-200 will-change-opacity">
-                DocMagic is a <span className="font-semibold bolt-gradient-text">100% open source</span>, 
+                DraftDeckAI is a <span className="font-semibold bolt-gradient-text">100% open source</span>, 
                 AI-powered document creation platform that revolutionizes how professionals create 
                 stunning documents. Built by the community, for the community.
               </p>
@@ -325,7 +325,7 @@ export default function AboutPage() {
                   Security & <span className="bolt-gradient-text">Quality</span>
                 </h2>
                 <p className="modern-body text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
-                  Enterprise-grade security and quality assurance built into every aspect of DocMagic.
+                  Enterprise-grade security and quality assurance built into every aspect of DraftDeckAI.
                 </p>
               </div>
               
@@ -421,7 +421,7 @@ export default function AboutPage() {
               </h2>
               
               <p className="modern-body text-lg sm:text-xl text-muted-foreground mb-8">
-                DocMagic is proudly open source under the MIT License. We believe in the power of 
+                DraftDeckAI is proudly open source under the MIT License. We believe in the power of 
                 community-driven development and welcome contributions from developers, designers, 
                 and users worldwide.
               </p>
@@ -446,14 +446,14 @@ export default function AboutPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild className="bolt-gradient text-white font-semibold px-6 py-3 rounded-full hover:scale-105 transition-all duration-300">
-                  <Link href="https://github.com/Muneerali199/DocMagic/" className="flex items-center gap-2">
+                  <Link href="https://github.com/Muneerali199/DraftDeckAI/" className="flex items-center gap-2">
                     <Github className="h-4 w-4" />
                     View on GitHub
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="gradient-border px-6 py-3 rounded-full hover:scale-105 transition-all duration-300">
-                  <Link href="https://github.com/Muneerali199/DocMagic/issues" className="flex items-center gap-2">
+                  <Link href="https://github.com/Muneerali199/DraftDeckAI/issues" className="flex items-center gap-2">
                     <Heart className="h-4 w-4" />
                     Start Contributing
                     <ArrowRight className="h-4 w-4" />
@@ -473,7 +473,7 @@ export default function AboutPage() {
                   What's <span className="bolt-gradient-text">Next</span>
                 </h2>
                 <p className="modern-body text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
-                  Exciting features and improvements coming to DocMagic in 2025.
+                  Exciting features and improvements coming to DraftDeckAI in 2025.
                 </p>
               </div>
               
@@ -511,7 +511,7 @@ export default function AboutPage() {
               
               <p className="modern-body text-lg sm:text-xl text-muted-foreground mb-12">
                 Connect with fellow developers, designers, and users. Get help, share ideas, 
-                and contribute to the future of DocMagic.
+                and contribute to the future of DraftDeckAI.
               </p>
               
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -579,7 +579,7 @@ const frontendTechnologies = [
   { name: "Tailwind CSS", version: "3.4.17" },
   { name: "Radix UI", version: "Latest" },
   { name: "Framer Motion", version: "12.23.6" },
-  { name: "DocMagic", version: "0.7.0" }
+  { name: "DraftDeckAI", version: "0.7.0" }
 ];
 
 // Backend technologies defined below
@@ -613,7 +613,7 @@ const roadmapItems = [
   },
   {
     title: "API Platform",
-    description: "Public API for developers to integrate DocMagic into their apps",
+    description: "Public API for developers to integrate DraftDeckAI into their apps",
     timeline: "Q4 2025",
     icon: <Code className="h-6 w-6 text-white" />,
     cardClass: "card-lavender hover-lavender",
@@ -713,7 +713,7 @@ const communityLinks = [
   {
     name: "GitHub",
     description: "Source code & issues",
-    href: "https://github.com/Muneerali199/DocMagic",
+    href: "https://github.com/Muneerali199/DraftDeckAI",
     icon: <Github className="h-6 w-6 text-white" />,
     gradientClass: "sunset-gradient"
   },
@@ -727,7 +727,7 @@ const communityLinks = [
   {
     name: "Documentation",
     description: "Guides & tutorials",
-    href: "https://github.com/Muneerali199/DocMagic/blob/main/README.md",
+    href: "https://github.com/Muneerali199/DraftDeckAI/blob/main/README.md",
     icon: <BookOpen className="h-6 w-6 text-white" />,
     gradientClass: "forest-gradient"
   },

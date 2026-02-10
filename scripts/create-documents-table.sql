@@ -1,4 +1,4 @@
--- Create documents table for DocMagic
+-- Create documents table for DraftDeckAI
 -- Run this script in the Supabase SQL Editor
 
 -- Create documents table

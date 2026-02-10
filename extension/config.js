@@ -1,4 +1,4 @@
-// Configuration for DocMagic Extension
+// Configuration for DraftDeckAI Extension
 // Store your API keys here (will be moved to chrome.storage for security)
 
 const CONFIG = {

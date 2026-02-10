@@ -1,7 +1,7 @@
-# Complete Fix Script for DocMagic
+# Complete Fix Script for DraftDeckAI
 # This fixes both CSS errors and chunk loading errors
 
-Write-Host "🔧 DocMagic - Complete Fix Script" -ForegroundColor Cyan
+Write-Host "🔧 DraftDeckAI - Complete Fix Script" -ForegroundColor Cyan
 Write-Host "=================================" -ForegroundColor Cyan
 Write-Host ""
 

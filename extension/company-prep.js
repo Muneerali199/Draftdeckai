@@ -1,4 +1,4 @@
-// DocMagic Company-Specific Preparation
+// DraftDeckAI Company-Specific Preparation
 // Tailored interview prep for top tech companies
 
 const COMPANY_PROFILES = {

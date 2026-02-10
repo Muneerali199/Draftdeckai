@@ -1,4 +1,4 @@
-// DocMagic Voice Interview - Real-time AI Interview with Voice
+// DraftDeckAI Voice Interview - Real-time AI Interview with Voice
 // 10-minute realistic interview simulation with voice interaction
 
 class VoiceInterview {

@@ -1,4 +1,4 @@
-// DocMagic MCP Server
+// DraftDeckAI MCP Server
 // Model Context Protocol server for intelligent page analysis
 
 class MCPServer {

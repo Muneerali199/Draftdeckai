@@ -1,4 +1,4 @@
-// DocMagic Code Snippet Library
+// DraftDeckAI Code Snippet Library
 // Manages saved code snippets and solutions
 
 class SnippetLibrary {

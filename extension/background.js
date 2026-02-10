@@ -1,4 +1,4 @@
-// DocMagic Smart AI Extension - Background Service Worker
+// DraftDeckAI Smart AI Extension - Background Service Worker
 // Supports multiple AI providers, MCP server, voice, and interviewer mode
 
 // Import MCP Server
@@ -24,7 +24,7 @@ const API_URLS = {
 // Installation
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
-        console.log('DocMagic Smart Extension installed!');
+        console.log('DraftDeckAI Smart Extension installed!');
 
         // Initialize storage
         chrome.storage.local.set({
@@ -54,7 +54,7 @@ chrome.runtime.onInstalled.addListener((details) => {
         chrome.notifications.create({
             type: 'basic',
             iconUrl: 'icons/icon128.png',
-            title: 'DocMagic Extension Installed!',
+            title: 'DraftDeckAI Extension Installed!',
             message: 'Configure your AI provider to get started.'
         });
     }
@@ -63,19 +63,19 @@ chrome.runtime.onInstalled.addListener((details) => {
 // Context menu for selected text
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
-        id: 'docmagic-solve',
-        title: '🚀 Solve with DocMagic AI',
+        id: 'draftdeckai-solve',
+        title: '🚀 Solve with DraftDeckAI AI',
         contexts: ['selection']
     });
 
     chrome.contextMenus.create({
-        id: 'docmagic-explain',
-        title: '💡 Explain with DocMagic AI',
+        id: 'draftdeckai-explain',
+        title: '💡 Explain with DraftDeckAI AI',
         contexts: ['selection']
     });
 
     chrome.contextMenus.create({
-        id: 'docmagic-hint',
+        id: 'draftdeckai-hint',
         title: '🎯 Get Hint',
         contexts: ['selection']
     });
@@ -83,11 +83,11 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'docmagic-solve') {
+    if (info.menuItemId === 'draftdeckai-solve') {
         handleSolveRequest(info.selectionText, tab);
-    } else if (info.menuItemId === 'docmagic-explain') {
+    } else if (info.menuItemId === 'draftdeckai-explain') {
         handleExplainRequest(info.selectionText, tab);
-    } else if (info.menuItemId === 'docmagic-hint') {
+    } else if (info.menuItemId === 'draftdeckai-hint') {
         handleHintRequest(info.selectionText, tab);
     }
 });
@@ -573,4 +573,4 @@ chrome.commands.onCommand.addListener((command) => {
     }
 });
 
-console.log('DocMagic Smart AI Extension loaded - Ready to help! 🚀');
+console.log('DraftDeckAI Smart AI Extension loaded - Ready to help! 🚀');

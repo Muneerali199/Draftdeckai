@@ -1,4 +1,4 @@
-// DocMagic Smart AI Extension - Popup Script
+// DraftDeckAI Smart AI Extension - Popup Script
 // Uses Gemini AI directly - No backend needed!
 
 let currentApiKey = '';

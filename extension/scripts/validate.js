@@ -1,10 +1,10 @@
-// Validate script for DocMagic Extension
+// Validate script for DraftDeckAI Extension
 // Performs comprehensive validation checks
 
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 Validating DocMagic Extension...\n');
+console.log('🔍 Validating DraftDeckAI Extension...\n');
 
 const extensionRoot = path.join(__dirname, '..');
 let errors = 0;

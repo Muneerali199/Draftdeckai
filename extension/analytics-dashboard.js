@@ -1,4 +1,4 @@
-// DocMagic Analytics Dashboard
+// DraftDeckAI Analytics Dashboard
 // Tracks and visualizes learning progress
 
 class AnalyticsDashboard {
