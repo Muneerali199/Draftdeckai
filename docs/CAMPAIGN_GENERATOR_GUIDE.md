@@ -103,7 +103,7 @@ Enter your campaign objective, for example:
 
 **Input:**
 ```
-URL: https://draftdeckai.me
+URL: https://draftdeckai.com
 Goal: Launch AI-powered resume builder feature
 ```
 
@@ -141,7 +141,7 @@ Goal: Launch AI-powered resume builder feature
   tone: "professional",
   keywords: ["AI", "documents", "templates"],
   description: "AI-powered document creation platform",
-  logo: "https://draftdeckai.me/logo.png",
+  logo: "https://draftdeckai.com/logo.png",
   timestamp: "2025-11-11T00:00:00.000Z"
 }
 ```
@@ -325,7 +325,7 @@ Generate AI marketing campaigns.
 ## 📞 Support
 
 Need help? Have questions?
-- 📧 Email: support@draftdeckai.me
+- 📧 Email: support@draftdeckai.com
 - 📖 Documentation: `/docs/campaign-generator`
 - 💬 GitHub Issues: Report bugs or request features
 
