@@ -7,7 +7,7 @@ When clicking "⚙️ Open Full Settings" button, the settings page doesn't open
 
 ### Step 1: Reload the Extension
 1. Go to `chrome://extensions/`
-2. Find **DocMagic** extension
+2. Find **DraftDeckAI** extension
 3. Click the **reload icon (🔄)**
 4. Close any open extension popups
 5. Try clicking "Open Full Settings" again
@@ -17,19 +17,19 @@ When clicking "⚙️ Open Full Settings" button, the settings page doesn't open
 If Step 1 doesn't work, try these methods:
 
 **Method A: Right-Click Extension Icon**
-- Right-click the DocMagic extension icon
+- Right-click the DraftDeckAI extension icon
 - Click "Options"
 - Settings page should open
 
 **Method B: From Extensions Page**
 - Go to `chrome://extensions/`
-- Find DocMagic
+- Find DraftDeckAI
 - Click "Details"
 - Click "Extension options"
 
 **Method C: Direct URL**
 1. Go to `chrome://extensions/`
-2. Find DocMagic extension
+2. Find DraftDeckAI extension
 3. Copy the **ID** (under the extension name)
 4. Open new tab
 5. Type: `chrome-extension://[PASTE-ID-HERE]/settings.html`
@@ -106,7 +106,7 @@ Before troubleshooting, verify:
 
 ✅ Extension is loaded in Chrome:
 - Go to `chrome://extensions/`
-- DocMagic should be visible
+- DraftDeckAI should be visible
 - Toggle should be ON (blue)
 
 ✅ No console errors:
@@ -151,7 +151,7 @@ Try this **nuclear option**:
 
 1. **Remove Extension:**
    - Go to `chrome://extensions/`
-   - Click "Remove" on DocMagic
+   - Click "Remove" on DraftDeckAI
 
 2. **Clear Extension Data:**
    - Close all Chrome windows

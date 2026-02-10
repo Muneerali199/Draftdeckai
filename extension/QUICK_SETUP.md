@@ -1,4 +1,4 @@
-# 🚀 Quick Setup Guide - DocMagic Enhanced Extension
+# 🚀 Quick Setup Guide - DraftDeckAI Enhanced Extension
 
 ## ⚡ 5-Minute Setup
 

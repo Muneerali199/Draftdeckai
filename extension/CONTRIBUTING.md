@@ -1,6 +1,6 @@
-# Contributing to DocMagic Extension
+# Contributing to DraftDeckAI Extension
 
-Thank you for your interest in contributing to DocMagic! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to DraftDeckAI! This document provides guidelines and instructions for contributing.
 
 ## 🎯 Ways to Contribute
 
@@ -27,8 +27,8 @@ Thank you for your interest in contributing to DocMagic! This document provides 
 1. **Fork the repository**
    ```bash
    # Click "Fork" on GitHub, then:
-   git clone https://github.com/YOUR_USERNAME/docmagic-extension.git
-   cd docmagic-extension/extension
+   git clone https://github.com/YOUR_USERNAME/draftdeckai-extension.git
+   cd draftdeckai-extension/extension
    ```
 
 2. **Install dependencies** (optional, for build scripts)
@@ -317,7 +317,7 @@ async function solveProblem(problem, language) {
 **DO NOT** create public issues for security vulnerabilities.
 
 Instead:
-1. Email: security@docmagic.com
+1. Email: security@draftdeckai.com
 2. Include detailed description
 3. Steps to reproduce
 4. Potential impact
@@ -354,10 +354,10 @@ We pledge to make participation in our project a harassment-free experience for 
 
 ## 📞 Questions?
 
-- Open a [Discussion](https://github.com/YOUR_USERNAME/docmagic-extension/discussions)
+- Open a [Discussion](https://github.com/YOUR_USERNAME/draftdeckai-extension/discussions)
 - Join our Discord (coming soon)
-- Email: support@docmagic.com
+- Email: support@draftdeckai.com
 
 ---
 
-**Thank you for contributing to DocMagic! Together, we help people land their dream jobs! 🚀**
+**Thank you for contributing to DraftDeckAI! Together, we help people land their dream jobs! 🚀**

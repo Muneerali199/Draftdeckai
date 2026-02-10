@@ -1,4 +1,4 @@
-# 🚀 DocMagic Enhanced AI Interview Assistant
+# 🚀 DraftDeckAI Enhanced AI Interview Assistant
 
 > **Revolutionary AI-Powered Extension with Voice, MCP Intelligence, and Interactive Interviewer Mode**
 
@@ -130,7 +130,7 @@ Evaluates you on 5 criteria:
    - 🧩 Show Approach
    - ✅ Full Solution
    - ⏱️ Complexity Analysis
-4. **Or right-click any text** → "Solve with DocMagic AI"
+4. **Or right-click any text** → "Solve with DraftDeckAI AI"
 
 ## 🎤 Voice Commands Reference
 
@@ -396,8 +396,8 @@ Coming soon:
 
 ## 🙏 Support & Feedback
 
-- **Website**: https://docmagic.com
-- **Email**: support@docmagic.com
+- **Website**: https://draftdeckai.com
+- **Email**: support@draftdeckai.com
 - **Discord**: Join our community
 - **GitHub**: Report issues
 

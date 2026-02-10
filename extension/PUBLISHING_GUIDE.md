@@ -1,6 +1,6 @@
 # 🚀 GitHub Publishing Guide
 
-This guide will help you publish your DocMagic extension to GitHub and create releases for users to download.
+This guide will help you publish your DraftDeckAI extension to GitHub and create releases for users to download.
 
 ## 📋 Prerequisites
 
@@ -15,7 +15,7 @@ This guide will help you publish your DocMagic extension to GitHub and create re
 1. **Go to GitHub** and sign in: https://github.com
 2. **Click the "+" icon** in the top right → "New repository"
 3. **Repository details**:
-   - Repository name: `docmagic-extension`
+   - Repository name: `draftdeckai-extension`
    - Description: `AI-powered browser extension for interview preparation and DSA problem solving`
    - Visibility: **Public** (so anyone can use it)
    - ✅ Add README file: **Skip** (we already have one)
@@ -29,7 +29,7 @@ Open PowerShell in your extension folder and run:
 
 ```powershell
 # Navigate to extension folder
-cd "C:\Users\miet\Desktop\DocMagic\extension"
+cd "C:\Users\miet\Desktop\DraftDeckAI\extension"
 
 # Initialize git repository
 git init
@@ -41,7 +41,7 @@ git add .
 git commit -m "Initial release v1.0.0"
 
 # Add GitHub remote (replace YOUR_USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/docmagic-extension.git
+git remote add origin https://github.com/YOUR_USERNAME/draftdeckai-extension.git
 
 # Push to GitHub
 git branch -M main
@@ -83,11 +83,11 @@ git push
 3. **Click "Create a new release"**
 4. **Fill in the release details**:
    - **Tag**: `v1.0.0` (create new tag)
-   - **Release title**: `DocMagic Extension v1.0.0`
+   - **Release title**: `DraftDeckAI Extension v1.0.0`
    - **Description**: Copy from below:
 
 ```markdown
-## 🚀 DocMagic Interview & DSA Prep Extension v1.0.0
+## 🚀 DraftDeckAI Interview & DSA Prep Extension v1.0.0
 
 ### ✨ First Release!
 
@@ -122,9 +122,9 @@ AI-powered browser extension to help you ace coding interviews, solve DSA proble
 
 ### 📚 Documentation
 
-- [README](https://github.com/YOUR_USERNAME/docmagic-extension/blob/main/README.md)
-- [Setup Guide](https://github.com/YOUR_USERNAME/docmagic-extension/blob/main/README.md#setup--configuration)
-- [Contributing](https://github.com/YOUR_USERNAME/docmagic-extension/blob/main/CONTRIBUTING.md)
+- [README](https://github.com/YOUR_USERNAME/draftdeckai-extension/blob/main/README.md)
+- [Setup Guide](https://github.com/YOUR_USERNAME/draftdeckai-extension/blob/main/README.md#setup--configuration)
+- [Contributing](https://github.com/YOUR_USERNAME/draftdeckai-extension/blob/main/CONTRIBUTING.md)
 
 ### ⭐ Support
 
@@ -142,8 +142,8 @@ Happy coding! May you ace all your interviews! 🚀
      ```powershell
      npm run package:all
      ```
-   - Upload `dist/docmagic-extension-v1.0.0.zip` from your dist folder
-   - Upload `dist/docmagic-extension-v1.0.0.tar.gz` (if created)
+   - Upload `dist/draftdeckai-extension-v1.0.0.zip` from your dist folder
+   - Upload `dist/draftdeckai-extension-v1.0.0.tar.gz` (if created)
 
 6. **Click "Publish release"**
 
@@ -167,10 +167,10 @@ If you want automated releases:
 
 ### Step 6: Verify Your Release
 
-1. **Go to your releases page**: `https://github.com/YOUR_USERNAME/docmagic-extension/releases`
+1. **Go to your releases page**: `https://github.com/YOUR_USERNAME/draftdeckai-extension/releases`
 2. **Check that files are present**:
-   - ✅ docmagic-extension-v1.0.0.zip
-   - ✅ docmagic-extension-v1.0.0.tar.gz (optional)
+   - ✅ draftdeckai-extension-v1.0.0.zip
+   - ✅ draftdeckai-extension-v1.0.0.tar.gz (optional)
 3. **Test download**: Download and install to verify
 
 ### Step 7: Add Badges and Polish
@@ -178,8 +178,8 @@ If you want automated releases:
 1. **Update README badges**:
    ```markdown
    [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-   [![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/docmagic-extension)](https://github.com/YOUR_USERNAME/docmagic-extension/releases)
-   [![Downloads](https://img.shields.io/github/downloads/YOUR_USERNAME/docmagic-extension/total)](https://github.com/YOUR_USERNAME/docmagic-extension/releases)
+   [![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/draftdeckai-extension)](https://github.com/YOUR_USERNAME/draftdeckai-extension/releases)
+   [![Downloads](https://img.shields.io/github/downloads/YOUR_USERNAME/draftdeckai-extension/total)](https://github.com/YOUR_USERNAME/draftdeckai-extension/releases)
    ```
 
 2. **Add screenshots** (optional but recommended):
@@ -317,4 +317,4 @@ Congratulations! Your extension is now:
 
 **Need help?** Open an issue on your repository or reach out to the community!
 
-**Made with ❤️ by the DocMagic Team**
+**Made with ❤️ by the DraftDeckAI Team**
