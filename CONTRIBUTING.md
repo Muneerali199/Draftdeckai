@@ -110,6 +110,7 @@ Create a new file named `.env.local` in your project root directory (same level 
 #### **Add Required Environment Variables**
 
 Copy the following into your `.env.local` file and replace the placeholder values:
+MAKE SURE TO RENAME `.env.local.example` file to `.env.local` , else npm will keep showing problems. 
 
 ```bash
 # App Configuration
@@ -142,6 +143,7 @@ PEXELS_API_KEY=your_pexels_api_key
 2. Create a new project
 3. Go to Settings → API
 4. Copy your Project URL and anon public key
+5. Make sure to not give spaces will copying into `.env.local` file
 
 **Google Gemini AI** (Required):
 1. Visit [Google AI Studio](https://ai.google.dev/)
