@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,8 +27,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { SiteHeader } from "@/components/site-header";
-import { SlideCard, Slide } from "@/components/presentation/real-time-generator";
 import { getThemeById } from "@/lib/presentation-themes";
+import { SlideCard, Slide } from "@/components/presentation/real-time-generator";
+import { ResumePreview } from "@/components/resume/resume-preview";
 
 type ContentType = "resume" | "presentation" | "diagram" | "letter";
 
@@ -79,13 +80,27 @@ const contentTypeConfig = {
 };
 
 // Helper function to get document description
+function getPresentationSlides(raw: any): any[] {
+  const content = raw?.content || raw || {};
+  const directSlides = content.slides ?? raw?.slides;
+  if (Array.isArray(directSlides)) return directSlides;
+  if (Array.isArray(directSlides?.slides)) return directSlides.slides;
+  if (Array.isArray(content?.outlines)) return content.outlines;
+  return [];
+}
+
+function getPresentationThemeId(raw: any): string {
+  const content = raw?.content || raw || {};
+  return content.themeId || content.template || raw?.themeId || raw?.template || 'peach';
+}
+
 function getDocumentDescription(doc: any): string {
   const content = doc.content || {};
   switch (doc.type) {
     case 'resume':
       return content.resumeData?.name || content.name || 'Resume';
     case 'presentation':
-      const slides = Array.isArray(content.slides) ? content.slides : (content.outlines || content.slides || []);
+      const slides = getPresentationSlides(doc);
       return `${slides.length || 0} slides`;
     case 'diagram':
       return content.type || 'Diagram';
@@ -96,10 +111,95 @@ function getDocumentDescription(doc: any): string {
   }
 }
 
-const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title: string, themeId?: string }) => {
+const ResumePreviewMini = ({ data, title }: { data: any, title: string }) => {
+  const [scale, setScale] = useState(0.2);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateScale = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        if (width > 0) {
+          // A4 base width is approx 794px for standard display
+          setScale(width / 794);
+        }
+      }
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(() => updateScale());
+    observer.observe(containerRef.current);
+    window.addEventListener('resize', updateScale);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateScale);
+    };
+  }, []);
+
+  // Unwrap resume data
+  let resumeData = data;
+  if (data?.resumeData) resumeData = data.resumeData;
+  const template = data?.template || data?.templateId || 'modern';
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-full w-full relative cursor-pointer overflow-hidden bg-white"
+    >
+      <div 
+        className="absolute top-0 left-0 origin-top-left" 
+        style={{ 
+          width: '794px', // A4 width at 96 DPI
+          height: '1123px', // A4 height
+          transform: `scale(${scale})`,
+        }}
+      >
+        <ResumePreview
+          resume={resumeData}
+          template={template}
+          showControls={false}
+          layoutMode="fixed"
+        />
+      </div>
+    </div>
+  );
+};
+
+const PresentationPreview = ({ slides, title, themeId }: { slides: Slide[], title: string, themeId?: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const theme = getThemeById(themeId || 'modern-blue');
+  const [scale, setScale] = useState(0.2);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const theme = getThemeById(themeId || 'peach');
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateScale = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        if (width > 0) {
+          setScale(width / 1200);
+        }
+      }
+    };
+
+    updateScale();
+    
+    const observer = new ResizeObserver(() => {
+      updateScale();
+    });
+    
+    observer.observe(containerRef.current);
+    
+    window.addEventListener('resize', updateScale);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateScale);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isHovered || slides.length <= 1) return;
@@ -111,8 +211,8 @@ const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title:
 
   if (!slides || slides.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center p-4 bg-purple-50">
-        <Presentation className="h-8 w-8 text-purple-400" />
+      <div className="h-full flex items-center justify-center p-4" style={{ backgroundColor: theme.colors.background }}>
+        <Presentation className="h-8 w-8" style={{ color: theme.colors.accent }} />
       </div>
     );
   }
@@ -121,32 +221,43 @@ const PresentationPreview = ({ slides, title, themeId }: { slides: any[], title:
 
   return (
     <div
-      className="h-full w-full relative group/slideshow cursor-pointer flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+      ref={containerRef}
+      className="h-full w-full relative group/slideshow cursor-pointer flex items-center justify-center overflow-hidden"
+      style={{ backgroundColor: theme.colors.background }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
         setCurrentIndex(0);
       }}
     >
-      <div className="w-[166.67%] h-[166.67%] scale-[0.6] transform-gpu pointer-events-none origin-center">
+      <div 
+        className="absolute top-0 left-0 origin-top-left" 
+        style={{ 
+          width: '1200px', 
+          height: '675px', // 16:9 for 1200px width
+          transform: `scale(${scale})`,
+        }}
+      >
         <SlideCard
           slide={slide}
           theme={theme}
           getGradientClass={() => theme.colors.gradient}
+          isPreview={true}
         />
       </div>
 
       {/* Slide number indicator */}
-      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[8px] px-2 py-0.5 rounded-full backdrop-blur-md font-bold z-20">
+      <div className="absolute bottom-2 right-2 text-[10px] px-2 py-0.5 rounded-full backdrop-blur-md font-bold z-20"
+        style={{ backgroundColor: `${theme.colors.foreground}cc`, color: theme.colors.background }}>
         {currentIndex + 1} / {slides.length}
       </div>
 
       {/* Progress bar */}
       {isHovered && slides.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200/50 z-20">
+        <div className="absolute bottom-0 left-0 right-0 h-1 z-20" style={{ backgroundColor: `${theme.colors.muted}80` }}>
           <div
-            className="h-full bg-purple-500 transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / slides.length) * 100}%` }}
+            className="h-full transition-all duration-300"
+            style={{ backgroundColor: theme.colors.accent, width: `${((currentIndex + 1) / slides.length) * 100}%` }}
           />
         </div>
       )}
@@ -330,15 +441,17 @@ export function HistoryDashboard() {
       return [];
     }
 
-    return (data as any[] || []).map((pres) => ({
+    return (data as any[] || []).map((pres) => {
+      const slides = getPresentationSlides(pres);
+      return ({
       id: pres.id,
       type: "presentation" as ContentType,
       title: pres.title || "Untitled Presentation",
-      description: `${pres.slides?.length || 0} slides`,
+      description: `${slides.length || 0} slides`,
       created_at: pres.created_at,
       updated_at: pres.updated_at,
       data: pres,
-    }));
+    })});
   };
 
   const fetchDiagrams = async (userId: string): Promise<HistoryItem[]> => {
@@ -413,192 +526,11 @@ export function HistoryDashboard() {
 
     switch (item.type) {
       case "resume":
-        // DEBUG: Log the actual data structure
-        console.log('🔍 Resume Preview Data:', item.data);
-        
-        // Handle different resume data structures - support both nested and flat formats
-        let resumeData = item.data;
-        
-        // If data is wrapped in resumeData key, unwrap it
-        if (item.data?.resumeData && typeof item.data.resumeData === 'object') {
-          resumeData = item.data.resumeData;
-          console.log('📦 Unwrapped resumeData from nested structure');
-        }
-        
-        // Support both personal_info and personalInfo naming
-        const personalInfo = resumeData?.personal_info || resumeData?.personalInfo || {};
-        
-        // Extract all fields with fallbacks
-        const name = personalInfo?.name || resumeData?.name || item.title || "Resume";
-        const email = personalInfo?.email || resumeData?.email || "";
-        const phone = personalInfo?.phone || resumeData?.phone || "";
-        const location = personalInfo?.location || resumeData?.location || "";
-        const linkedin = personalInfo?.linkedin || resumeData?.linkedin || "";
-        const github = personalInfo?.github || resumeData?.github || "";
-        const summary = personalInfo?.summary || resumeData?.summary || "";
-        
-        // Extract experiences
-        const experiences = resumeData?.experience || resumeData?.work_experience || 
-                           resumeData?.workExperience || resumeData?.experiences || [];
-        
-        // Extract education
-        const education = resumeData?.education || resumeData?.educations || [];
-        
-        // Extract skills - handle both array and object formats
-        let skills: any[] = [];
-        if (Array.isArray(resumeData?.skills)) {
-          skills = resumeData.skills;
-        } else if (typeof resumeData?.skills === 'object' && resumeData.skills !== null) {
-          // Flatten skills object (e.g., {technical: [...], programming: [...]})
-          skills = Object.values(resumeData.skills).flat();
-        }
-        
-        // Extract projects
-        const projects = resumeData?.projects || resumeData?.project || [];
-        
-        // Extract certifications
-        const certifications = resumeData?.certifications || resumeData?.certification || [];
-        
-        console.log('✅ Extracted Resume Fields:', {
-          name, email, phone, location,
-          hasSummary: !!summary,
-          experiencesCount: experiences?.length || 0,
-          educationCount: education?.length || 0,
-          skillsCount: skills?.length || 0,
-          projectsCount: projects?.length || 0,
-          certificationsCount: certifications?.length || 0
-        });
-
-        return (
-          <div className="p-2 text-[5px] leading-tight h-full overflow-hidden bg-white flex flex-col">
-            {/* Header - Name & Contact */}
-            <div className="text-center mb-1 pb-1 border-b border-gray-300">
-              <div className="font-bold text-[7px] text-gray-900">
-                {name}
-              </div>
-              <div className="text-gray-600 text-[4px] mt-0.5">
-                {email && <span>{email}</span>}
-                {phone && email && <span> • </span>}
-                {phone && <span>{phone}</span>}
-                {location && (email || phone) && <span> • </span>}
-                {location && <span>{location}</span>}
-              </div>
-              {(linkedin || github) && (
-                <div className="text-gray-500 text-[3px] mt-0.5">
-                  {linkedin && <span>LinkedIn: {linkedin}</span>}
-                  {github && linkedin && <span> • </span>}
-                  {github && <span>GitHub: {github}</span>}
-                </div>
-              )}
-            </div>
-            
-            {/* Summary */}
-            {summary && (
-              <div className="mb-1">
-                <div className="text-gray-700 text-[4px] line-clamp-2 leading-tight">{summary}</div>
-              </div>
-            )}
-            
-            {/* Experience Section */}
-            {experiences.length > 0 && (
-              <div className="mb-1">
-                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Experience</div>
-                {experiences.slice(0, 3).map((exp: any, i: number) => (
-                  <div key={i} className="mb-1">
-                    <div className="flex justify-between items-baseline">
-                      <span className="font-semibold text-gray-800 text-[4px]">
-                        {exp.title || exp.position || exp.role || "Position"}
-                      </span>
-                      <span className="text-gray-500 text-[3px]">{exp.date || exp.duration || ""}</span>
-                    </div>
-                    <div className="text-gray-600 text-[3px] italic">
-                      {exp.company || exp.organization || exp.employer || "Company"}
-                      {exp.location && <span> — {exp.location}</span>}
-                    </div>
-                    {exp.description && Array.isArray(exp.description) && exp.description.length > 0 && (
-                      <ul className="mt-0.5 text-[3px] text-gray-600 list-disc list-inside">
-                        {exp.description.slice(0, 2).map((desc: string, j: number) => (
-                          <li key={j} className="line-clamp-1">{desc}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Education Section */}
-            {education.length > 0 && (
-              <div className="mb-1">
-                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Education</div>
-                {education.slice(0, 2).map((edu: any, i: number) => (
-                  <div key={i} className="mb-0.5">
-                    <div className="flex justify-between items-baseline">
-                      <span className="font-semibold text-gray-800 text-[4px]">
-                        {edu.degree || edu.title || "Degree"}
-                      </span>
-                      <span className="text-gray-500 text-[3px]">{edu.date || edu.graduationDate || ""}</span>
-                    </div>
-                    <div className="text-gray-600 text-[3px]">
-                      {edu.institution || edu.school || edu.university || "Institution"}
-                      {edu.gpa && <span className="text-gray-500"> (GPA: {edu.gpa})</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Skills Section */}
-            {skills.length > 0 && (
-              <div className="mb-1">
-                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Skills</div>
-                <div className="flex flex-wrap gap-0.5">
-                  {skills.slice(0, 8).map((skill: any, i: number) => (
-                    <span key={i} className="bg-gray-100 text-gray-700 px-1 py-0.5 rounded text-[3px] border border-gray-200">
-                      {typeof skill === 'string' ? skill : skill.name || skill.skill || String(skill)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Projects Section */}
-            {projects.length > 0 && (
-              <div className="mb-1">
-                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Projects</div>
-                {projects.slice(0, 2).map((proj: any, i: number) => (
-                  <div key={i} className="mb-0.5">
-                    <div className="font-semibold text-gray-800 text-[4px]">{proj.name || proj.title || "Project"}</div>
-                    <div className="text-gray-600 text-[3px] line-clamp-1">{proj.description || ""}</div>
-                    {proj.technologies && Array.isArray(proj.technologies) && (
-                      <div className="text-[3px] text-gray-500 mt-0.5">
-                        {proj.technologies.slice(0, 3).join(', ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Certifications Section */}
-            {certifications.length > 0 && (
-              <div>
-                <div className="font-bold text-[4px] text-gray-900 uppercase tracking-wide border-b border-gray-400 mb-0.5">Certifications</div>
-                {certifications.slice(0, 2).map((cert: any, i: number) => (
-                  <div key={i} className="flex justify-between items-baseline text-[3px]">
-                    <span className="text-gray-800">{cert.name || cert.title || "Certification"}</span>
-                    <span className="text-gray-500">{cert.date || cert.year || ""}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+        return <ResumePreviewMini data={item.data} title={item.title} />;
 
       case "presentation":
-        const rawSlides = item.data?.slides || item.data?.content?.slides;
-        const slides = Array.isArray(rawSlides) ? rawSlides : (rawSlides?.slides || []);
-        const themeId = item.data?.themeId || item.data?.content?.themeId;
+        const slides = getPresentationSlides(item.data);
+        const themeId = getPresentationThemeId(item.data);
         return <PresentationPreview slides={slides} title={item.title} themeId={themeId} />;
 
       case "diagram":
@@ -855,10 +787,19 @@ export function HistoryDashboard() {
                   </div>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
                   {filteredItems.map((item) => {
                     const config = contentTypeConfig[item.type];
                     const Icon = config.icon;
+                    
+                    // Dynamic background for the preview container
+                    let containerBg = `bg-gradient-to-br ${config.gradient}`;
+                    if (item.type === 'presentation') {
+                      const themeId = getPresentationThemeId(item.data);
+                      const theme = getThemeById(themeId);
+                      // Use a subtle version of the theme background or the theme background itself
+                      containerBg = ""; // We'll use inline style for PPT to be precise
+                    }
 
                     return (
                       <Card
@@ -867,14 +808,19 @@ export function HistoryDashboard() {
                         onClick={() => handleView(item)}
                       >
                         {/* Preview Area */}
-                        <div className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} bg-gradient-to-br ${config.gradient} overflow-hidden`}>
+                        <div 
+                          className={`relative ${item.type === 'presentation' ? 'aspect-video' : 'aspect-[3/4]'} ${item.type !== 'presentation' ? containerBg : ''} overflow-hidden`}
+                          style={item.type === 'presentation' ? { backgroundColor: getThemeById(getPresentationThemeId(item.data)).colors.background } : {}}
+                        >
                           {/* Document Preview Content */}
-                          <div className="absolute inset-0 bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner overflow-hidden">
+                          <div
+                            className={`absolute inset-0 ${item.type === 'presentation' ? '' : 'bg-white dark:bg-gray-900 m-3 rounded-lg shadow-inner'} overflow-hidden`}
+                          >
                             {renderPreview(item)}
                           </div>
 
                           {/* Hover Overlay */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 hidden group-hover:flex items-center justify-center z-30">
                             <div className="flex gap-3">
                               <Button
                                 size="sm"
@@ -927,7 +873,7 @@ export function HistoryDashboard() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-6 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                              className="h-6 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 invisible group-hover:visible transition-all"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleView(item);

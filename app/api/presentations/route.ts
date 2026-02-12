@@ -31,7 +31,8 @@ export async function POST(request: Request) {
     );
 
     const body = await request.json();
-    const { title, slides, template, prompt, isPublic = false } = body;
+    const { title, slides, template, themeId, prompt, isPublic = false } = body;
+    const resolvedThemeId = themeId || template || 'peach';
 
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -53,7 +54,8 @@ export async function POST(request: Request) {
         type: 'presentation',
         content: {
           slides,
-          template,
+          template: resolvedThemeId,
+          themeId: resolvedThemeId,
           isPublic
         },
         prompt

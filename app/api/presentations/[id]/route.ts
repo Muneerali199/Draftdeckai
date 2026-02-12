@@ -44,11 +44,14 @@ export async function GET(
     }
 
     // Return presentation data
+    const resolvedThemeId = content.themeId || content.template || 'peach';
+
     return NextResponse.json({
       id: data.id,
       title: data.title,
       slides: content.slides || [],
-      template: content.template || 'peach',
+      template: resolvedThemeId,
+      themeId: resolvedThemeId,
       created_at: data.created_at,
       user_id: data.user_id
     });

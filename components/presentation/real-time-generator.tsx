@@ -325,6 +325,7 @@ export default function RealTimeGenerator() {
         content: {
           slides: slides,
           themeId: selectedThemeId,
+          template: selectedThemeId,
           version: 2,
           isPublic: true
         }
@@ -1933,12 +1934,13 @@ export default function RealTimeGenerator() {
 }
 
 // Enhanced Slide Card Component with Icons, Diagrams, Images, and Charts
-export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage }: {
+export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage, isPreview }: {
   slide: Slide;
   getGradientClass: (bg?: string) => string;
   theme: PresentationTheme;
   onUpdate?: (updatedSlide: Slide) => void;
   onAddImage?: () => void;
+  isPreview?: boolean;
 }) {
   const isHero = slide.type === 'hero' || slide.type === 'cover' || slide.type === 'title';
   const isFlowchart = slide.type === 'process' || slide.type === 'flowchart';
@@ -2050,7 +2052,7 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
 
   return (
     <div
-      className="group relative rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border"
+      className={`group relative ${isPreview ? '' : 'rounded-[2rem] shadow-xl hover:shadow-2xl'} transition-all duration-500 overflow-hidden ${isPreview ? '' : 'border'}`}
       style={{
         backgroundColor: theme.colors.card,
         borderColor: theme.colors.border
@@ -2111,17 +2113,19 @@ export function SlideCard({ slide, getGradientClass, theme, onUpdate, onAddImage
         )}
 
         {/* Slide Number Badge */}
-        <div
-          data-export-hide="true"
-          className="absolute top-8 right-8 backdrop-blur-md border px-4 py-2 rounded-full text-sm font-bold tracking-wide shadow-lg z-20"
-          style={{
-            borderColor: `${textColor}30`,
-            backgroundColor: `${theme.colors.background}40`,
-            color: textColor
-          }}
-        >
-          SLIDE {slide.slideNumber}
-        </div>
+        {!isPreview && (
+          <div
+            data-export-hide="true"
+            className="absolute top-8 right-8 backdrop-blur-md border px-4 py-2 rounded-full text-sm font-bold tracking-wide shadow-lg z-20"
+            style={{
+              borderColor: `${textColor}30`,
+              backgroundColor: `${theme.colors.background}40`,
+              color: textColor
+            }}
+          >
+            SLIDE {slide.slideNumber}
+          </div>
+        )}
 
         <div className="absolute inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           <div className="min-h-full w-full p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col items-center justify-center relative z-10">
