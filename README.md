@@ -59,8 +59,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Muneerali199/DraftDeckAI.git
-cd DraftDeckAI
+git clone https://github.com/Muneerali199/Draftdeckai.git
+cd Draftdeckai
 
 # Install dependencies
 npm install
@@ -202,7 +202,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Built with ❤️ by [Muneer Ali](https://github.com/Muneerali199)**
+**Built with ❤️ by [Muneer Ali](https://github.com/Muneerali199) and [Mayank Sahu](https://github.com/msnotfound) .**
 
 ⭐ Star this repo if you find it helpful!
 
