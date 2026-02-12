@@ -59,8 +59,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Muneerali199/DraftDeckAI.git
-cd DraftDeckAI
+git clone https://github.com/Muneerali199/Draftdeckai.git
+cd Draftdeckai
 
 # Install dependencies
 npm install
