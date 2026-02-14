@@ -483,20 +483,28 @@ export function PresentationPreview({
                   : "bg-gradient-to-br from-white/30 via-white/10 to-white/30"
             )}></div>
             <div className={cn(
-              "relative z-10 h-full flex flex-col items-center justify-center p-8 sm:p-12 text-center",
-              backgroundImage ? "text-white" : "" // Use white text on images, otherwise use template text color
+              "relative z-10 h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 text-center",
+              backgroundImage ? "text-white" : ""
             )}>
-              <div className="max-w-4xl mx-auto">
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              <div className="max-w-full w-full px-2 sm:px-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl font-bold mb-3 leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {slide.title}
                 </h1>
                 {slide.content && (
-                  <p className="text-xl sm:text-2xl lg:text-3xl opacity-90 max-w-4xl leading-relaxed mb-8">
+                  <p className="text-sm sm:text-base md:text-lg lg:text-lg xl:text-lg opacity-90 max-w-full leading-relaxed mb-4 mx-auto" 
+                     style={{ 
+                       wordBreak: 'break-word', 
+                       overflowWrap: 'break-word',
+                       display: '-webkit-box',
+                       WebkitLineClamp: 3,
+                       WebkitBoxOrient: 'vertical',
+                       overflow: 'hidden'
+                     }}>
                     {slide.content}
                   </p>
                 )}
                 <div className={cn(
-                  "w-24 h-1 mx-auto",
+                  "w-12 h-0.5 sm:w-16 sm:h-0.5 lg:w-20 lg:h-1 mx-auto",
                   backgroundImage ? "bg-white/80" : templateStyles.accent.replace('text-', 'bg-')
                 )}></div>
               </div>
@@ -884,7 +892,7 @@ export function PresentationPreview({
     <div 
       id="presentation-container" 
       className={cn(
-        "relative w-full aspect-video",
+        "relative w-full aspect-video overflow-hidden",
         isFullscreen && "fixed inset-0 z-50 bg-black aspect-auto"
       )}
     >
@@ -928,7 +936,7 @@ export function PresentationPreview({
       
       {/* Slide Content */}
       <div className={cn(
-        "h-full overflow-hidden rounded-lg",
+        "h-full w-full overflow-hidden rounded-lg flex flex-col",
         isFullscreen && "rounded-none"
       )}>
         {renderSlideContent(slides[currentSlide], currentSlide)}
