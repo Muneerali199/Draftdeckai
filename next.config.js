@@ -42,11 +42,10 @@ const nextConfig = {
     ],
   },
   trailingSlash: false,
-  swcMinify: true,
+  swcMinify: false,
   compress: true,
   poweredByHeader: false,
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion']
   },
   productionBrowserSourceMaps: false,
@@ -112,17 +111,7 @@ const nextConfig = {
             enforce: true
           },
           lib: {
-            test(module) {
-              return (
-                module.size() > 160000 &&
-                /node_modules[\\/](?!(@radix-ui|lucide-react|framer-motion))/.test(module.name())
-              );
-            },
-            name(module) {
-              const hash = webpack.util.createHash('sha1');
-              hash.update(module.libIdent({ context: '' }));
-              return `lib-${hash.digest('hex').substring(0, 8)}`;
-            },
+            test: /[\\/]node_modules[\\/](?!(@radix-ui|lucide-react|framer-motion))/,
             priority: 30,
             minChunks: 1,
             reuseExistingChunk: true
@@ -134,9 +123,7 @@ const nextConfig = {
             priority: 20
           },
           shared: {
-            name(module, chunks) {
-              return modulesSharedByChunks(module.name(), chunks);
-            },
+            name: 'shared',
             chunks: 'all',
             priority: 10,
             minChunks: 2,
@@ -149,12 +136,6 @@ const nextConfig = {
     return config;
   },
 };
-
-function modulesSharedByChunks(moduleName, chunks) {
-  const hash = require('crypto').createHash('sha1');
-  hash.update(moduleName);
-  return `shared-${hash.digest('hex').substring(0, 8)}`;
-}
 
 const withPWA = withPWACore({
   dest: 'public',

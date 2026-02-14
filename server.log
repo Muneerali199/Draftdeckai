@@ -1,0 +1,152 @@
+
+> draftdeckai@2.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · optimizeCss
+
+ ✓ Starting...
+   Using tsconfig file: ./tsconfig.build.json
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 70.6s
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · optimizeCss
+
+ ✓ Starting...
+ ⚠ Disabling SWC Minifer will not be an option in the next major version. Please report any issues you may be experiencing to https://github.com/vercel/next.js/issues
+   Using tsconfig file: ./tsconfig.build.json
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 9.3s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 8.8s (124 modules)
+ ○ Compiling / ...
+TypeError: module.name is not a function
+    at Object.name [as getName] (file:///C:/Users/miet/Desktop/Draftdeckai/next.config.js:138:51)
+    at addModuleToChunksInfoMap (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1133071)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1135446
+    at Hook.eval [as call] (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28636), <anonymous>:31:16)
+    at Hook.CALL_DELEGATE [as _call] (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:25906)
+    at Compilation.seal (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:103413)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:149081
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:99350
+    at _next2 (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:16:1)
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:42:1)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306987
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at Object.each (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9608)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306727
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at done (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9742)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9372
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:303927
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15962
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15523
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:539171
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15992
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:30:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+ ⨯ unhandledRejection: TypeError: module.name is not a function
+    at Object.name [as getName] (file:///C:/Users/miet/Desktop/Draftdeckai/next.config.js:138:51)
+    at addModuleToChunksInfoMap (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1133071)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1135446
+    at Hook.eval [as call] (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28636), <anonymous>:31:16)
+    at Hook.CALL_DELEGATE [as _call] (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:25906)
+    at Compilation.seal (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:103413)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:149081
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:99350
+    at _next2 (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:16:1)
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:42:1)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306987
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at Object.each (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9608)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306727
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at done (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9742)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9372
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:303927
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15962
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15523
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:539171
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15992
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:30:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+ ⨯ unhandledRejection: TypeError: module.name is not a function
+    at Object.name [as getName] (file:///C:/Users/miet/Desktop/Draftdeckai/next.config.js:138:51)
+    at addModuleToChunksInfoMap (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1133071)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:1135446
+    at Hook.eval [as call] (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28636), <anonymous>:31:16)
+    at Hook.CALL_DELEGATE [as _call] (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:25906)
+    at Compilation.seal (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:103413)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:149081
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:99350
+    at _next2 (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:16:1)
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:42:1)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306987
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at Object.each (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9608)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:306727
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9430
+    at done (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9742)
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\neo-async\async.js:1:9372
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:303927
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15962
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15523
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:539171
+    at C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:28:15992
+    at eval (eval at create (C:\Users\miet\Desktop\Draftdeckai\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:30:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (131kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · optimizeCss
+
+ ✓ Starting...
+ ⚠ Disabling SWC Minifer will not be an option in the next major version. Please report any issues you may be experiencing to https://github.com/vercel/next.js/issues
+   Using tsconfig file: ./tsconfig.build.json
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 7.4s
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3003
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · optimizeCss
+
+ ✓ Starting...
+ ⚠ Disabling SWC Minifer will not be an option in the next major version. Please report any issues you may be experiencing to https://github.com/vercel/next.js/issues
+   Using tsconfig file: ./tsconfig.build.json
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 72.5s
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3003
+  - Environments: .env.local
+
+ ✓ Starting...
+ ⚠ Disabling SWC Minifer will not be an option in the next major version. Please report any issues you may be experiencing to https://github.com/vercel/next.js/issues
+   Using tsconfig file: ./tsconfig.build.json
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 68.7s
