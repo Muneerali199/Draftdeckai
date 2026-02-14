@@ -3,14 +3,10 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { validateAndSanitize, resumeGenerationSchema, detectSqlInjection, sanitizeInput } from '@/lib/validation';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase/instance';
 import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits } from '@/lib/credits-service';
 
-// Service role client for credit operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = getSupabaseAdmin();
 
 // Mistral-based resume generation as fallback
 async function generateResumeWithMistral({ prompt, name, email }: { prompt: string; name: string; email: string }) {

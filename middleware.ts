@@ -2,42 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { SECURITY_CONFIG, getSecurityHeaders, isAllowedOrigin, logSecurityEvent } from '@/lib/security';
-
-// Rate limiting store (in production, use Redis or similar)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-// Rate limiting function
-function rateLimit(ip: string, endpoint: string): boolean {
-  const now = Date.now();
-  const key = `${ip}:${endpoint}`;
-
-  // Determine rate limit based on endpoint
-  let limit = SECURITY_CONFIG.RATE_LIMITS.API.requests;
-  let windowMs = SECURITY_CONFIG.RATE_LIMITS.API.windowMs;
-
-  if (endpoint.startsWith('/api/auth/')) {
-    limit = SECURITY_CONFIG.RATE_LIMITS.AUTH.requests;
-    windowMs = SECURITY_CONFIG.RATE_LIMITS.AUTH.windowMs;
-  } else if (endpoint.startsWith('/api/generate/')) {
-    limit = SECURITY_CONFIG.RATE_LIMITS.GENERATE.requests;
-    windowMs = SECURITY_CONFIG.RATE_LIMITS.GENERATE.windowMs;
-  }
-
-  const record = rateLimitStore.get(key);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-
-  if (record.count >= limit) {
-    logSecurityEvent('RATE_LIMIT_EXCEEDED', { endpoint, limit }, ip);
-    return false;
-  }
-
-  record.count++;
-  return true;
-}
+import { rateLimit } from '@/lib/rate-limit';
 
 // Custom fetch with timeout
 const createFetchWithTimeout = (timeoutMs: number = 30000) => {
@@ -114,14 +79,39 @@ export async function middleware(req: NextRequest) {
 
   // Apply rate limiting to API routes
   if (req.nextUrl.pathname.startsWith('/api/')) {
-    if (!rateLimit(ip, req.nextUrl.pathname)) {
+    // Determine rate limit config based on endpoint
+    let limitConfig = SECURITY_CONFIG.RATE_LIMITS.API;
+
+    if (req.nextUrl.pathname.startsWith('/api/auth/')) {
+      limitConfig = SECURITY_CONFIG.RATE_LIMITS.AUTH;
+    } else if (req.nextUrl.pathname.startsWith('/api/generate/')) {
+      limitConfig = SECURITY_CONFIG.RATE_LIMITS.GENERATE;
+    }
+
+    const result = await rateLimit(`${ip}:${req.nextUrl.pathname}`, limitConfig);
+
+    if (!result.success) {
+      logSecurityEvent('RATE_LIMIT_EXCEEDED', {
+        endpoint: req.nextUrl.pathname,
+        limit: limitConfig.requests,
+        windowMs: limitConfig.windowMs
+      }, ip);
+
+      const retryAfter = Math.ceil((result.resetTime - Date.now()) / 1000);
       return new NextResponse(
-        JSON.stringify({ error: 'Too many requests' }),
+        JSON.stringify({
+          error: 'Too many requests',
+          retryAfter: result.resetTime,
+          message: `Please try again in ${retryAfter} seconds`
+        }),
         {
           status: 429,
           headers: {
             'Content-Type': 'application/json',
-            'Retry-After': '900' // 15 minutes
+            'Retry-After': retryAfter.toString(),
+            'X-RateLimit-Limit': limitConfig.requests.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': result.resetTime.toString()
           }
         }
       );

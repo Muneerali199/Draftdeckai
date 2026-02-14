@@ -42,10 +42,20 @@ const nextConfig = {
     ],
   },
   trailingSlash: false,
-  // Optimize for production
   swcMinify: true,
   compress: true,
   poweredByHeader: false,
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion']
+  },
+  productionBrowserSourceMaps: false,
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+      skipDefaultConversion: true
+    }
+  },
   async headers() {
     return [
       {
@@ -71,7 +81,7 @@ const nextConfig = {
     tsconfigPath: './tsconfig.build.json',
     ignoreBuildErrors: true,
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     config.module.rules.push({
       test: /\.pdf$/,
       use: [
@@ -85,9 +95,66 @@ const nextConfig = {
         },
       ],
     });
+
+    if (!isServer) {
+      config.optimization.minimize = true;
+
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          framework: {
+            name: 'framework',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types)[\\/]/,
+            priority: 40,
+            enforce: true
+          },
+          lib: {
+            test(module) {
+              return (
+                module.size() > 160000 &&
+                /node_modules[\\/](?!(@radix-ui|lucide-react|framer-motion))/.test(module.name())
+              );
+            },
+            name(module) {
+              const hash = webpack.util.createHash('sha1');
+              hash.update(module.libIdent({ context: '' }));
+              return `lib-${hash.digest('hex').substring(0, 8)}`;
+            },
+            priority: 30,
+            minChunks: 1,
+            reuseExistingChunk: true
+          },
+          commons: {
+            name: 'commons',
+            chunks: 'all',
+            minChunks: 2,
+            priority: 20
+          },
+          shared: {
+            name(module, chunks) {
+              return modulesSharedByChunks(module.name(), chunks);
+            },
+            chunks: 'all',
+            priority: 10,
+            minChunks: 2,
+            reuseExistingChunk: true
+          }
+        }
+      };
+    }
+
     return config;
   },
 };
+
+function modulesSharedByChunks(moduleName, chunks) {
+  const hash = require('crypto').createHash('sha1');
+  hash.update(moduleName);
+  return `shared-${hash.digest('hex').substring(0, 8)}`;
+}
 
 const withPWA = withPWACore({
   dest: 'public',
