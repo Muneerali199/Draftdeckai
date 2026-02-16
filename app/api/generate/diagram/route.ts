@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { generateDiagramWithMistral } from '@/lib/mistral';
 import { createClient } from '@supabase/supabase-js';
-import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits } from '@/lib/credits-service';
+import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits, hasUnlimitedDeveloperCredits } from '@/lib/credits-service';
 
 // Service role client for credit operations
 const supabaseAdmin = createClient(
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     const body = await request.json();
     const { prompt, diagramType = 'flowchart' } = body;
@@ -97,9 +98,11 @@ export async function POST(request: Request) {
     }
 
     // Check if user has enough credits
-    const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
+    const creditsRemaining = hasUnlimitedCredits
+      ? Number.MAX_SAFE_INTEGER
+      : calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
     
-    if (creditsRemaining < creditCost) {
+    if (!hasUnlimitedCredits && creditsRemaining < creditCost) {
       return NextResponse.json(
         { 
           error: 'Not enough credits',
@@ -178,29 +181,31 @@ export async function POST(request: Request) {
     console.log('✅ Diagram generated successfully with Mistral');
     
     // ✅ DEDUCT CREDITS after successful generation
-    const { error: updateError } = await supabaseAdmin
-      .from('user_credits')
-      .update({ 
-        credits_used: userCredits.credits_used + creditCost,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id);
+    if (!hasUnlimitedCredits) {
+      const { error: updateError } = await supabaseAdmin
+        .from('user_credits')
+        .update({ 
+          credits_used: userCredits.credits_used + creditCost,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
 
-    if (updateError) {
-      console.error('Failed to deduct credits:', updateError);
-      // Don't fail the request, just log the error
-    } else {
-      // Log the usage
-      await supabaseAdmin
-        .from('credit_usage_log')
-        .insert({
-          user_id: user.id,
-          action: 'diagram',
-          credits_used: creditCost,
-          metadata: { diagram_type: diagramType, prompt_length: prompt.length }
-        });
-      
-      console.log(`💳 Deducted ${creditCost} credits for diagram generation`);
+      if (updateError) {
+        console.error('Failed to deduct credits:', updateError);
+        // Don't fail the request, just log the error
+      } else {
+        // Log the usage
+        await supabaseAdmin
+          .from('credit_usage_log')
+          .insert({
+            user_id: user.id,
+            action: 'diagram',
+            credits_used: creditCost,
+            metadata: { diagram_type: diagramType, prompt_length: prompt.length }
+          });
+        
+        console.log(`💳 Deducted ${creditCost} credits for diagram generation`);
+      }
     }
     
     return NextResponse.json(diagram);

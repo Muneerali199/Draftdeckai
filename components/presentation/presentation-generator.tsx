@@ -21,6 +21,11 @@ import jsPDF from 'jspdf';
 import { createClient } from "@/lib/supabase/client";
 import type PptxGenJS from 'pptxgenjs';
 import { RESUME_TEMPLATES } from "@/lib/resume-template-data";
+import {
+  SLIDE_LAYOUT, PAD, SAFE, SPLIT, COVER, CONTENT,
+  FONT, LINE, PARA_BEFORE, FONT_FACE, insetMargins,
+  fitTextInBox, fitBullets,
+} from '@/lib/slide-layout-tokens';
 
 type GenerationStep = 'input' | 'outline' | 'theme' | 'generated';
 type InputMode = 'text' | 'url';
@@ -243,13 +248,15 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
         body: JSON.stringify({ 
           outlines: slideOutlines, 
           template: selectedTemplate,
-          prompt 
+          prompt,
+          generationMode: 'code-driven'
         }),
       });
 
       if (!response.ok) {
         clearInterval(progressInterval);
-        throw new Error('Failed to generate presentation');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate presentation');
       }
 
       setGenerationStage('🖼️ Fetching unique images for each slide...');
@@ -275,10 +282,10 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
         title: "🎉 Professional Presentation Ready!",
         description: `${data.slides.length} slides created with unique images, professional design, and interactive charts!`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to generate presentation. Please try again.",
+        description: error?.message || "Failed to generate presentation. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -718,7 +725,8 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
       // Dynamically create a new instance of PptxGen
       const PptxGenJSModule = await import('pptxgenjs');
       const pptx = new PptxGenJSModule.default();
-      pptx.layout = 'LAYOUT_WIDE';
+      pptx.layout = SLIDE_LAYOUT;
+      const margins = insetMargins();
       
       // Define master slide with template colors
       const templateStyles = getTemplateColors(selectedTemplate);
@@ -749,36 +757,44 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
         // --- COVER SLIDE LAYOUT ---
         if (isCover) {
-          // Title (Left side, large)
+          const coverTitleFit = fitTextInBox({
+            text: slide.title || '',
+            fontSize: FONT.coverTitle,
+            minFontSize: FONT.title,
+            boxW: COVER.title.w,
+            boxH: COVER.title.h,
+            lineSpacing: LINE.title,
+          });
           pptxSlide.addText(slide.title, {
-            x: 0.5,
-            y: 1.5,
-            w: 6,
-            h: 2,
-            fontSize: 54,
+            x: COVER.title.x,
+            y: COVER.title.y,
+            w: COVER.title.w,
+            h: COVER.title.h,
+            fontSize: coverTitleFit.fontSize,
             bold: true,
             color: templateStyles.textColor,
-            fontFace: 'Calibri',
+            fontFace: FONT_FACE,
             valign: 'middle',
-            align: 'left'
+            align: 'left',
+            margin: margins,
           });
 
-          // Subtitle/Description (Left side, below title)
           if (slide.content) {
             pptxSlide.addText(slide.content, {
-              x: 0.5,
-              y: 3.5,
-              w: 6,
-              h: 1.5,
-              fontSize: 24,
+              x: COVER.subtitle.x,
+              y: COVER.subtitle.y,
+              w: COVER.subtitle.w,
+              h: COVER.subtitle.h,
+              fontSize: FONT.subtitle,
               color: templateStyles.accentColor,
-              fontFace: 'Calibri',
+              fontFace: FONT_FACE,
               valign: 'top',
-              align: 'left'
+              align: 'left',
+              lineSpacing: LINE.body,
+              margin: margins,
             });
           }
 
-          // Image (Right side, large)
           if (hasImage && slide.image) {
             try {
               let imagePath = slide.image;
@@ -807,11 +823,11 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
               pptxSlide.addImage({
                 [isBase64 ? 'data' : 'path']: imagePath,
-                x: 7,
-                y: 0,
-                w: 6.33,
-                h: 7.5, // Full height
-                sizing: { type: 'cover', w: 6.33, h: 7.5 }
+                x: COVER.image.x,
+                y: COVER.image.y,
+                w: COVER.image.w,
+                h: COVER.image.h,
+                sizing: { type: 'cover', w: COVER.image.w, h: COVER.image.h }
               });
             } catch (e) {
               console.error('Error adding cover image:', e);
@@ -820,51 +836,81 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
         } 
         // --- CONTENT SLIDE LAYOUT ---
         else {
-          // Title (Top, across)
+          const titleFit = fitTextInBox({
+            text: slide.title || '',
+            fontSize: FONT.title,
+            minFontSize: FONT.MIN_BODY,
+            boxW: CONTENT.title.w,
+            boxH: CONTENT.title.h,
+            lineSpacing: LINE.title,
+          });
           pptxSlide.addText(slide.title, {
-            x: 0.5,
-            y: 0.4,
-            w: 12.33,
-            h: 1,
-            fontSize: 40,
+            x: CONTENT.title.x,
+            y: CONTENT.title.y,
+            w: CONTENT.title.w,
+            h: CONTENT.title.h,
+            fontSize: titleFit.fontSize,
             bold: true,
             color: templateStyles.textColor,
-            fontFace: 'Calibri',
-            valign: 'top'
+            fontFace: FONT_FACE,
+            valign: 'top',
+            margin: margins,
           });
 
-          let contentY = 1.6;
-          const contentWidth = hasImage ? 6.5 : 12.33;
+          let contentY = CONTENT.body_split.y;
+          const contentWidth = hasImage ? SPLIT.textW : SAFE.w;
+          const bulletBoxH = hasImage ? CONTENT.bullets_split.h : CONTENT.bullets_full.h;
 
           // Content/Description
           if (slide.content) {
+            const bodyFit = fitTextInBox({
+              text: slide.content,
+              fontSize: FONT.body,
+              minFontSize: FONT.MIN_BODY,
+              boxW: contentWidth,
+              boxH: hasImage ? CONTENT.body_split.h : CONTENT.body_full.h,
+              lineSpacing: LINE.body,
+            });
             pptxSlide.addText(slide.content, {
-              x: 0.5,
+              x: PAD.left,
               y: contentY,
               w: contentWidth,
-              h: 1.5,
-              fontSize: 24,
+              h: bodyFit.expandedH,
+              fontSize: bodyFit.fontSize,
               color: templateStyles.textColor,
-              fontFace: 'Calibri',
-              valign: 'top'
+              fontFace: FONT_FACE,
+              valign: 'top',
+              lineSpacing: bodyFit.lineSpacing,
+              margin: margins,
             });
-            contentY += 1.8;
+            contentY += bodyFit.expandedH + 0.1;
           }
 
           // Bullets
           if (hasBullets) {
-            pptxSlide.addText(slide.bullets.map((bullet: string) => ({ text: bullet })), {
-              x: 0.5,
+            const bulletFit = fitBullets({
+              bullets: slide.bullets,
+              fontSize: FONT.bullet,
+              minFontSize: FONT.MIN_BULLET,
+              boxW: contentWidth,
+              boxH: bulletBoxH,
+              lineSpacing: LINE.bullet,
+              paraSpaceBefore: PARA_BEFORE.bullet,
+            });
+            pptxSlide.addText(slide.bullets.map((bullet: string) => ({
+              text: bullet,
+              options: { fontSize: bulletFit.fontSize, color: templateStyles.textColor, breakLine: true }
+            })), {
+              x: PAD.left,
               y: contentY,
               w: contentWidth,
-              h: 4,
-              fontSize: 20,
-              color: templateStyles.textColor,
-              fontFace: 'Calibri',
+              h: bulletFit.expandedH,
+              fontFace: FONT_FACE,
               bullet: { type: 'number', marginPt: 20 },
               valign: 'top',
-              lineSpacing: 32,
-              paraSpaceBefore: 10
+              lineSpacing: bulletFit.lineSpacing,
+              paraSpaceBefore: PARA_BEFORE.bullet,
+              margin: margins,
             });
           }
 
@@ -897,11 +943,11 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
               pptxSlide.addImage({
                 [isBase64 ? 'data' : 'path']: imagePath,
-                x: 7.2,
-                y: 1.6,
-                w: 5.6,
-                h: 5,
-                sizing: { type: 'cover', w: 5.6, h: 5 },
+                x: CONTENT.image.x,
+                y: CONTENT.image.y,
+                w: CONTENT.image.w,
+                h: CONTENT.image.h,
+                sizing: { type: 'cover', w: CONTENT.image.w, h: CONTENT.image.h },
                 rounding: true
               });
             } catch (e) {
@@ -911,20 +957,21 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
           // Chart (if exists)
           if (hasChart && slide.charts && slide.charts.data) {
-             // ... (keep existing chart logic or simplify) ...
-             // For brevity, using simplified chart logic here as user requested no charts mostly
-             // but if they exist, we render them.
              try {
                 const chartData = slide.charts.data;
                 const chartLabels = chartData.map((item: any) => item.name || item.label);
                 const chartValues = chartData.map((item: any) => item.value || item.data);
                 
+                const chartX = hasImage ? PAD.left : SPLIT.imageX;
+                const chartW = hasImage ? SPLIT.textW : SPLIT.imageW + 1;
+                const chartY = hasBullets ? (CONTENT.bullets_split.y + CONTENT.bullets_split.h + 0.2) : contentY;
+
                 pptxSlide.addChart(pptx.charts.BAR, [
                   { name: slide.charts.title || 'Data', labels: chartLabels, values: chartValues }
                 ], {
-                  x: hasImage ? 0.5 : 7,
-                  y: hasBullets ? 4.5 : contentY,
-                  w: hasImage ? 6 : 5.5,
+                  x: chartX,
+                  y: chartY,
+                  w: chartW,
                   h: 3,
                   chartColors: [templateStyles.accentColor]
                 });
@@ -934,13 +981,14 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
 
         // Slide Number
         pptxSlide.addText(`${index + 1} / ${slides.length}`, {
-          x: 12,
-          y: 7,
-          w: 1,
+          x: SAFE.w - 0.5,
+          y: SAFE.h + PAD.top - 0.1,
+          w: 1.3,
           h: 0.3,
-          fontSize: 12,
+          fontSize: FONT.slideNum,
           color: templateStyles.accentColor,
-          align: 'right'
+          align: 'right',
+          fontFace: FONT_FACE,
         });
       }
 
@@ -1148,13 +1196,15 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
         body: JSON.stringify({ 
           outlines: slideOutlines, 
           template: selectedTemplate,
-          prompt 
+          prompt,
+          generationMode: 'code-driven'
         }),
       });
 
       if (!response.ok) {
         clearInterval(progressInterval);
-        throw new Error('Failed to apply new theme');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to apply new theme');
       }
 
       const data = await response.json();
@@ -1170,10 +1220,10 @@ export function PresentationGenerator({ templateId }: PresentationGeneratorProps
         title: "🎨 Theme Applied Successfully!",
         description: `Your presentation now uses the ${selectedTemplate} theme!`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to apply new theme. Please try again.",
+        description: error?.message || "Failed to apply new theme. Please try again.",
         variant: "destructive",
       });
       setCurrentStep('generated');
