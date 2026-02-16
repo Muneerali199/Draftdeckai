@@ -1,6 +1,6 @@
 /**
  * DraftDeckAI Productivity Engine - AI Document Generator
- * Generates structured documents with context awareness and visuals
+ * Generates structured documents with context awareness and visuals using Mistral AI
  */
 
 import { 
@@ -16,9 +16,9 @@ import {
 } from '@/types/documents';
 import { getBlueprint, getDefaultTone } from './blueprints';
 import { extractVisualTags, parseMermaidFromResponse, createVisualTagFromMermaid, ParsedVisual } from './visual-tagging';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || '';
+const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 
 export interface GenerationOptions {
   documentType: DocumentType;
@@ -34,6 +34,38 @@ export interface OutlineOptions {
 }
 
 /**
+ * Call Mistral API
+ */
+async function callMistral(prompt: string, model: string = 'mistral-large-latest'): Promise<string> {
+  const response = await fetch(MISTRAL_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Mistral API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+/**
  * Generate document outline based on blueprint
  */
 export async function generateOutline(options: OutlineOptions): Promise<DocumentOutline> {
@@ -42,9 +74,6 @@ export async function generateOutline(options: OutlineOptions): Promise<Document
   
   // Build context string from uploaded files
   const contextString = buildContextString(contextFiles);
-  
-  // Generate outline using AI
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   
   const prompt = `Create a detailed outline for a ${blueprint.name}.
 
@@ -77,8 +106,7 @@ Return ONLY a JSON object with this structure:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const response = await callMistral(prompt, 'mistral-large-latest');
     
     // Parse JSON response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -169,8 +197,6 @@ interface GenerateSectionOptions {
 async function generateSection(options: GenerateSectionOptions): Promise<DocumentSection> {
   const { blueprintSection, input, contextString, tone, contextFiles } = options;
   
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  
   // Replace template variables
   let prompt = blueprintSection.promptTemplate
     .replace('{{context}}', contextString)
@@ -185,8 +211,7 @@ async function generateSection(options: GenerateSectionOptions): Promise<Documen
   prompt += getToneInstructions(tone);
   
   try {
-    const result = await model.generateContent(prompt);
-    const content = result.response.text();
+    const content = await callMistral(prompt, 'mistral-large-latest');
 
     // Extract visual tags from content
     const { content: cleanedContent, visuals: parsedVisuals } = extractVisualTags(content);
