@@ -213,7 +213,7 @@ export default async function Home() {
               {/* Productivity Engine */}
               <TooltipWithShortcut content="Generate structured documents with AI - proposals, reports, research papers, and specs">
                 <Link
-                  href="/productivity-engine"
+                  href="/documents"
                   className="group relative flex flex-col p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border-2 border-indigo-200/50 hover:border-indigo-300/70 hover:scale-105 hover:shadow-2xl transition-all duration-500 backdrop-blur-xl shadow-lg hover:shadow-indigo-200/20"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/8 to-purple-500/8 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -222,7 +222,7 @@ export default async function Home() {
                       <Wand2 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                     </div>
                     <h3 className="text-lg font-bold mb-2 group-hover:bolt-gradient-text transition-all duration-300 text-gray-800 dark:text-white">
-                      Productivity Engine
+                      AI Document Generator
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                       AI-powered structured document generation with context awareness, auto-visualizations, and smart templates

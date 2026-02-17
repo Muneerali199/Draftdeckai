@@ -439,6 +439,12 @@ const navItems = [
     tooltip: "Generate stunning slide presentations instantly",
   },
   {
+    href: "/documents",
+    label: "Documents",
+    icon: <Sparkles className="h-4 w-4" />,
+    tooltip: "Generate structured documents with AI",
+  },
+  {
     href: "/letter",
     label: "Letter",
     icon: <MailIcon className="h-4 w-4" />,

@@ -8,7 +8,8 @@
 import React, { useState, useCallback } from 'react';
 import { DocumentType, DocumentInput, GeneratedDocument, DocumentOutline, ContextFile } from '@/types/documents';
 import { getAllBlueprints, getBlueprint } from '@/lib/documents/blueprints';
-import { generateOutline, generateDocument, approveOutline as approveOutlineFn } from '@/lib/documents/ai-generator';
+import { generateOutlineAction, generateDocumentAction } from '@/app/actions/ai-actions';
+import { approveOutline as approveOutlineFn } from '@/lib/documents/ai-generator';
 import { processContextFile, FileUploadResult } from '@/lib/documents/context-processor';
 import { exportDocument, ExportFormat } from '@/lib/documents/export';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,7 @@ export function DocumentGenerator() {
       const blueprint = getBlueprint(selectedType);
       const input = buildDocumentInput(selectedType, formData);
 
-      const generatedOutline = await generateOutline({
+      const generatedOutline = await generateOutlineAction({
         documentType: selectedType,
         input,
         contextFiles,
@@ -140,7 +141,7 @@ export function DocumentGenerator() {
         setProgress((prev) => Math.min(prev + 10, 90));
       }, 1000);
 
-      const document = await generateDocument({
+      const document = await generateDocumentAction({
         documentType: selectedType,
         input,
         contextFiles,
@@ -526,21 +527,21 @@ export function DocumentGenerator() {
           </TabsList>
 
           <TabsContent value="preview" className="mt-4">
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50">
               <CardContent className="pt-6">
-                <div className="prose prose-slate dark:prose-invert max-w-none">
+                <div className="prose prose-slate dark:prose-invert max-w-none bg-transparent">
                   {generatedDocument.sections.map((section) => (
                     <div key={section.id} className="mb-8">
-                      <h3 className="text-xl font-semibold mb-4">{section.title}</h3>
-                      <div className="whitespace-pre-wrap text-muted-foreground">
+                      <h3 className="text-xl font-semibold mb-4 text-foreground">{section.title}</h3>
+                      <div className="whitespace-pre-wrap text-foreground/80 bg-transparent">
                         {section.content}
                       </div>
                       {section.visualTags && section.visualTags.length > 0 && (
-                        <div className="mt-4 p-4 bg-muted rounded-lg">
-                          <p className="text-sm font-medium mb-2">Visuals:</p>
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border/30">
+                          <p className="text-sm font-medium mb-2 text-foreground">Visuals:</p>
                           <div className="flex flex-wrap gap-2">
                             {section.visualTags.map((visual) => (
-                              <Badge key={visual.id} variant="secondary">
+                              <Badge key={visual.id} variant="secondary" className="bg-secondary/50">
                                 {visual.title} ({visual.type})
                               </Badge>
                             ))}
@@ -558,21 +559,21 @@ export function DocumentGenerator() {
             <ScrollArea className="h-[600px]">
               <div className="space-y-4">
                 {generatedDocument.sections.map((section, index) => (
-                  <Card key={section.id}>
+                  <Card key={section.id} className="bg-card/80 backdrop-blur-sm border-border/50">
                     <CardHeader>
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline">{index + 1}</Badge>
-                        <CardTitle className="text-lg">{section.title}</CardTitle>
+                        <Badge variant="outline" className="bg-background/50">{index + 1}</Badge>
+                        <CardTitle className="text-lg text-foreground">{section.title}</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground line-clamp-3">
+                      <p className="text-sm text-foreground/70 line-clamp-3">
                         {section.content.substring(0, 200)}...
                       </p>
                       {section.visualTags && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {section.visualTags.map((tag) => (
-                            <Badge key={tag.id} variant="secondary" className="text-xs">
+                            <Badge key={tag.id} variant="secondary" className="text-xs bg-secondary/50">
                               {tag.type}
                             </Badge>
                           ))}
@@ -595,13 +596,24 @@ export function DocumentGenerator() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      {currentStep === 'select-type' && renderSelectType()}
-      {currentStep === 'input-data' && renderInputData()}
-      {currentStep === 'upload-context' && renderUploadContext()}
-      {currentStep === 'review-outline' && renderReviewOutline()}
-      {currentStep === 'generating' && renderGenerating()}
-      {currentStep === 'preview' && renderPreview()}
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Elements - Matching Landing Page Style */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20"></div>
+        <div className="absolute inset-0 mesh-gradient-alt opacity-20"></div>
+        <div className="floating-orb w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bolt-gradient opacity-20 top-1/4 -left-20 sm:-left-32 animate-float" />
+        <div className="floating-orb w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 sunset-gradient opacity-15 top-3/4 -right-20 sm:-right-28 animate-float-delayed" />
+        <div className="floating-orb w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 ocean-gradient opacity-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-4xl mx-auto p-6">
+        {currentStep === 'select-type' && renderSelectType()}
+        {currentStep === 'input-data' && renderInputData()}
+        {currentStep === 'upload-context' && renderUploadContext()}
+        {currentStep === 'review-outline' && renderReviewOutline()}
+        {currentStep === 'generating' && renderGenerating()}
+        {currentStep === 'preview' && renderPreview()}
+      </div>
     </div>
   );
 }

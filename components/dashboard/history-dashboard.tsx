@@ -23,6 +23,7 @@ import {
   Mail,
   Edit,
   Sparkles,
+  FileCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
@@ -31,7 +32,7 @@ import { getThemeById } from "@/lib/presentation-themes";
 import { SlideCard, Slide } from "@/components/presentation/real-time-generator";
 import { ResumePreview } from "@/components/resume/resume-preview";
 
-type ContentType = "resume" | "presentation" | "diagram" | "letter";
+type ContentType = "resume" | "presentation" | "diagram" | "letter" | "generated";
 
 interface HistoryItem {
   id: string;
@@ -60,6 +61,14 @@ const contentTypeConfig = {
     bgColor: "bg-purple-50",
     route: "/presentation",
     gradient: "from-purple-500 to-pink-500",
+  },
+  generated: {
+    icon: Sparkles,
+    label: "Documents",
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+    route: "/documents",
+    gradient: "from-blue-600 to-indigo-600",
   },
   diagram: {
     icon: Network,
@@ -96,6 +105,8 @@ function getPresentationThemeId(raw: any): string {
 
 function getDocumentDescription(doc: any): string {
   const content = doc.content || {};
+  const metadata = doc.metadata || content.metadata || {};
+  
   switch (doc.type) {
     case 'resume':
       return content.resumeData?.name || content.name || 'Resume';
@@ -106,6 +117,9 @@ function getDocumentDescription(doc: any): string {
       return content.type || 'Diagram';
     case 'letter':
       return content.letter_type || content.type || 'Letter';
+    case 'generated':
+      const sections = metadata.sections || doc.sections || content.sections || [];
+      return `${sections.length || 0} sections • ${doc.document_type?.replace(/-/g, ' ') || 'AI Document'}`;
     default:
       return doc.type || 'Document';
   }
@@ -275,6 +289,7 @@ export function HistoryDashboard() {
     total: 0,
     resume: 0,
     presentation: 0,
+    generated: 0,
     diagram: 0,
     letter: 0,
   });
@@ -336,7 +351,7 @@ export function HistoryDashboard() {
       // Map documents to history items
       const docItems: HistoryItem[] = (documents || []).map((doc: any) => {
         const content = doc.content || {};
-        const data = doc.type === 'resume' ? (content.resumeData || content) : content;
+        const data = doc.type === 'resume' ? (content.resumeData || content) : doc; // Keep full doc for generated docs
 
         return {
           id: doc.id,
@@ -367,12 +382,7 @@ export function HistoryDashboard() {
 
       // DEBUG: Log the final merged items
       console.log('📊 Final History Items:', allItems.length, 'items');
-      allItems.forEach((item, idx) => {
-        if (item.type === 'resume') {
-          console.log(`📝 Resume ${idx + 1}:`, item.id, item.title, 'data keys:', Object.keys(item.data || {}));
-        }
-      });
-
+      
       setItems(allItems);
 
       // Calculate stats
@@ -380,6 +390,7 @@ export function HistoryDashboard() {
         total: allItems.length,
         resume: allItems.filter(i => i.type === 'resume').length,
         presentation: allItems.filter(i => i.type === 'presentation').length,
+        generated: allItems.filter(i => i.type === 'generated').length,
         diagram: allItems.filter(i => i.type === 'diagram').length,
         letter: allItems.filter(i => i.type === 'letter').length,
       });
@@ -503,6 +514,10 @@ export function HistoryDashboard() {
   // filterItems is now inlined in useEffect above
 
   const handleView = (item: HistoryItem) => {
+    if (item.type === 'generated') {
+      router.push(`/documents/${item.id}`);
+      return;
+    }
     const config = contentTypeConfig[item.type];
     router.push(`${config.route}?id=${item.id}`);
   };
@@ -532,6 +547,38 @@ export function HistoryDashboard() {
         const slides = getPresentationSlides(item.data);
         const themeId = getPresentationThemeId(item.data);
         return <PresentationPreview slides={slides} title={item.title} themeId={themeId} />;
+
+      case "generated":
+        const metadata = item.data?.metadata || {};
+        const docSections = metadata.sections || item.data?.sections || [];
+        return (
+          <div className="p-4 text-[8px] leading-tight h-full overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-md relative flex flex-col">
+            <div className="font-bold text-[10px] mb-2 text-blue-600 dark:text-blue-400 border-b pb-1 flex items-center justify-between">
+              <span className="truncate pr-2">{item.title}</span>
+              <FileCode className="h-3 w-3 flex-shrink-0" />
+            </div>
+            <div className="space-y-3 mt-2 flex-1 overflow-hidden">
+              {docSections.slice(0, 4).map((section: any, idx: number) => (
+                <div key={idx} className="border-l-2 border-blue-100 dark:border-blue-900/50 pl-2">
+                  <div className="font-semibold text-gray-800 dark:text-gray-200 mb-0.5 truncate">{section.title}</div>
+                  <div className="text-gray-500 dark:text-gray-400 line-clamp-2">{section.content}</div>
+                </div>
+              ))}
+            </div>
+            {docSections.length > 4 && (
+              <div className="text-[6px] text-blue-400 font-medium italic mt-2 text-center bg-blue-50/50 dark:bg-blue-950/30 py-1 rounded">
+                + {docSections.length - 4} more sections
+              </div>
+            )}
+            
+            {/* Action buttons visible on hover in history grid */}
+            <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
+               <Button size="sm" variant="outline" className="h-7 text-[10px] bg-white dark:bg-gray-800" onClick={(e) => { e.stopPropagation(); handleView(item); }}>
+                 <Edit className="h-3 w-3 mr-1" /> Edit
+               </Button>
+            </div>
+          </div>
+        );
 
       case "diagram":
         return (
@@ -714,13 +761,13 @@ export function HistoryDashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <Card className="p-4 glass-effect border border-border/40 hover:shadow-lg transition-all">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <Card className="p-3 sm:p-4 glass-effect border border-border/40 hover:shadow-lg transition-all">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-yellow-500" />
-                <span className="text-sm text-muted-foreground">Total</span>
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
+                <span className="text-xs sm:text-sm text-muted-foreground">Total</span>
               </div>
-              <p className="text-2xl font-bold bolt-gradient-text">{stats.total}</p>
+              <p className="text-xl sm:text-2xl font-bold bolt-gradient-text">{stats.total}</p>
             </Card>
 
             {Object.entries(contentTypeConfig).map(([type, config]) => {
@@ -728,16 +775,16 @@ export function HistoryDashboard() {
               return (
                 <Card
                   key={type}
-                  className={`p-4 glass-effect border border-border/40 cursor-pointer hover:scale-105 hover:shadow-lg transition-all ${activeTab === type ? 'ring-2 ring-yellow-400 border-yellow-400/50' : ''}`}
+                  className={`p-3 sm:p-4 glass-effect border border-border/40 cursor-pointer hover:scale-105 hover:shadow-lg transition-all ${activeTab === type ? 'ring-2 ring-yellow-400 border-yellow-400/50' : ''}`}
                   onClick={() => setActiveTab(type as ContentType)}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
-                      <Icon className={`h-4 w-4 ${config.color}`} />
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+                    <div className={`p-1 sm:p-1.5 rounded-lg ${config.bgColor}`}>
+                      <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
                     </div>
-                    <span className="text-sm text-muted-foreground">{config.label}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground truncate">{config.label}</span>
                   </div>
-                  <p className="text-2xl font-bold">{stats[type as ContentType]}</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats[type as ContentType]}</p>
                 </Card>
               );
             })}
@@ -759,10 +806,10 @@ export function HistoryDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ContentType | "all")}>
-            <TabsList className="mb-6 glass-effect border border-border/40">
-              <TabsTrigger value="all" className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">All ({stats.total})</TabsTrigger>
+            <TabsList className="mb-6 glass-effect border border-border/40 overflow-x-auto flex-nowrap scrollbar-hide">
+              <TabsTrigger value="all" className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400 whitespace-nowrap">All ({stats.total})</TabsTrigger>
               {Object.entries(contentTypeConfig).map(([type, config]) => (
-                <TabsTrigger key={type} value={type} className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400">
+                <TabsTrigger key={type} value={type} className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-700 dark:data-[state=active]:text-yellow-400 whitespace-nowrap">
                   {config.label} ({stats[type as ContentType]})
                 </TabsTrigger>
               ))}
@@ -787,7 +834,7 @@ export function HistoryDashboard() {
                   </div>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 items-start">
                   {filteredItems.map((item) => {
                     const config = contentTypeConfig[item.type];
                     const Icon = config.icon;
@@ -819,8 +866,8 @@ export function HistoryDashboard() {
                             {renderPreview(item)}
                           </div>
 
-                          {/* Hover Overlay */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 hidden group-hover:flex items-center justify-center z-30">
+                          {/* Hover Overlay - Show on hover for desktop, always visible actions on mobile */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 hidden sm:group-hover:flex items-center justify-center z-30">
                             <div className="flex gap-3">
                               <Button
                                 size="sm"
@@ -856,32 +903,46 @@ export function HistoryDashboard() {
                         </div>
 
                         {/* Info Section */}
-                        <div className="p-4 bg-background/50">
-                          <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:bolt-gradient-text transition-colors">
+                        <div className="p-3 sm:p-4 bg-background/50">
+                          <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:bolt-gradient-text transition-colors text-sm sm:text-base">
                             {item.title}
                           </h3>
                           {item.description && (
-                            <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-1">
                               {item.description}
                             </p>
                           )}
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              <span>{formatDate(item.created_at)}</span>
+                              <span className="hidden xs:inline">{formatDate(item.created_at)}</span>
+                              <span className="xs:hidden">{formatDate(item.created_at).split(',')[0]}</span>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 invisible group-hover:visible transition-all"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleView(item);
-                              }}
-                            >
-                              <Edit className="h-3 w-3 mr-1" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 sm:invisible sm:group-hover:visible transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleView(item);
+                                }}
+                              >
+                                <Edit className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Edit</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 sm:hidden"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleView(item);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </Card>
