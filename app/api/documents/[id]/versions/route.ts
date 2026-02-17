@@ -18,22 +18,21 @@ export async function GET(
       );
     }
 
-    // Fetch document
-    const { data: document, error } = await supabase
+    // Fetch document to check ownership
+    const { data: document } = await supabase
       .from('documents')
-      .select('*')
+      .select('user_id')
       .eq('id', params.id)
       .single();
 
-    if (error) {
-      console.error('Error fetching document:', error);
+    if (!document) {
       return NextResponse.json(
         { error: 'Document not found' },
         { status: 404 }
       );
     }
 
-    // Check if user has access (owner or shared with them)
+    // Check permissions
     if (document.user_id !== user.id) {
       const { data: permission } = await supabase
         .from('share_permissions')
@@ -50,10 +49,26 @@ export async function GET(
       }
     }
 
-    return NextResponse.json(document);
+    // Fetch versions
+    const { data: versions, error } = await supabase
+      .from('document_versions')
+      .select('*')
+      .eq('document_id', params.id)
+      .order('version_number', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Error fetching versions:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch versions' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(versions);
 
   } catch (error) {
-    console.error('Error in GET /api/documents/[id]:', error);
+    console.error('Error in GET /api/documents/[id]/versions:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -61,7 +76,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -79,9 +94,9 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { content, type, title, metadata } = body;
+    const { content, change_summary } = body;
 
-    // Check if user has edit permission
+    // Fetch document to check ownership
     const { data: document } = await supabase
       .from('documents')
       .select('user_id')
@@ -95,6 +110,7 @@ export async function PUT(
       );
     }
 
+    // Check permissions
     if (document.user_id !== user.id) {
       const { data: permission } = await supabase
         .from('share_permissions')
@@ -111,95 +127,44 @@ export async function PUT(
       }
     }
 
-    // Update document
-    const { data: updatedDocument, error: updateError } = await supabase
-      .from('documents')
-      .update({
-        content,
-        type,
-        title,
-        metadata,
-        updated_at: new Date().toISOString()
+    // Get next version number
+    const { data: latestVersion } = await supabase
+      .from('document_versions')
+      .select('version_number')
+      .eq('document_id', params.id)
+      .order('version_number', { ascending: false })
+      .limit(1)
+      .single();
+
+    const versionNumber = latestVersion ? latestVersion.version_number + 1 : 1;
+
+    // Create version
+    const { data: version, error } = await supabase
+      .from('document_versions')
+      .insert({
+        document_id: params.id,
+        version_number: versionNumber,
+        content: content,
+        change_summary: change_summary || 'Manual save',
+        created_by: user.id,
+        created_by_name: user.user_metadata?.full_name || user.email || 'Anonymous',
+        created_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
       .select()
       .single();
 
-    if (updateError) {
-      console.error('Error updating document:', updateError);
+    if (error) {
+      console.error('Error creating version:', error);
       return NextResponse.json(
-        { error: 'Failed to update document' },
+        { error: 'Failed to create version' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(updatedDocument);
+    return NextResponse.json(version);
 
   } catch (error) {
-    console.error('Error in PUT /api/documents/[id]:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const supabase = await createRoute();
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Check if user is the owner
-    const { data: document } = await supabase
-      .from('documents')
-      .select('user_id')
-      .eq('id', params.id)
-      .single();
-
-    if (!document) {
-      return NextResponse.json(
-        { error: 'Document not found' },
-        { status: 404 }
-      );
-    }
-
-    if (document.user_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Only the owner can delete this document' },
-        { status: 403 }
-      );
-    }
-
-    // Delete document
-    const { error: deleteError } = await supabase
-      .from('documents')
-      .delete()
-      .eq('id', params.id);
-
-    if (deleteError) {
-      console.error('Error deleting document:', deleteError);
-      return NextResponse.json(
-        { error: 'Failed to delete document' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
-
-  } catch (error) {
-    console.error('Error in DELETE /api/documents/[id]:', error);
+    console.error('Error in POST /api/documents/[id]/versions:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

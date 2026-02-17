@@ -1,0 +1,306 @@
+// LaTeX Document Generator
+// Generates professional LaTeX code for structured documents
+
+// Helper to escape LaTeX special characters
+export const escapeLatex = (text: string | null | undefined): string => {
+  if (!text) return '';
+  return String(text)
+    .replace(/\\/g, '\\textbackslash{}')
+    .replace(/&/g, '\\&')
+    .replace(/%/g, '\\%')
+    .replace(/\$/g, '\\$')
+    .replace(/#/g, '\\#')
+    .replace(/_/g, '\\_')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/~/g, '\\textasciitilde{}')
+    .replace(/\^/g, '\\textasciicircum{}');
+};
+
+// Helper to format content with basic markdown-like syntax
+const formatContent = (content: string): string => {
+  if (!content) return '';
+  
+  return escapeLatex(content)
+    .split('\n')
+    .map(line => {
+      // Handle bullet points
+      if (line.trim().startsWith('- ') || line.trim().startsWith('• ')) {
+        return `  \\item ${line.trim().substring(2)}`;
+      }
+      // Handle numbered lists
+      if (/^\d+\.\s/.test(line.trim())) {
+        return `  \\item ${line.trim().replace(/^\d+\.\s/, '')}`;
+      }
+      return line;
+    })
+    .join('\n');
+};
+
+// Detect if content has lists
+const hasList = (content: string): boolean => {
+  if (!content) return false;
+  const lines = content.split('\n');
+  return lines.some(line => 
+    line.trim().startsWith('- ') || 
+    line.trim().startsWith('• ') ||
+    /^\d+\.\s/.test(line.trim())
+  );
+};
+
+// Wrap content in itemize if it has lists
+const wrapLists = (content: string): string => {
+  if (!hasList(content)) return formatContent(content);
+  
+  const lines = content.split('\n');
+  let result = '\\begin{itemize}\n';
+  let inList = false;
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || /^\d+\.\s/.test(trimmed)) {
+      if (!inList) {
+        result += '\\begin{itemize}\n';
+        inList = true;
+      }
+      result += `  \\item ${escapeLatex(trimmed.replace(/^[-•\d.]+\s/, ''))}\n`;
+    } else {
+      if (inList) {
+        result += '\\end{itemize}\n';
+        inList = false;
+      }
+      if (trimmed) {
+        result += escapeLatex(line) + '\n';
+      } else {
+        result += '\n';
+      }
+    }
+  }
+  
+  if (inList) {
+    result += '\\end{itemize}\n';
+  }
+  
+  return result;
+};
+
+export interface DocumentSection {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+}
+
+export interface DocumentData {
+  title: string;
+  documentType: string;
+  sections: DocumentSection[];
+  author?: string;
+  date?: string;
+}
+
+// Generate professional LaTeX document
+export const generateDocumentLatex = (data: DocumentData): string => {
+  const { title, documentType, sections, author, date } = data;
+  
+  const documentClass = getDocumentClass(documentType);
+  const packages = getPackages(documentType);
+  const preamble = getPreamble(documentType, title);
+  
+  const sectionsLatex = sections
+    .sort((a, b) => a.order - b.order)
+    .map((section, index) => {
+      const sectionCmd = index === 0 ? '\\section*' : '\\section';
+      const formattedContent = wrapLists(section.content);
+      
+      return `${sectionCmd}{${escapeLatex(section.title)}}
+${formattedContent}
+
+`;
+    })
+    .join('');
+
+  return `\\documentclass[11pt,a4paper]{${documentClass}}
+
+% Encoding and Fonts
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+${packages}
+
+% Page Layout
+\\usepackage{geometry}
+\\geometry{
+    margin=1in,
+    top=1.2in,
+    bottom=1in
+}
+
+% Hyperlinks
+\\usepackage{hyperref}
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    pdftitle={${escapeLatex(title)}},
+    pdfauthor={${escapeLatex(author || 'DraftDeckAI')}}
+}
+
+% Custom Styling
+\\usepackage{titlesec}
+\\titleformat{\\section}{\\Large\\bfseries\\color{darkblue}}{}{0em}{}[\\titlerule]
+\\titleformat{\\subsection}{\\large\\bfseries}{\\thesubsection}{1em}{}
+\\titlespacing*{\\section}{0pt}{18pt}{12pt}
+\\titlespacing*{\\subsection}{0pt}{12pt}{6pt}
+
+% Lists styling
+\\usepackage{enumitem}
+\\setlist[itemize]{nosep, leftmargin=*, label=\\textbullet}
+\\setlist[enumerate]{nosep, leftmargin=*}
+
+% Colors
+\\usepackage{xcolor}
+\\definecolor{darkblue}{RGB}{26, 54, 93}
+\\definecolor{accent}{RGB}{59, 130, 246}
+
+% Header and Footer
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\fancyhead[L]{\\small\\textit{${escapeLatex(title)}}}
+\\fancyhead[R]{\\small\\thepage}
+\\renewcommand{\\headrulewidth}{0.4pt}
+
+% Line spacing
+\\usepackage{setspace}
+\\onehalfspacing
+
+\\begin{document}
+
+% Title Page
+\\begin{titlepage}
+    \\centering
+    \\vspace*{2cm}
+    
+    {\\Huge\\bfseries\\color{darkblue} ${escapeLatex(title)}\\par}
+    
+    \\vspace{1cm}
+    
+    {\\Large\\color{accent} ${getDocumentTypeLabel(documentType)}\\par}
+    
+    \\vspace{2cm}
+    
+    ${author ? `{\\large Generated by: ${escapeLatex(author)}\\par}` : ''}
+    
+    \\vspace{0.5cm}
+    
+    {\\large ${date || new Date().toLocaleDateString()}\\par}
+    
+    \\vfill
+    
+    {\\small\\textit{Generated with DraftDeckAI}\\par}
+\\end{titlepage}
+
+% Table of Contents
+\\tableofcontents
+\\newpage
+
+% Document Content
+${sectionsLatex}
+
+\\end{document}`;
+};
+
+// Get appropriate document class based on type
+const getDocumentClass = (type: string): string => {
+  switch (type) {
+    case 'business-proposal':
+    case 'project-report':
+      return 'article';
+    case 'academic-research':
+      return 'report';
+    case 'requirements-spec':
+      return 'article';
+    default:
+      return 'article';
+  }
+};
+
+// Get additional packages based on document type
+const getPackages = (type: string): string => {
+  const basePackages = `\\usepackage{lmodern}
+\\usepackage{microtype}
+\\usepackage{graphicx}
+\\usepackage{booktabs}`;
+  
+  switch (type) {
+    case 'business-proposal':
+      return `${basePackages}
+\\usepackage{mathptmx} % Times New Roman for professional look`;
+    case 'academic-research':
+      return `${basePackages}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
+\\usepackage{natbib}`;
+    case 'requirements-spec':
+      return `${basePackages}
+\\usepackage{longtable}
+\\usepackage{array}`;
+    default:
+      return basePackages;
+  }
+};
+
+// Get preamble customizations
+const getPreamble = (type: string, title: string): string => {
+  switch (type) {
+    case 'academic-research':
+      return `% Academic formatting
+\\usepackage{abstract}
+\\renewcommand{\\abstractname}{\\Large Abstract}`;
+    default:
+      return '';
+  }
+};
+
+// Get document type label
+const getDocumentTypeLabel = (type: string): string => {
+  switch (type) {
+    case 'business-proposal':
+      return 'Business Proposal';
+    case 'project-report':
+      return 'Project Report';
+    case 'academic-research':
+      return 'Academic Research';
+    case 'requirements-spec':
+      return 'Requirements Specification';
+    default:
+      return 'Document';
+  }
+};
+
+// Compile LaTeX to PDF (placeholder - would need server-side compilation)
+export const compileLatexToPDF = async (latexCode: string): Promise<Blob | null> => {
+  try {
+    // This would typically call a LaTeX compilation service
+    // For now, we'll return the LaTeX code as a .tex file
+    return new Blob([latexCode], { type: 'application/x-tex' });
+  } catch (error) {
+    console.error('Error compiling LaTeX:', error);
+    return null;
+  }
+};
+
+// Download LaTeX file
+export const downloadLatexFile = (latexCode: string, filename: string): void => {
+  const blob = new Blob([latexCode], { type: 'application/x-tex' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.tex`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
