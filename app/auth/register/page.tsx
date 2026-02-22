@@ -74,8 +74,6 @@ function RegisterForm() {
   const [mounted, setMounted] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState<string>("");
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
@@ -175,9 +173,8 @@ function RegisterForm() {
           "Please check your email to verify your account before signing in.",
       });
 
-      // Persist success state and show verification instructions instead of redirecting
-      setSubmittedEmail(email);
-      setSuccess(true);
+      // Redirect to sign in page
+      router.push("/auth/signin");
     } catch (error: any) {
       // Enhanced error handling for Supabase registration
       let userMessage = "Failed to create account. Please try again.";
@@ -233,74 +230,6 @@ function RegisterForm() {
     password === confirmPassword &&
     password.length >= 6;
 
-  // Success view: show verification instructions
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-8">
-        <div className="absolute inset-0 mesh-gradient opacity-20 animate-pulse-glow"></div>
-        <div className={`w-full max-w-md mx-4 relative z-10 transition-all duration-1000 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          <div className="glass-effect p-6 sm:p-8 rounded-2xl shadow-2xl border border-yellow-400/20 relative overflow-hidden group backdrop-blur-xl">
-            <div className="relative z-10 space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <Mail className="w-8 h-8 text-green-500" />
-                </div>
-                <h1 className="modern-display text-2xl sm:text-3xl font-bold mb-2 text-shadow-professional">
-                  Verify Your Email
-                </h1>
-                <p className="modern-body text-muted-foreground text-sm sm:text-base">
-                  We sent a verification link to <span className="font-medium text-foreground">{submittedEmail}</span>.
-                  Please check your inbox and confirm your email to complete signup.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  className="w-full bolt-gradient text-white font-semibold py-4 rounded-xl"
-                  onClick={async () => {
-                    try {
-                      const { error } = await supabase.auth.resend({ type: "signup", email: submittedEmail });
-                      if (error) throw error;
-                      toast({
-                        title: "Verification Email Resent",
-                        description: "Check your inbox (and spam folder) for the new link.",
-                      });
-                    } catch (err: any) {
-                      toast({
-                        title: "Couldn't resend email",
-                        description: err.message || "Please try again in a moment.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Resend Verification Email
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSuccess(false);
-                  }}
-                >
-                  Change Email
-                </Button>
-              </div>
-
-              <div className="text-center text-xs text-muted-foreground">
-                <p>If you don't see the email, check your spam or promotions folder.</p>
-                <p>Make sure your Supabase project allows redirects from your current domain.</p>
-              </div>
-
-              <div className="text-center">
-                <Link href="/auth/signin" className="text-sm font-medium bolt-gradient-text">Back to Sign In</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Memoized referral handler to prevent unnecessary re-renders
   const handleReferral = useCallback((code: string | null) => {
