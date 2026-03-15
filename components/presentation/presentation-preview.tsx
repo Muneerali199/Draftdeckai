@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Quote, Maximize2, Minimize2, Play, Pause, RotateCcw, Image as ImageIcon, Edit3 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, Pause, RotateCcw, Image as ImageIcon, Edit3 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PostGenerationImageEditor } from "./post-generation-image-editor";
+import { DiagramPreview } from "@/components/diagram/diagram-preview";
+import { PresentationVisualFrame } from "./visual-frame";
+import {
+  getSlideMotionTransition,
+  getSlideMotionVariants,
+  isWheelNavigationLocked,
+  PRESENTATION_WHEEL_LOCK_MS,
+} from "@/lib/presentation-motion";
 import {
   BarChart,
   Bar,
@@ -27,6 +36,77 @@ import {
   Legend
 } from "recharts";
 
+const CODE_VISUAL_TYPES = new Set(["svg_code", "mermaid", "html_tailwind", "chart_data"]);
+
+function sanitizeMarkup(markup: string): string {
+  return markup
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, "")
+    .replace(/<embed[\s\S]*?>/gi, "")
+    .replace(/\son[a-z]+=(["']).*?\1/gi, "")
+    .replace(/\son[a-z]+={[^}]*}/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
+function normalizeVisualType(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const visualType = value.trim().toLowerCase();
+  if (["svg", "svg_code", "svgcode"].includes(visualType)) return "svg_code";
+  if (["mermaid", "diagram"].includes(visualType)) return "mermaid";
+  if (["html", "html_tailwind", "tailwind", "mockup"].includes(visualType)) return "html_tailwind";
+  if (["chart", "chart_data", "data"].includes(visualType)) return "chart_data";
+  return visualType;
+}
+
+function parseChartPayload(payload: unknown): any {
+  if (!payload) return null;
+  if (typeof payload === "object") return payload;
+  if (typeof payload === "string") {
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function getSlideAccentColor(slide: any): string | undefined {
+  const color = slide?.theme?.accent_color || slide?.theme?.accentColor;
+  if (typeof color === "string" && /^#[0-9A-Fa-f]{6}$/.test(color.trim())) {
+    return color.trim();
+  }
+  return undefined;
+}
+
+function resolveSlideThemeTokens(slide: any, isDark: boolean) {
+  const accent = getSlideAccentColor(slide) || (isDark ? "#38bdf8" : "#2563eb");
+  const palette = slide?.theme?.palette || {};
+  return {
+    bg: (typeof palette.secondary === "string" && /^#[0-9A-Fa-f]{6}$/.test(palette.secondary)) ? palette.secondary : isDark ? "#0f172a" : "#f8fafc",
+    card: (typeof palette.primary === "string" && /^#[0-9A-Fa-f]{6}$/.test(palette.primary)) ? palette.primary : isDark ? "#1e293b" : "#ffffff",
+    fg: isDark ? "#e2e8f0" : "#0f172a",
+    accent,
+    border: isDark ? "#334155" : "#cbd5e1",
+  };
+}
+
+function wrapMarkupWithThemeTokens(markup: string, tokens: ReturnType<typeof resolveSlideThemeTokens>): string {
+  return `<div data-dd-theme-visual style="--dd-bg:${tokens.bg};--dd-card:${tokens.card};--dd-fg:${tokens.fg};--dd-accent:${tokens.accent};--dd-border:${tokens.border};background:var(--dd-card);color:var(--dd-fg);border:1px solid var(--dd-border);border-radius:12px;padding:10px;">
+    <style>
+      [data-dd-theme-visual], [data-dd-theme-visual] * {
+        --dd-bg:${tokens.bg} !important;
+        --dd-card:${tokens.card} !important;
+        --dd-fg:${tokens.fg} !important;
+        --dd-accent:${tokens.accent} !important;
+        --dd-border:${tokens.border} !important;
+      }
+    </style>
+    ${markup}
+  </div>`;
+}
+
 interface PresentationPreviewProps {
   slides: any[];
   template: string;
@@ -41,13 +121,17 @@ export function PresentationPreview({
   allowImageEditing = true 
 }: PresentationPreviewProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slideDirection, setSlideDirection] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoPlayInterval, setAutoPlayInterval] = useState<NodeJS.Timeout | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = useState<{[key: number]: boolean}>({});
   const [isImageEditorOpen, setIsImageEditorOpen] = useState(false);
   const [editingSlideIndex, setEditingSlideIndex] = useState<number>(0);
+  const wheelLockRef = useRef(0);
+  const prefersReducedMotion = useReducedMotion();
   const { theme } = useTheme();
+  const hasSlides = slides.length > 0;
 
   const handleEditImage = (slideIndex: number) => {
     setEditingSlideIndex(slideIndex);
@@ -77,10 +161,14 @@ export function PresentationPreview({
   };
 
   const nextSlide = useCallback(() => {
+    if (!slides.length) return;
+    setSlideDirection(1);
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   }, [slides.length]);
 
   const prevSlide = useCallback(() => {
+    if (!slides.length) return;
+    setSlideDirection(-1);
     setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   }, [slides.length]);
 
@@ -111,6 +199,7 @@ export function PresentationPreview({
   }, [isPlaying, autoPlayInterval, nextSlide]);
 
   const resetPresentation = useCallback(() => {
+    setSlideDirection(-1);
     setCurrentSlide(0);
     if (autoPlayInterval) {
       clearInterval(autoPlayInterval);
@@ -124,7 +213,12 @@ export function PresentationPreview({
   }, []);
 
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (!hasSlides) return;
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
         nextSlide();
@@ -145,20 +239,16 @@ export function PresentationPreview({
     };
 
     window.addEventListener('keydown', handleKeyPress);
-    document.addEventListener('fullscreenchange', () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    });
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
-      document.removeEventListener('fullscreenchange', () => {
-        setIsFullscreen(!!document.fullscreenElement);
-      });
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       if (autoPlayInterval) {
         clearInterval(autoPlayInterval);
       }
     };
-  }, [nextSlide, prevSlide, toggleFullscreen, autoPlayInterval]);
+  }, [nextSlide, prevSlide, toggleFullscreen, autoPlayInterval, hasSlides]);
 
   const renderChart = (chart: any) => {
     if (!chart || !chart.data) return null;
@@ -449,6 +539,202 @@ export function PresentationPreview({
     };
   };
 
+  const renderCodeVisual = (slide: any, templateStyles: ReturnType<typeof getTemplateStyles>) => {
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    const visualContent = slide.visual_content ?? slide.visualContent;
+    const tokens = resolveSlideThemeTokens(slide, theme === "dark");
+    const frameBorderColor = theme === "dark" ? "#334155" : "#cbd5e1";
+    const frameBgColor = theme === "dark" ? "rgba(15, 23, 42, 0.35)" : "rgba(255,255,255,0.7)";
+
+    if (visualType === "mermaid") {
+      const mermaidCode = typeof visualContent === "string" ? visualContent.trim() : "";
+      if (!mermaidCode) {
+        return (
+          <div className={cn("h-full flex items-center justify-center rounded-xl border p-4", templateStyles.border, templateStyles.cardBg)}>
+            Diagram data unavailable
+          </div>
+        );
+      }
+      return (
+        <PresentationVisualFrame
+          frameClassName={cn(templateStyles.shadow)}
+          contentClassName="overflow-hidden"
+          borderColor={frameBorderColor}
+          backgroundColor={frameBgColor}
+          fixedAspect
+          minHeightPx={isFullscreen ? 300 : 220}
+          maxHeightPx={isFullscreen ? 640 : 400}
+        >
+          <DiagramPreview
+            code={mermaidCode}
+            fullScreen={isFullscreen}
+            themeColors={{
+              background: tokens.bg,
+              card: tokens.card,
+              foreground: tokens.fg,
+              accent: tokens.accent,
+              border: tokens.border,
+            }}
+          />
+        </PresentationVisualFrame>
+      );
+    }
+
+    if (visualType === "svg_code") {
+      const svgMarkup = typeof visualContent === "string" ? sanitizeMarkup(visualContent) : "";
+      if (!svgMarkup.includes("<svg")) {
+        return (
+          <div className={cn("h-full flex items-center justify-center rounded-xl border p-4", templateStyles.border, templateStyles.cardBg)}>
+            SVG visual unavailable
+          </div>
+        );
+      }
+      return (
+        <PresentationVisualFrame
+          frameClassName={cn(templateStyles.shadow)}
+          contentClassName="overflow-auto"
+          borderColor={frameBorderColor}
+          backgroundColor={frameBgColor}
+          fixedAspect
+          minHeightPx={isFullscreen ? 300 : 220}
+          maxHeightPx={isFullscreen ? 640 : 400}
+        >
+          <div
+            className="h-full [&>svg]:w-full [&>svg]:h-auto"
+            dangerouslySetInnerHTML={{ __html: wrapMarkupWithThemeTokens(svgMarkup, tokens) }}
+          />
+        </PresentationVisualFrame>
+      );
+    }
+
+    if (visualType === "html_tailwind") {
+      const htmlSnippet = typeof visualContent === "string" ? sanitizeMarkup(visualContent) : "";
+      if (!htmlSnippet.trim()) {
+        return (
+          <div className={cn("h-full flex items-center justify-center rounded-xl border p-4", templateStyles.border, templateStyles.cardBg)}>
+            Mockup content unavailable
+          </div>
+        );
+      }
+      return (
+        <PresentationVisualFrame
+          frameClassName={cn(templateStyles.shadow)}
+          contentClassName="overflow-hidden"
+          borderColor={frameBorderColor}
+          backgroundColor={frameBgColor}
+          fixedAspect
+          minHeightPx={isFullscreen ? 300 : 220}
+          maxHeightPx={isFullscreen ? 640 : 400}
+        >
+          <div className={`h-full w-full origin-top ${isFullscreen ? "scale-[0.96]" : "scale-[0.9]"}`}>
+            <div className="h-full" dangerouslySetInnerHTML={{ __html: wrapMarkupWithThemeTokens(htmlSnippet, tokens) }} />
+          </div>
+        </PresentationVisualFrame>
+      );
+    }
+
+    if (visualType === "chart_data") {
+      const chartPayload =
+        parseChartPayload(visualContent) ||
+        parseChartPayload(slide.chart_data || slide.chartData || slide.charts);
+      if (!chartPayload) {
+        return (
+          <div className={cn("h-full flex items-center justify-center rounded-xl border p-4", templateStyles.border, templateStyles.cardBg)}>
+            Chart data unavailable
+          </div>
+        );
+      }
+      return (
+        <PresentationVisualFrame
+          frameClassName={cn(templateStyles.shadow)}
+          contentClassName="overflow-hidden"
+          borderColor={frameBorderColor}
+          backgroundColor={frameBgColor}
+          minHeightPx={260}
+          maxHeightPx={isFullscreen ? 640 : 420}
+        >
+          {renderChart(chartPayload)}
+        </PresentationVisualFrame>
+      );
+    }
+
+    return null;
+  };
+
+  const renderCodeDrivenSlide = (
+    slide: any,
+    baseClasses: string,
+    templateStyles: ReturnType<typeof getTemplateStyles>
+  ) => {
+    const slideBody = slide.body_text || slide.bodyText || slide.content;
+    const slideBullets = slide.bullet_points || slide.bulletPoints || slide.bullets;
+    const visualNode = renderCodeVisual(slide, templateStyles);
+    const layout = String(slide.layout || "split_right").toLowerCase();
+    const isCenteredLayout = layout.includes("center");
+    const accentColor = getSlideAccentColor(slide);
+
+    if (isCenteredLayout) {
+      return (
+        <div className={cn(baseClasses, "p-8 sm:p-12")}>
+          <div className="h-full flex flex-col">
+            <div className="text-center mb-8">
+              <h2
+                className={cn("text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight", templateStyles.accent)}
+                style={accentColor ? { color: accentColor } : undefined}
+              >
+                {slide.title}
+              </h2>
+              {slideBody && (
+                <p className="text-lg sm:text-xl leading-relaxed opacity-90 max-w-3xl mx-auto mt-4">
+                  {slideBody}
+                </p>
+              )}
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto">
+              {visualNode}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn(baseClasses, "p-8 sm:p-12")}>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-full">
+          <div className="lg:col-span-2 flex flex-col justify-center space-y-6">
+            <h2
+              className={cn("text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight", templateStyles.accent)}
+              style={accentColor ? { color: accentColor } : undefined}
+            >
+              {slide.title}
+            </h2>
+            {slideBody && (
+              <p className="text-lg sm:text-xl leading-relaxed opacity-90">
+                {slideBody}
+              </p>
+            )}
+            {Array.isArray(slideBullets) && slideBullets.length > 0 && (
+              <ul className="space-y-4 text-base sm:text-lg">
+                {slideBullets.map((bullet: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <div
+                      className={cn("w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0", templateStyles.accent.replace('text-', 'bg-'))}
+                      style={accentColor ? { backgroundColor: accentColor } : undefined}
+                    ></div>
+                    <span className="leading-relaxed">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="lg:col-span-3 min-h-0 overflow-auto">
+            {visualNode}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSlideContent = (slide: any, slideIndex: number) => {
     const templateStyles = getTemplateStyles(template);
     
@@ -461,6 +747,11 @@ export function PresentationPreview({
     const backgroundImage = slide.image && !imageLoadErrors[slideIndex] 
       ? `url(${slide.image})` 
       : undefined;
+
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    if (CODE_VISUAL_TYPES.has(visualType)) {
+      return renderCodeDrivenSlide(slide, baseClasses, templateStyles);
+    }
 
     switch (slide.layout) {
       case "cover":
@@ -887,6 +1178,15 @@ export function PresentationPreview({
         "relative w-full aspect-video",
         isFullscreen && "fixed inset-0 z-50 bg-black aspect-auto"
       )}
+      onWheel={(event) => {
+        if (!isFullscreen) return;
+        if (Math.abs(event.deltaY) < 8) return;
+        if (isWheelNavigationLocked(wheelLockRef.current, PRESENTATION_WHEEL_LOCK_MS)) return;
+        wheelLockRef.current = Date.now();
+        event.preventDefault();
+        if (event.deltaY > 0) nextSlide();
+        else prevSlide();
+      }}
     >
       {/* Controls */}
       <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
@@ -931,7 +1231,20 @@ export function PresentationPreview({
         "h-full overflow-hidden rounded-lg",
         isFullscreen && "rounded-none"
       )}>
-        {renderSlideContent(slides[currentSlide], currentSlide)}
+        <AnimatePresence mode="wait" initial={false} custom={slideDirection}>
+          <motion.div
+            key={`preview-slide-${currentSlide}`}
+            custom={slideDirection}
+            variants={getSlideMotionVariants(!!prefersReducedMotion)}
+            transition={getSlideMotionTransition(!!prefersReducedMotion)}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="h-full"
+          >
+            {renderSlideContent(slides[currentSlide], currentSlide)}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Navigation */}
@@ -953,7 +1266,10 @@ export function PresentationPreview({
           {slides.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentSlide(index)}
+              onClick={() => {
+                setSlideDirection(index >= currentSlide ? 1 : -1);
+                setCurrentSlide(index);
+              }}
               className={cn(
                 "w-3 h-3 rounded-full transition-all",
                 index === currentSlide 
@@ -978,7 +1294,7 @@ export function PresentationPreview({
       {isFullscreen && (
         <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm">
           <div className="space-y-1">
-            <div>← → Space: Navigate</div>
+            <div>Left/Right/Space: Navigate</div>
             <div>F: Fullscreen</div>
             <div>Esc: Exit</div>
           </div>

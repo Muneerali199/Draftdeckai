@@ -8,9 +8,18 @@ import { AlertCircle, Loader2 } from "lucide-react";
 interface DiagramPreviewProps {
   code: string;
   fullScreen?: boolean;
+  compact?: boolean;
+  themeColors?: {
+    background?: string;
+    foreground?: string;
+    accent?: string;
+    muted?: string;
+    border?: string;
+    card?: string;
+  };
 }
 
-export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps) {
+export function DiagramPreview({ code, fullScreen = false, compact = false, themeColors }: DiagramPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,53 +30,7 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
     const loadMermaid = async () => {
       try {
         const mermaid = (await import('mermaid')).default;
-        
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: 'default',
-          securityLevel: 'loose',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          themeVariables: {
-            primaryTextColor: '#000000',
-            secondaryTextColor: '#1a1a1a',
-            tertiaryTextColor: '#2d2d2d',
-            textColor: '#000000',
-            fontSize: '16px',
-            fontWeight: '500',
-          },
-          flowchart: {
-            useMaxWidth: false,
-            htmlLabels: true,
-            curve: 'basis',
-            padding: 20,
-            nodeSpacing: 50,
-            rankSpacing: 50,
-          },
-          sequence: {
-            useMaxWidth: false,
-            wrap: true,
-            width: 800,
-            height: 600,
-          },
-          gantt: {
-            useMaxWidth: false,
-            fontSize: 14,
-          },
-          journey: {
-            useMaxWidth: false,
-          },
-          gitGraph: {
-            useMaxWidth: false,
-          },
-          er: {
-            useMaxWidth: false,
-            fontSize: 14,
-          },
-          class: {
-            useMaxWidth: false,
-          }
-        });
-        
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
         setMermaidLoaded(true);
       } catch (err) {
         console.error('Failed to load Mermaid:', err);
@@ -91,6 +54,67 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
 
       try {
         const mermaid = (await import('mermaid')).default;
+        const accent = themeColors?.accent || '#3b82f6';
+        const foreground = themeColors?.foreground || '#111827';
+        const card = themeColors?.card || '#ffffff';
+        const border = themeColors?.border || '#cbd5e1';
+        const muted = themeColors?.muted || '#e2e8f0';
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          securityLevel: 'loose',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          themeVariables: {
+            primaryColor: card,
+            primaryTextColor: foreground,
+            primaryBorderColor: border,
+            lineColor: accent,
+            secondaryColor: muted,
+            tertiaryColor: card,
+            clusterBkg: card,
+            clusterBorder: border,
+            edgeLabelBackground: card,
+            actorBkg: card,
+            actorBorder: border,
+            actorTextColor: foreground,
+            actorLineColor: accent,
+            signalColor: accent,
+            signalTextColor: foreground,
+            labelBoxBkgColor: card,
+            labelBoxBorderColor: border,
+            labelTextColor: foreground,
+            loopTextColor: foreground,
+            noteBkgColor: card,
+            noteTextColor: foreground,
+            noteBorderColor: border,
+            activationBorderColor: border,
+            activationBkgColor: muted,
+            sectionBkgColor: card,
+            altSectionBkgColor: muted,
+            sectionBkgColor2: card,
+            cScale0: accent,
+            cScale1: muted,
+            cScale2: card,
+            cScaleLabel0: foreground,
+            cScaleLabel1: foreground,
+            cScaleLabel2: foreground,
+          },
+          flowchart: {
+            useMaxWidth: false,
+            htmlLabels: true,
+            curve: 'basis',
+            padding: 20,
+            nodeSpacing: 50,
+            rankSpacing: 50,
+          },
+          sequence: {
+            useMaxWidth: false,
+            wrap: true,
+            width: 800,
+            height: 600,
+          },
+        });
         
         // Basic validation to check if code looks like Mermaid syntax
         const trimmedCode = code.trim();
@@ -125,9 +149,9 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
           diagramContainer.style.display = 'flex';
           diagramContainer.style.justifyContent = 'center';
           diagramContainer.style.alignItems = 'center';
-          diagramContainer.style.minHeight = fullScreen ? '600px' : '400px';
-          diagramContainer.style.padding = '30px';
-          diagramContainer.style.backgroundColor = '#ffffff';
+          diagramContainer.style.minHeight = fullScreen ? '600px' : compact ? '220px' : '400px';
+          diagramContainer.style.padding = compact ? '16px' : '30px';
+          diagramContainer.style.backgroundColor = card;
           
           // Find the SVG element and enhance it with beautiful styling
           const svgElement = diagramContainer.querySelector('svg');
@@ -145,19 +169,28 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
             
             // Improve text rendering with better fonts and colors
             const textElements = svgElement.querySelectorAll('text, tspan, .nodeLabel, .edgeLabel');
-            textElements.forEach((text: any) => {
-              text.style.fill = '#1a1a1a';
-              text.style.color = '#1a1a1a';
-              text.setAttribute('fill', '#1a1a1a');
-              text.style.fontSize = text.getAttribute('font-size') || '14px';
-              text.style.fontWeight = '500';
-              text.style.fontFamily = '\"Segoe UI\", \"Roboto\", sans-serif';
+            textElements.forEach((textEl: any) => {
+              textEl.style.fill = foreground;
+              textEl.style.color = foreground;
+              textEl.setAttribute('fill', foreground);
+              textEl.style.fontSize = textEl.getAttribute('font-size') || '14px';
+              textEl.style.fontWeight = '500';
+              textEl.style.fontFamily = '\"Segoe UI\", \"Roboto\", sans-serif';
             });
             
             // Enhance node styling with subtle shadows
             const nodes = svgElement.querySelectorAll('[data-type="node"], .node, [class*="node"]');
             nodes.forEach((node: any) => {
               node.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))';
+            });
+            const shapes = svgElement.querySelectorAll('rect, circle, ellipse, polygon, path');
+            shapes.forEach((shape: any) => {
+              if (shape.getAttribute('fill') === '#ECECFF' || shape.getAttribute('fill') === '#e0e0e0') {
+                shape.setAttribute('fill', muted);
+              }
+              if (!shape.getAttribute('stroke') || shape.getAttribute('stroke') === '#333') {
+                shape.setAttribute('stroke', border);
+              }
             });
             
             // Make SVG more responsive on mobile with scaling
@@ -192,7 +225,7 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
     // Debounce the rendering to avoid too many re-renders
     const timeoutId = setTimeout(renderDiagram, 500);
     return () => clearTimeout(timeoutId);
-  }, [code, mermaidLoaded, fullScreen]);
+  }, [code, mermaidLoaded, fullScreen, compact, themeColors]);
 
   if (!code.trim()) {
     return (
@@ -208,9 +241,9 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
   }
 
   return (
-    <div className={`w-full ${fullScreen ? 'min-h-[600px]' : 'min-h-[300px]'} relative`}>
+    <div className={`w-full ${fullScreen ? 'min-h-[600px]' : compact ? 'min-h-[220px]' : 'min-h-[300px]'} relative`}>
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm z-10" style={{ backgroundColor: `${themeColors?.background || '#ffffff'}cc` }}>
           <div className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
             <span className="text-sm text-muted-foreground">Rendering diagram...</span>
@@ -229,16 +262,16 @@ export function DiagramPreview({ code, fullScreen = false }: DiagramPreviewProps
       
       <div 
         ref={containerRef} 
-        className={`w-full ${fullScreen ? 'min-h-[600px]' : 'min-h-[400px]'} overflow-x-auto overflow-y-auto`}
+        className={`w-full ${fullScreen ? 'min-h-[600px]' : compact ? 'min-h-[240px]' : 'min-h-[400px]'} overflow-x-auto overflow-y-auto`}
         style={{ 
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafb 100%)',
+          background: `linear-gradient(135deg, ${themeColors?.card || '#ffffff'} 0%, ${themeColors?.background || '#f8fafb'} 100%)`,
           WebkitOverflowScrolling: 'touch',
           borderRadius: '8px',
           boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)',
-          padding: fullScreen ? '40px 20px' : '30px 15px',
+          padding: fullScreen ? '40px 20px' : compact ? '14px 10px' : '30px 15px',
         }}
       />
     </div>

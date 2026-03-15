@@ -67,6 +67,16 @@ export const TIER_FEATURES: Record<Tier, string[]> = {
   ],
 };
 
+// Developer/testing credit bypass
+const DEVELOPER_BYPASS_EMAILS = new Set([
+  'alimuneerali245@gmail.com',
+]);
+
+export function hasUnlimitedDeveloperCredits(email?: string | null): boolean {
+  if (!email) return false;
+  return DEVELOPER_BYPASS_EMAILS.has(email.trim().toLowerCase());
+}
+
 // Helper to check if a tier has enough credits for an action
 export function canPerformAction(
   creditsRemaining: number,

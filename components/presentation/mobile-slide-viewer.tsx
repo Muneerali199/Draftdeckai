@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { DiagramPreview } from "@/components/diagram/diagram-preview";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -25,6 +26,89 @@ export function MobileSlideViewer({ slides, onClose }: MobileSlideViewerProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+
+  const normalizeVisualType = (value: unknown): string => {
+    if (typeof value !== 'string') return '';
+    const visualType = value.trim().toLowerCase();
+    if (['svg', 'svg_code', 'svgcode'].includes(visualType)) return 'svg_code';
+    if (['mermaid', 'diagram'].includes(visualType)) return 'mermaid';
+    if (['html', 'html_tailwind', 'tailwind', 'mockup'].includes(visualType)) return 'html_tailwind';
+    if (['chart', 'chart_data', 'data'].includes(visualType)) return 'chart_data';
+    return visualType;
+  };
+
+  const sanitizeMarkup = (markup: string): string => {
+    return markup
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+      .replace(/\son[a-z]+=(["']).*?\1/gi, '')
+      .replace(/javascript:/gi, '');
+  };
+
+  const isCodeVisual = (slide: any) => {
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    return ['svg_code', 'mermaid', 'html_tailwind', 'chart_data'].includes(visualType);
+  };
+
+  const renderCodeVisual = (slide: any) => {
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    const visualContent = slide.visual_content ?? slide.visualContent;
+
+    if (visualType === 'mermaid' && typeof visualContent === 'string') {
+      return (
+        <div className="w-full rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-2">
+          <DiagramPreview code={visualContent} />
+        </div>
+      );
+    }
+
+    if (visualType === 'svg_code' && typeof visualContent === 'string') {
+      return (
+        <div className="w-full rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-3">
+          <div dangerouslySetInnerHTML={{ __html: sanitizeMarkup(visualContent) }} />
+        </div>
+      );
+    }
+
+    if (visualType === 'html_tailwind' && typeof visualContent === 'string') {
+      return (
+        <div className="w-full rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-3 text-slate-900">
+          <div dangerouslySetInnerHTML={{ __html: sanitizeMarkup(visualContent) }} />
+        </div>
+      );
+    }
+
+    if (visualType === 'chart_data') {
+      const chartData = slide.chartData || slide.charts || visualContent;
+      if (!chartData?.data || !Array.isArray(chartData.data)) {
+        return null;
+      }
+      return (
+        <div className="w-full p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4">
+            📊 {chartData.title || 'Data Visualization'}
+          </h3>
+          <div className="space-y-2">
+            {chartData.data.map((item: any, idx: number) => (
+              <div key={idx} className="flex items-center gap-3">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: chartData.colors?.[idx] || '#3B82F6' }}
+                />
+                <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium flex-1">
+                  {item.name}
+                </span>
+                <span className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   const nextSlide = () => {
     if (currentSlide < slides.length - 1) {
@@ -291,9 +375,12 @@ export function MobileSlideViewer({ slides, onClose }: MobileSlideViewerProps) {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
                   {slide.title}
                 </h1>
+
+                {/* Code-driven visuals */}
+                {isCodeVisual(slide) && renderCodeVisual(slide)}
                 
-                {/* Image - Displayed as content, not background */}
-                {slide.imageUrl && (
+                {/* Image - legacy slides */}
+                {!isCodeVisual(slide) && slide.imageUrl && (
                   <div className="w-full rounded-xl overflow-hidden shadow-2xl border-2 border-gray-200 dark:border-gray-700">
                     <img
                       src={slide.imageUrl}
@@ -311,7 +398,7 @@ export function MobileSlideViewer({ slides, onClose }: MobileSlideViewerProps) {
                 )}
 
                 {/* Chart Display */}
-                {slide.chartData && (
+                {!isCodeVisual(slide) && slide.chartData && (
                   <div className="w-full p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4">
                       📊 {slide.chartData.title || 'Data Visualization'}

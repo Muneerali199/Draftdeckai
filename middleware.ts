@@ -1,243 +1,148 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { SECURITY_CONFIG, getSecurityHeaders, isAllowedOrigin, logSecurityEvent } from '@/lib/security';
 
-// Rate limiting store (in production, use Redis or similar)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-// Rate limiting function
-function rateLimit(ip: string, endpoint: string): boolean {
-  const now = Date.now();
-  const key = `${ip}:${endpoint}`;
-
-  // Determine rate limit based on endpoint
-  let limit = SECURITY_CONFIG.RATE_LIMITS.API.requests;
-  let windowMs = SECURITY_CONFIG.RATE_LIMITS.API.windowMs;
-
-  if (endpoint.startsWith('/api/auth/')) {
-    limit = SECURITY_CONFIG.RATE_LIMITS.AUTH.requests;
-    windowMs = SECURITY_CONFIG.RATE_LIMITS.AUTH.windowMs;
-  } else if (endpoint.startsWith('/api/generate/')) {
-    limit = SECURITY_CONFIG.RATE_LIMITS.GENERATE.requests;
-    windowMs = SECURITY_CONFIG.RATE_LIMITS.GENERATE.windowMs;
-  }
-
-  const record = rateLimitStore.get(key);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-
-  if (record.count >= limit) {
-    logSecurityEvent('RATE_LIMIT_EXCEEDED', { endpoint, limit }, ip);
-    return false;
-  }
-
-  record.count++;
-  return true;
-}
-
-// Custom fetch with timeout
-const createFetchWithTimeout = (timeoutMs: number = 30000) => {
-  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      const response = await fetch(input, {
-        ...init,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-
-      if (error.name === 'AbortError') {
-        console.error('Request timeout in middleware:', { url: input, timeout: timeoutMs });
-        throw new Error(`Request timeout after ${timeoutMs}ms`);
-      }
-
-      if (error.code === 'UND_ERR_CONNECT_TIMEOUT' || error.message?.includes('Connect Timeout Error')) {
-        console.error('Connection timeout in middleware:', error);
-        throw new Error('Unable to connect to authentication service');
-      }
-
-      throw error;
-    }
-  };
+// Enhanced rate limiting configuration
+const RATE_LIMITS = {
+  API: { windowMs: 60 * 1000, max: 100 }, // 1 minute, 100 requests
+  AUTH: { windowMs: 15 * 60 * 1000, max: 10 }, // 15 minutes, 10 requests
+  GENERATE: { windowMs: 5 * 60 * 1000, max: 20 }, // 5 minutes, 20 requests
+  EXPORT: { windowMs: 2 * 60 * 1000, max: 30 }, // 2 minutes, 30 requests
 };
 
-export async function middleware(req: NextRequest) {
-  let res = NextResponse.next();
+// In-memory stores
+const rateLimitStore = new Map<string, { count: number; reset: number }>();
+const ipBlocklist = new Set<string>();
 
-  // ✅ IMPORTANT: Create Supabase client and refresh session FIRST
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          res.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
-      },
-      global: {
-        fetch: createFetchWithTimeout(30000), // 30 second timeout
-      },
-    }
-  );
+function getRateLimitConfig(pathname: string) {
+  if (pathname.startsWith('/api/auth/')) {
+    return RATE_LIMITS.AUTH;
+  } else if (pathname.startsWith('/api/generate/')) {
+    return RATE_LIMITS.GENERATE;
+  } else if (pathname.startsWith('/api/export/')) {
+    return RATE_LIMITS.EXPORT;
+  }
+  return RATE_LIMITS.API;
+}
 
-  try {
-    await supabase.auth.getSession(); // This refreshes the auth cookies!
-  } catch (error) {
-    console.error('Session refresh error in middleware:', error);
+function checkRateLimit(ip: string, pathname: string): { allowed: boolean; remaining: number; reset: number } {
+  // Check blocklist first
+  if (ipBlocklist.has(ip)) {
+    return { allowed: false, remaining: 0, reset: Date.now() + 5 * 60 * 1000 };
   }
 
-  // Get client IP for rate limiting
-  const ip = req.ip || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const config = getRateLimitConfig(pathname);
+  const now = Date.now();
+  const key = `${ip}:${pathname}`;
+  
+  let data = rateLimitStore.get(key);
+  
+  // Reset if window expired
+  if (!data || now > data.reset) {
+    data = { count: 1, reset: now + config.windowMs };
+    rateLimitStore.set(key, data);
+    return { allowed: true, remaining: config.max - 1, reset: data.reset };
+  }
 
-  // Apply rate limiting to API routes
-  if (req.nextUrl.pathname.startsWith('/api/')) {
-    if (!rateLimit(ip, req.nextUrl.pathname)) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Too many requests' }),
+  // Check if limit exceeded
+  if (data.count >= config.max) {
+    // Add to blocklist temporarily
+    ipBlocklist.add(ip);
+    setTimeout(() => ipBlocklist.delete(ip), 5 * 60 * 1000); // 5 minutes
+    return { allowed: false, remaining: 0, reset: data.reset };
+  }
+
+  // Increment count
+  data.count++;
+  rateLimitStore.set(key, data);
+  
+  return { allowed: true, remaining: config.max - data.count, reset: data.reset };
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  
+  // Static asset optimization
+  if (pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+    const response = NextResponse.next();
+    
+    // Aggressive caching for static assets
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    response.headers.set('Vary', 'Accept-Encoding');
+    
+    // Performance headers
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    
+    return response;
+  }
+
+  // API routes - apply rate limiting
+  if (pathname.startsWith('/api/')) {
+    const rateLimitResult = checkRateLimit(ip, pathname);
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+        },
         {
           status: 429,
           headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': '900' // 15 minutes
-          }
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': RATE_LIMITS.API.max.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimitResult.reset / 1000).toString(),
+          },
         }
       );
     }
-  }
 
-  // Pages that can be browsed without authentication
-  const browsablePages = [
-    '/',
-    '/about',
-    '/contact',
-    '/pricing',
-    '/documentation',
-    '/templates', // Can view templates but not create/edit
-    '/auth/signin',
-    '/auth/register',
-    '/resume', // Can view resume page but not create/save
-    '/presentation', // Can view presentation page but not create/save
-    '/cv', // Can view CV page but not create/save
-    '/letter', // Can view letter page but not create/save
-    '/diagram', // Can view diagram page but not create/save
-    '/campaign', // Can view campaign generator page
-  ];
-
-  // Pages that require full authentication
-  const fullyProtectedRoutes = [
-    '/profile',
-    // '/settings', // Temporarily removed to allow access - settings page handles its own auth
-    '/payment-demo',
-  ];
-
-  const isBrowsablePage = browsablePages.some(page => {
-    if (page === '/') return req.nextUrl.pathname === '/';
-    return req.nextUrl.pathname.startsWith(page);
-  });
-
-  const isFullyProtectedRoute = fullyProtectedRoutes.some(route =>
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  // Only enforce authentication for fully protected routes
-  if (isFullyProtectedRoute) {
-    // Check if we're using placeholder Supabase credentials (development mode)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const isUsingPlaceholders = !supabaseUrl || !supabaseKey ||
-      supabaseUrl.includes('placeholder') ||
-      supabaseKey.includes('placeholder');
-
-    // Skip authentication check in development with placeholder credentials
-    if (!isUsingPlaceholders) {
-      try {
-        // Reuse the supabase client we already created at the top
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
-          const redirectUrl = new URL('/auth/signin', req.url);
-          redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-          return NextResponse.redirect(redirectUrl);
-        }
-      } catch (error) {
-        console.error('Middleware auth error:', error);
-        // If there's an error with Supabase, allow access in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Allowing access in development mode due to auth error');
-        } else {
-          const redirectUrl = new URL('/auth/signin', req.url);
-          redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-          return NextResponse.redirect(redirectUrl);
-        }
-      }
-    } else {
-      console.log('Skipping auth check - using placeholder credentials');
+    const response = NextResponse.next();
+    
+    // Add rate limit headers
+    response.headers.set('X-RateLimit-Limit', RATE_LIMITS.API.max.toString());
+    response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+    response.headers.set('X-RateLimit-Reset', Math.ceil(rateLimitResult.reset / 1000).toString());
+    
+    // Performance monitoring for AI endpoints
+    if (pathname.startsWith('/api/generate/') || pathname.startsWith('/api/analyze-ats')) {
+      response.headers.set('X-Endpoint-Type', 'ai-generation');
     }
+    
+    return response;
   }
 
-  // For browsable pages, allow access but components will handle auth for specific activities
-
-  // Add security headers to all responses
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const securityHeaders = getSecurityHeaders(isDevelopment);
-
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    res.headers.set(key, value);
-  });
-
-  res.headers.set('X-DNS-Prefetch-Control', 'off');
-
-  // Add CSRF protection for state-changing requests
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-    const origin = req.headers.get('origin');
-    const host = req.headers.get('host');
-
-    if (origin && host && !isAllowedOrigin(origin, host)) {
-      logSecurityEvent('CSRF_PROTECTION_TRIGGERED', { origin, host }, ip);
-      return new NextResponse(
-        JSON.stringify({ error: 'CSRF protection: Invalid origin' }),
-        {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
+  // HTML pages - add performance headers
+  if (pathname.match(/\.html$/) || !pathname.includes('.')) {
+    const response = NextResponse.next();
+    
+    // Security headers
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    
+    // Performance headers
+    response.headers.set('X-DNS-Prefetch-Control', 'on');
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    
+    // Cache HTML pages moderately
+    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+    
+    return response;
   }
 
-  return res;
+  // Default response
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * Match all request paths except for:
+     * - Static files (_next/static, _next/image, favicon.ico)
+     * - Public files
      */
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],

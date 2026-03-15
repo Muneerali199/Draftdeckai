@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { MobileSlideViewer } from "@/components/presentation/mobile-slide-viewer";
+import { DiagramPreview } from "@/components/diagram/diagram-preview";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { 
@@ -46,6 +47,96 @@ export function MobilePresentationGenerator() {
   const [showSlideViewer, setShowSlideViewer] = useState(false);
   const { toast } = useToast();
   const supabase = createClient();
+
+  const normalizeGeneratedSlides = (rawSlides: any[]) => {
+    return (rawSlides || []).map((slide: any) => ({
+      ...slide,
+      imageUrl: slide.imageUrl || slide.image || null,
+      chartData: slide.chartData || slide.charts || null,
+      content: slide.content || slide.body_text || slide.bodyText || '',
+      bullets: slide.bullets || slide.bullet_points || slide.bulletPoints || [],
+    }));
+  };
+
+  const normalizeVisualType = (value: unknown): string => {
+    if (typeof value !== 'string') return '';
+    const visualType = value.trim().toLowerCase();
+    if (['svg', 'svg_code', 'svgcode'].includes(visualType)) return 'svg_code';
+    if (['mermaid', 'diagram'].includes(visualType)) return 'mermaid';
+    if (['html', 'html_tailwind', 'tailwind', 'mockup'].includes(visualType)) return 'html_tailwind';
+    if (['chart', 'chart_data', 'data'].includes(visualType)) return 'chart_data';
+    return visualType;
+  };
+
+  const sanitizeMarkup = (markup: string): string => {
+    return markup
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+      .replace(/\son[a-z]+=(["']).*?\1/gi, '')
+      .replace(/javascript:/gi, '');
+  };
+
+  const renderMobileCodeVisual = (slide: any) => {
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    const visualContent = slide.visual_content ?? slide.visualContent;
+    if (!visualType) return null;
+
+    if (visualType === 'mermaid' && typeof visualContent === 'string') {
+      return (
+        <div className="rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-2">
+          <DiagramPreview code={visualContent} />
+        </div>
+      );
+    }
+
+    if (visualType === 'svg_code' && typeof visualContent === 'string') {
+      const svg = sanitizeMarkup(visualContent);
+      return (
+        <div className="rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-3">
+          <div dangerouslySetInnerHTML={{ __html: svg }} />
+        </div>
+      );
+    }
+
+    if (visualType === 'html_tailwind' && typeof visualContent === 'string') {
+      const html = sanitizeMarkup(visualContent);
+      return (
+        <div className="rounded-xl overflow-hidden border-2 border-blue-200 bg-white p-3 text-slate-900">
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+      );
+    }
+
+    if (visualType === 'chart_data') {
+      const chartData = slide.chartData || slide.charts || visualContent;
+      if (!chartData?.data || !Array.isArray(chartData.data)) return null;
+      return (
+        <div className="w-full p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-md">
+          <h4 className="font-semibold text-sm text-gray-900 mb-2">
+            📊 {chartData.title || 'Data Visualization'}
+          </h4>
+          <div className="space-y-1.5">
+            {chartData.data.slice(0, 5).map((item: any, idx: number) => (
+              <div key={idx} className="flex items-center gap-2 text-xs">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: chartData.colors?.[idx] || '#3B82F6' }}
+                />
+                <span className="flex-1 text-gray-700">{item.name}</span>
+                <span className="font-semibold text-gray-900">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const hasCodeVisual = (slide: any) => {
+    const visualType = normalizeVisualType(slide.visual_type || slide.visualType);
+    return ['svg_code', 'mermaid', 'html_tailwind', 'chart_data'].includes(visualType);
+  };
 
   const MAX_FREE_PAGES = 8;
 
@@ -245,23 +336,27 @@ export function MobilePresentationGenerator() {
         body: JSON.stringify({ 
           outlines: slideOutlines, 
           template: selectedTemplate,
-          prompt 
+          prompt,
+          generationMode: 'code-driven'
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate presentation');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate presentation');
+      }
 
       const data = await response.json();
-      setSlides(data.slides);
+      setSlides(normalizeGeneratedSlides(data.slides));
 
       toast({
         title: "🎉 Presentation Ready!",
-        description: `${data.slides.length} slides with unique images and charts created!`,
+        description: `${data.slides.length} slides generated with code visuals!`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Generation failed",
-        description: "Please try again",
+        description: error?.message || "Please try again",
         variant: "destructive",
       });
       setCurrentStep('theme');
@@ -848,8 +943,11 @@ export function MobilePresentationGenerator() {
                   </div>
                 </div>
 
-                {/* Image Section */}
-                {slide.imageUrl && (
+                {/* Code Visual Section */}
+                {hasCodeVisual(slide) && renderMobileCodeVisual(slide)}
+
+                {/* Image Section (legacy fallback) */}
+                {!hasCodeVisual(slide) && slide.imageUrl && (
                   <div className="relative w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 overflow-hidden">
                     <img
                       src={slide.imageUrl}
@@ -871,7 +969,7 @@ export function MobilePresentationGenerator() {
                 {/* Content Section */}
                 <div className="p-5 space-y-3 bg-white dark:bg-gray-900">
                   {/* Title if no image */}
-                  {!slide.imageUrl && (
+                  {!hasCodeVisual(slide) && !slide.imageUrl && (
                     <h3 className="font-bold text-xl leading-tight text-gray-900 dark:text-white pl-12">
                       {slide.title}
                     </h3>

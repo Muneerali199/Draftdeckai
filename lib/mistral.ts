@@ -25,6 +25,14 @@ export interface ChartData {
   }>;
 }
 
+interface PresentationTextSettings {
+  language?: string;
+  audience?: string;
+  tone?: string;
+  textDensity?: string;
+  purpose?: string;
+}
+
 /**
  * Helper to generate a filler slide with a consistent structure
  * 
@@ -297,7 +305,8 @@ Omit "chart" if not applicable.`;
  */
 export async function generatePresentationText(
   topic: string,
-  pageCount: number = 8
+  pageCount: number = 8,
+  settings?: PresentationTextSettings
 ): Promise<any[]> {
   if (!mistral) {
     console.error('Mistral client not initialized');
@@ -308,10 +317,21 @@ export async function generatePresentationText(
     // Calculate slide type distribution for optimal variety
     const slideTypeDistribution = getSlideTypeDistribution(pageCount);
 
+    const language = typeof settings?.language === 'string' && settings.language.trim() ? settings.language.trim() : 'English';
+    const audience = typeof settings?.audience === 'string' && settings.audience.trim() ? settings.audience.trim() : 'Business stakeholders';
+    const tone = typeof settings?.tone === 'string' && settings.tone.trim() ? settings.tone.trim() : 'Professional';
+    const textDensity = typeof settings?.textDensity === 'string' && settings.textDensity.trim() ? settings.textDensity.trim() : 'concise';
+    const purpose = typeof settings?.purpose === 'string' && settings.purpose.trim() ? settings.purpose.trim() : 'General presentation';
+
     const prompt = `You are a WORLD-CLASS presentation designer creating a PREMIUM presentation that's 10X better than Gamma or Canva.
 
 Topic: "${topic}"
 Total Slides: ${pageCount}
+Language: ${language}
+Audience: ${audience}
+Tone: ${tone}
+Text Density: ${textDensity}
+Purpose: ${purpose}
 
 REQUIRED SLIDE TYPE DISTRIBUTION:
 ${slideTypeDistribution.map((type, i) => `Slide ${i + 1}: ${type}`).join('\n')}
@@ -428,6 +448,8 @@ RULES:
 3. Every slide must be UNIQUE and visually different
 4. Create content that tells a COMPELLING STORY
 5. Make stats realistic and impressive
+6. Strictly follow Language, Audience, Tone, Text Density, and Purpose constraints.
+7. If topic is technical/project-oriented and slides allow, include UX, architecture, and tech stack coverage naturally.
 
 Return ONLY the JSON array. No markdown, no explanation.`;
 
