@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { TIER_LIMITS, ACTION_COSTS, TIER_NAMES, TIER_FEATURES, type Tier, type ActionType } from '@/lib/credits-service';
+import { TIER_LIMITS, ACTION_COSTS, TIER_NAMES, TIER_FEATURES, hasUnlimitedDeveloperCredits, type Tier, type ActionType } from '@/lib/credits-service';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +29,7 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     // Get user credits
     let { data: credits, error } = await supabase
@@ -93,16 +94,19 @@ export async function GET(request: Request) {
     }
 
     const tier = (credits?.tier || 'free') as Tier;
-    const creditsTotal = credits?.credits_total || TIER_LIMITS[tier];
-    const creditsUsed = credits?.credits_used || 0;
+    const tierToShow = hasUnlimitedCredits ? 'enterprise' : tier;
+    const creditsTotal = hasUnlimitedCredits
+      ? Number.MAX_SAFE_INTEGER
+      : (credits?.credits_total || TIER_LIMITS[tier]);
+    const creditsUsed = hasUnlimitedCredits ? 0 : (credits?.credits_used || 0);
 
     return NextResponse.json({
-      tier,
-      tierName: TIER_NAMES[tier],
+      tier: tierToShow,
+      tierName: TIER_NAMES[tierToShow],
       creditsTotal,
       creditsUsed,
       creditsRemaining: creditsTotal - creditsUsed,
-      features: TIER_FEATURES[tier],
+      features: TIER_FEATURES[tierToShow],
       resetDate: credits?.credits_reset_at,
       actionCosts: ACTION_COSTS,
       subscriptionStatus: credits?.subscription_status || 'active',
@@ -139,6 +143,7 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     const body = await request.json();
     const { action, metadata } = body as { action: ActionType; metadata?: any };
@@ -206,6 +211,15 @@ export async function POST(request: Request) {
 
     const creditsRemaining = credits.credits_total - credits.credits_used;
     const creditsRequired = ACTION_COSTS[action];
+
+    if (hasUnlimitedCredits) {
+      return NextResponse.json({
+        success: true,
+        creditsUsed: 0,
+        creditsRemaining: Number.MAX_SAFE_INTEGER,
+        tier: 'enterprise',
+      });
+    }
 
     // Check if user has enough credits
     if (creditsRemaining < creditsRequired) {

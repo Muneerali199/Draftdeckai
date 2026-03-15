@@ -4,16 +4,8 @@ import withPWACore from 'next-pwa';
 const nextConfig = {
   reactStrictMode: false,
   allowedDevOrigins: ['https://kindlier-tawna-nontypographic.ngrok-free.dev'],
-  images: {
-    unoptimized: true,
-    domains: [
-      'bxiieunzrcdbxqadapcl.supabase.co',
-      'images.unsplash.com',
-      'images.pexels.com',
-      'cdn.pixabay.com',
-      'pictures-storage.storage.eu-north1.nebius.cloud',
-      'placehold.co'
-    ],
+images: {
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -41,11 +33,20 @@ const nextConfig = {
       },
     ],
   },
-  trailingSlash: false,
+trailingSlash: false,
   // Optimize for production
   swcMinify: true,
   compress: true,
   poweredByHeader: false,
+  // Performance optimizations
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
+    workerThreads: true,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
   async headers() {
     return [
       {
@@ -71,7 +72,7 @@ const nextConfig = {
     tsconfigPath: './tsconfig.build.json',
     ignoreBuildErrors: true,
   },
-  webpack: (config, { isServer }) => {
+webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.pdf$/,
       use: [
@@ -85,6 +86,47 @@ const nextConfig = {
         },
       ],
     });
+    
+    // Bundle size optimizations
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          maxInitialRequests: 25,
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            framework: {
+              name: 'framework',
+              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+              chunks: 'all',
+              priority: 40,
+              enforce: true,
+            },
+            lib: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'lib',
+              priority: 30,
+              minChunks: 1,
+              reuseExistingChunk: true,
+            },
+            commons: {
+              name: 'commons',
+              minChunks: 2,
+              priority: 20,
+            },
+            shared: {
+              name: 'shared',
+              minChunks: 2,
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      };
+    }
+    
     return config;
   },
 };

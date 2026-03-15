@@ -8,12 +8,50 @@ import {
 } from '@/lib/mistral';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits } from '@/lib/credits-service';
+import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits, hasUnlimitedDeveloperCredits } from '@/lib/credits-service';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const NEBIUS_BASE_URL =
+  process.env.NEBIUS_BASE_URL ||
+  'https://api.tokenfactory.us-central1.nebius.com/v1/';
+
+type NebiusOutlineModel =
+  | 'Qwen/Qwen3-235B-A22B-Instruct-2507'
+  | 'deepseek-ai/DeepSeek-V3.2'
+  | 'meta-llama/Meta-Llama-3.1-70B-Instruct';
+
+function normalizeOutlineModel(value: unknown): NebiusOutlineModel {
+  const model = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (model === 'deepseek-ai/deepseek-v3.2' || model === 'deepseek-v3.2' || model === 'deepseek') {
+    return 'deepseek-ai/DeepSeek-V3.2';
+  }
+  if (model === 'qwen/qwen3-235b-a22b-instruct-2507' || model === 'qwen' || model === 'qwen3-235b') {
+    return 'Qwen/Qwen3-235B-A22B-Instruct-2507';
+  }
+  return 'meta-llama/Meta-Llama-3.1-70B-Instruct';
+}
+
+function buildPromptWithSettings(prompt: string, settings: any): string {
+  const language = typeof settings?.language === 'string' && settings.language.trim() ? settings.language.trim() : 'English';
+  const audience = typeof settings?.audience === 'string' && settings.audience.trim() ? settings.audience.trim() : 'Business';
+  const tone = typeof settings?.tone === 'string' && settings.tone.trim() ? settings.tone.trim() : 'Professional';
+  const textDensity = typeof settings?.textDensity === 'string' && settings.textDensity.trim() ? settings.textDensity.trim() : 'concise';
+  const purpose = typeof settings?.purpose === 'string' && settings.purpose.trim() ? settings.purpose.trim() : 'General presentation';
+
+  return `${prompt}
+
+Generation Requirements:
+- Language: ${language}
+- Audience: ${audience}
+- Tone: ${tone}
+- Text Density: ${textDensity}
+- Purpose: ${purpose}
+- If this is a project/product/technical deck and page count allows, include UX/user-flow, architecture diagram, and tech stack coverage.`;
+}
 
 /**
  * Helper to create a filler slide with contextual content
@@ -98,15 +136,19 @@ function createFillerSlide(slideNumber: number, totalCount: number, topic: strin
 
 // Fallback to Nebius/Qwen when Gemini fails
 const nebiusClient = new OpenAI({
-  baseURL: 'https://api.tokenfactory.nebius.com/v1/',
+  baseURL: NEBIUS_BASE_URL,
   apiKey: process.env.NEBIUS_API_KEY,
 });
 
-async function generateWithNebius(prompt: string, pageCount: number) {
+async function generateWithNebius(
+  prompt: string,
+  pageCount: number,
+  model: NebiusOutlineModel = 'meta-llama/Meta-Llama-3.1-70B-Instruct'
+) {
   console.log('🔄 Using Nebius/Qwen as fallback...');
   
   const completion = await nebiusClient.chat.completions.create({
-    model: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+    model,
     messages: [
       {
         role: 'system',
@@ -200,9 +242,12 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     const body = await request.json();
-    const { prompt, pageCount = 8, outlineOnly = false } = body;
+    const { prompt, pageCount = 8, outlineOnly = false, settings } = body;
+    const selectedModel = normalizeOutlineModel(settings?.llmModel);
+    const promptWithSettings = buildPromptWithSettings(prompt, settings);
 
     if (!prompt) {
       return NextResponse.json(
@@ -290,9 +335,11 @@ export async function POST(request: Request) {
     // Check if user has enough credits - use validated page count for calculation
     const creditsPerSlide = ACTION_COSTS.presentation;
     const estimatedCreditCost = validatedPageCount * creditsPerSlide;
-    const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
+    const creditsRemaining = hasUnlimitedCredits
+      ? Number.MAX_SAFE_INTEGER
+      : calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
     
-    if (creditsRemaining < estimatedCreditCost) {
+    if (!hasUnlimitedCredits && creditsRemaining < estimatedCreditCost) {
       const creditWord = estimatedCreditCost === 1 ? 'credit' : 'credits';
       const slideWord = validatedPageCount === 1 ? 'slide' : 'slides';
       return NextResponse.json(
@@ -312,19 +359,31 @@ export async function POST(request: Request) {
     
     // Step 1: Generate text content - Use Mistral first, then Nebius fallback
     let outlines;
-    try {
-      console.log('Using Mistral Large for text generation');
-      outlines = await generatePresentationText(prompt, validatedPageCount);
-      
-      if (!outlines || outlines.length === 0) {
-        throw new Error('Mistral generated no content');
+    const nebiusFirst = selectedModel !== 'meta-llama/Meta-Llama-3.1-70B-Instruct';
+    if (nebiusFirst) {
+      console.log(`Using Nebius model for outline generation: ${selectedModel}`);
+      outlines = await generateWithNebius(promptWithSettings, validatedPageCount, selectedModel);
+    } else {
+      try {
+        console.log('Using Mistral Large for text generation');
+        outlines = await generatePresentationText(prompt, validatedPageCount, {
+          language: settings?.language,
+          audience: settings?.audience,
+          tone: settings?.tone,
+          textDensity: settings?.textDensity,
+          purpose: settings?.purpose,
+        });
+
+        if (!outlines || outlines.length === 0) {
+          throw new Error('Mistral generated no content');
+        }
+
+        console.log('Generated with Mistral');
+      } catch (mistralError: any) {
+        console.error('Mistral failed:', mistralError.message);
+        console.log('Falling back to Nebius...');
+        outlines = await generateWithNebius(promptWithSettings, validatedPageCount, selectedModel);
       }
-      
-      console.log('✅ Generated with Mistral');
-    } catch (mistralError: any) {
-      console.error('⚠️ Mistral failed:', mistralError.message);
-      console.log('🔄 Falling back to Nebius/Qwen...');
-      outlines = await generateWithNebius(prompt, validatedPageCount);
     }
     
     console.log(`✅ Generated ${outlines.length} slides`);
@@ -407,36 +466,38 @@ export async function POST(request: Request) {
     
     // ✅ DEDUCT CREDITS based on actual slides generated
     const actualCreditCost = enhancedOutlines.length * creditsPerSlide;
-    const { error: updateError } = await supabaseAdmin
-      .from('user_credits')
-      .update({ 
-        credits_used: userCredits.credits_used + actualCreditCost,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id);
+    if (!hasUnlimitedCredits) {
+      const { error: updateError } = await supabaseAdmin
+        .from('user_credits')
+        .update({ 
+          credits_used: userCredits.credits_used + actualCreditCost,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
 
-    if (updateError) {
-      console.error('Failed to deduct credits:', updateError);
-      // Don't fail the request, just log the error
-    } else {
-      // Log the usage
-      const { error: logError } = await supabaseAdmin
-        .from('credit_usage_log')
-        .insert({
-          user_id: user.id,
-          action: 'presentation',
-          credits_used: actualCreditCost,
-          metadata: { 
-            pageCount: enhancedOutlines.length,
-            prompt_length: prompt.length 
-          }
-        });
-      
-      if (logError) {
-        console.error('Failed to log credit usage:', logError);
+      if (updateError) {
+        console.error('Failed to deduct credits:', updateError);
+        // Don't fail the request, just log the error
+      } else {
+        // Log the usage
+        const { error: logError } = await supabaseAdmin
+          .from('credit_usage_log')
+          .insert({
+            user_id: user.id,
+            action: 'presentation',
+            credits_used: actualCreditCost,
+            metadata: { 
+              pageCount: enhancedOutlines.length,
+              prompt_length: prompt.length 
+            }
+          });
+        
+        if (logError) {
+          console.error('Failed to log credit usage:', logError);
+        }
+        
+        console.log(`💳 Deducted ${actualCreditCost} credits for ${enhancedOutlines.length}-slide presentation`);
       }
-      
-      console.log(`💳 Deducted ${actualCreditCost} credits for ${enhancedOutlines.length}-slide presentation`);
     }
     
     return NextResponse.json({ 
@@ -447,11 +508,13 @@ export async function POST(request: Request) {
         withCharts: enhancedOutlines.filter((o: any) => o.chartData).length,
       },
       credits: {
-        used: actualCreditCost,
-        remaining: calculateRemainingCredits(
-          userCredits.credits_total,
-          userCredits.credits_used + actualCreditCost
-        )
+        used: hasUnlimitedCredits ? 0 : actualCreditCost,
+        remaining: hasUnlimitedCredits
+          ? Number.MAX_SAFE_INTEGER
+          : calculateRemainingCredits(
+            userCredits.credits_total,
+            userCredits.credits_used + actualCreditCost
+          )
       }
     });
   } catch (error) {
@@ -462,3 +525,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

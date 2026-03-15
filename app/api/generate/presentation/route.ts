@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePresentation, generatePresentationOutline } from '@/lib/gemini';
 import { createClient } from '@supabase/supabase-js';
-import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits } from '@/lib/credits-service';
+import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits, hasUnlimitedDeveloperCredits } from '@/lib/credits-service';
 
 // Service role client for credit operations
 const supabaseAdmin = createClient(
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     const body = await request.json();
     const { prompt, pageCount = 8, template } = body;
@@ -109,9 +110,11 @@ export async function POST(request: NextRequest) {
     // Check if user has enough credits - use validated page count
     const creditsPerSlide = ACTION_COSTS.presentation;
     const estimatedCreditCost = validatedPageCount * creditsPerSlide;
-    const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
+    const creditsRemaining = hasUnlimitedCredits
+      ? Number.MAX_SAFE_INTEGER
+      : calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
     
-    if (creditsRemaining < estimatedCreditCost) {
+    if (!hasUnlimitedCredits && creditsRemaining < estimatedCreditCost) {
       const creditWord = estimatedCreditCost === 1 ? 'credit' : 'credits';
       const slideWord = validatedPageCount === 1 ? 'slide' : 'slides';
       return NextResponse.json(
@@ -135,6 +138,15 @@ export async function POST(request: NextRequest) {
 
     // ✅ DEDUCT CREDITS based on actual slides generated
     const actualCreditCost = slides.length * creditsPerSlide;
+    if (hasUnlimitedCredits) {
+      return NextResponse.json({
+        slides,
+        credits: {
+          used: 0,
+          remaining: Number.MAX_SAFE_INTEGER
+        }
+      });
+    }
     
     // Refetch user credits to avoid race conditions with resets
     const { data: currentCredits } = await supabaseAdmin

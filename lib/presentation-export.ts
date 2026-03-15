@@ -1,5 +1,10 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import {
+  SLIDE_LAYOUT, PAD, SAFE, SPLIT, COVER, CONTENT,
+  FONT, LINE, PARA_BEFORE, FONT_FACE, insetMargins,
+  fitTextInBox, fitBullets,
+} from '@/lib/slide-layout-tokens';
 
 /**
  * Export presentation to various formats
@@ -177,7 +182,7 @@ export async function exportAsPPTX(
     const PptxGenJS = (await import('pptxgenjs')).default;
     const pptx = new PptxGenJS();
 
-    pptx.layout = 'LAYOUT_16x9';
+    pptx.layout = SLIDE_LAYOUT;
     pptx.author = 'DraftDeckAI';
     pptx.company = 'DraftDeckAI';
     pptx.revision = '1';
@@ -248,51 +253,94 @@ export async function exportAsPPTX(
           line: { width: 0 } // No border
         });
 
-        // Use global text color
         const textColor = globalTextColor;
+        const hasImage = !!slideData.imageUrl;
+        const margins = insetMargins();
 
         // Title
+        const titleFit = fitTextInBox({
+          text: slideData.title || '',
+          fontSize: FONT.title,
+          minFontSize: FONT.MIN_BODY,
+          boxW: CONTENT.title.w,
+          boxH: CONTENT.title.h,
+          lineSpacing: LINE.title,
+        });
         slide.addText(slideData.title, {
-          x: 0.5, y: 0.5, w: '90%', h: 1,
-          fontSize: 32,
+          x: CONTENT.title.x, y: CONTENT.title.y,
+          w: CONTENT.title.w, h: CONTENT.title.h,
+          fontSize: titleFit.fontSize,
           bold: true,
           color: textColor,
           align: 'center',
-          fontFace: 'Arial'
+          fontFace: FONT_FACE,
+          lineSpacingMultiple: 1.1,
+          margin: margins,
         });
 
         // Subtitle
         if (slideData.subtitle) {
           slide.addText(slideData.subtitle, {
-            x: 0.5, y: 1.5, w: '90%', h: 0.5,
-            fontSize: 18,
+            x: PAD.left, y: 1.9, w: SAFE.w, h: 0.6,
+            fontSize: FONT.subtitle,
             color: textColor,
             align: 'center',
-            fontFace: 'Arial'
+            fontFace: FONT_FACE,
+            margin: margins,
           });
         }
 
+        // Dynamic Y position after title area
+        const bodyY = slideData.subtitle ? 2.6 : 2.0;
+        const bodyW = hasImage ? SPLIT.textW : SAFE.w;
+        const bodyH = hasImage ? CONTENT.bullets_split.h : CONTENT.bullets_full.h;
+
         // Main Content
         if (slideData.content) {
+          const bodyFit = fitTextInBox({
+            text: slideData.content,
+            fontSize: FONT.body,
+            minFontSize: FONT.MIN_BODY,
+            boxW: bodyW,
+            boxH: bodyH,
+            lineSpacing: LINE.body,
+          });
           slide.addText(slideData.content, {
-            x: 0.5, y: 2.2, w: '50%', h: 4, // Reduced width to make room for image
-            fontSize: 14,
+            x: PAD.left, y: bodyY, w: bodyW, h: bodyFit.expandedH,
+            fontSize: bodyFit.fontSize,
             color: textColor,
             align: 'left',
-            fontFace: 'Arial',
-            valign: 'top'
+            fontFace: FONT_FACE,
+            valign: 'top',
+            lineSpacing: bodyFit.lineSpacing,
+            margin: margins,
           });
         }
 
         // Bullets
         if (slideData.bullets && slideData.bullets.length > 0) {
-          const bulletItems = slideData.bullets.map((b: string) => ({ text: b, options: { fontSize: 14, color: textColor, breakLine: true } }));
+          const bulletFit = fitBullets({
+            bullets: slideData.bullets,
+            fontSize: FONT.bullet,
+            minFontSize: FONT.MIN_BULLET,
+            boxW: bodyW,
+            boxH: bodyH,
+            lineSpacing: LINE.bullet,
+            paraSpaceBefore: PARA_BEFORE.bullet,
+          });
+          const bulletItems = slideData.bullets.map((b: string) => ({
+            text: b,
+            options: { fontSize: bulletFit.fontSize, color: textColor, breakLine: true }
+          }));
           slide.addText(bulletItems, {
-            x: 0.5, y: 2.2, w: '50%', h: 4,
+            x: PAD.left, y: bodyY, w: bodyW, h: bulletFit.expandedH,
             align: 'left',
             bullet: true,
-            fontFace: 'Arial',
-            valign: 'top'
+            fontFace: FONT_FACE,
+            valign: 'top',
+            lineSpacing: bulletFit.lineSpacing,
+            paraSpaceBefore: PARA_BEFORE.bullet,
+            margin: margins,
           });
         }
 
@@ -303,8 +351,9 @@ export async function exportAsPPTX(
             if (base64Data) {
               slide.addImage({
                 data: base64Data,
-                x: 5.8, y: 1.5, w: 4, h: 4,
-                sizing: { type: 'contain', w: 4, h: 4 }
+                x: CONTENT.image.x, y: CONTENT.image.y,
+                w: CONTENT.image.w, h: CONTENT.image.h,
+                sizing: { type: 'contain', w: CONTENT.image.w, h: CONTENT.image.h }
               });
             }
           } catch (err) {

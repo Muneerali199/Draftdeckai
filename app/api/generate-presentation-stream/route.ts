@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createEnhancedPresentationPrompt } from '@/lib/prompts/enhanced-presentation-prompt';
 import { createClient } from '@supabase/supabase-js';
-import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits } from '@/lib/credits-service';
+import { ACTION_COSTS, TIER_LIMITS, getCreditsResetDate, shouldResetCredits, calculateRemainingCredits, hasUnlimitedDeveloperCredits } from '@/lib/credits-service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+    const hasUnlimitedCredits = hasUnlimitedDeveloperCredits(user.email);
 
     const { topic, audience, outline, settings } = await req.json();
 
@@ -103,9 +104,11 @@ export async function POST(req: NextRequest) {
     // ✅ CHECK CREDITS
     const creditsPerSlide = ACTION_COSTS.presentation;
     const estimatedCreditCost = slideCount * creditsPerSlide;
-    const creditsRemaining = calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
+    const creditsRemaining = hasUnlimitedCredits
+      ? Number.MAX_SAFE_INTEGER
+      : calculateRemainingCredits(userCredits.credits_total, userCredits.credits_used);
     
-    if (creditsRemaining < estimatedCreditCost) {
+    if (!hasUnlimitedCredits && creditsRemaining < estimatedCreditCost) {
       return Response.json(
         { 
           error: 'Not enough credits',
@@ -136,32 +139,34 @@ export async function POST(req: NextRequest) {
     const writer = stream.writable.getWriter();
 
     // ✅ DEDUCT CREDITS BEFORE STARTING GENERATION
-    const { error: updateError } = await supabaseAdmin
-      .from('user_credits')
-      .update({ 
-        credits_used: userCredits.credits_used + estimatedCreditCost,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id);
+    if (!hasUnlimitedCredits) {
+      const { error: updateError } = await supabaseAdmin
+        .from('user_credits')
+        .update({ 
+          credits_used: userCredits.credits_used + estimatedCreditCost,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
 
-    if (updateError) {
-      console.error('Failed to deduct credits:', updateError);
-    } else {
-      // Log the usage
-      await supabaseAdmin
-        .from('credit_usage_log')
-        .insert({
-          user_id: user.id,
-          action: 'presentation',
-          credits_used: estimatedCreditCost,
-          metadata: { 
-            slideCount,
-            topic,
-            audience
-          }
-        });
-      
-      console.log(`💳 Deducted ${estimatedCreditCost} credits for ${slideCount}-slide presentation`);
+      if (updateError) {
+        console.error('Failed to deduct credits:', updateError);
+      } else {
+        // Log the usage
+        await supabaseAdmin
+          .from('credit_usage_log')
+          .insert({
+            user_id: user.id,
+            action: 'presentation',
+            credits_used: estimatedCreditCost,
+            metadata: { 
+              slideCount,
+              topic,
+              audience
+            }
+          });
+        
+        console.log(`💳 Deducted ${estimatedCreditCost} credits for ${slideCount}-slide presentation`);
+      }
     }
 
     // Start streaming in the background
@@ -221,8 +226,8 @@ Never include explanatory text, just the slide content.`,
           encoder.encode(`data: ${JSON.stringify({ 
             done: true,
             credits: {
-              used: estimatedCreditCost,
-              remaining: creditsRemaining - estimatedCreditCost
+              used: hasUnlimitedCredits ? 0 : estimatedCreditCost,
+              remaining: hasUnlimitedCredits ? Number.MAX_SAFE_INTEGER : creditsRemaining - estimatedCreditCost
             }
           })}\n\n`)
         );

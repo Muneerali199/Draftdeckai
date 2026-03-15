@@ -41,10 +41,15 @@
 - **AI Enhancement** - Improve tone and content with AI
 
 ### 📊 Diagram Builder
+- **Architecture Diagrams** - System design with subgraphs and layers
 - **Flowcharts** - Create process diagrams easily
 - **Mind Maps** - Visualize ideas and concepts
-- **Org Charts** - Build organizational structures
-- **Mermaid Syntax** - Powered by Mermaid.js
+- **Sequence Diagrams** - Show component interactions
+- **ER Diagrams** - Database schema visualization
+- **Mermaid Syntax** - Powered by Mermaid.js v11
+- **9+ Professional Templates** - Ready-to-use diagram templates
+- **Theme Integration** - Adapts to light/dark modes
+- **Export Options** - Download as PNG/SVG
 
 ---
 
@@ -160,6 +165,21 @@ Free tier: 50 credits/month
 
 ---
 
+## 📚 Documentation
+
+### Architecture & Diagrams
+- [ARCHITECTURE_DIAGRAM_FEATURE.md](./ARCHITECTURE_DIAGRAM_FEATURE.md) - Complete guide to architecture diagrams
+- [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) - Technical system architecture  
+- [ARCHITECTURE_IMPROVEMENTS.md](./ARCHITECTURE_IMPROVEMENTS.md) - Recent improvements summary
+
+### Other Docs
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
+- [Code_of_Conduct.md](./Code_of_Conduct.md) - Community standards
+- [CHANGELOG.md](./CHANGELOG.md) - Version history
+- [FAQ.md](./FAQ.md) - Frequently asked questions
+
+---
+
 ## 📜 Scripts
 
 ```bash
@@ -197,6 +217,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Supabase](https://supabase.com/) - Backend & Auth
 - [Mistral AI](https://mistral.ai/) - AI generation
 - [Mermaid.js](https://mermaid.js.org/) - Diagram rendering
+- [Nebius Token Factory](https://nebius.com/services/token-factory) - Qwen AI models
+- [OpenAI](https://openai.com/) - API client library
 
 ---
 
