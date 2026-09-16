@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StatCounter } from "./ui/stat-counter";
 import { TooltipWithShortcut } from "@/components/ui/tooltip";
@@ -9,11 +10,41 @@ import { Sparkles, ArrowRight, Zap, Star, Wand2, Clock, Users, Trophy } from "lu
 import { useTrackEvent } from "@/hooks/useTrackEvent";
 
 export function HeroSection() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean | null>(null);
+
+  // 1. Detect user's reduced-motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const updatePreference = () => {
+      setPrefersReducedMotion(mediaQuery.matches);
+    };
+
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
   // 2. Initialize the tracker
   const { trackEvent } = useTrackEvent();
 
   return (
-    <div className="relative overflow-hidden bg-background py-16 sm:py-24 md:py-32 lg:py-40">
+        <div className="relative isolate overflow-hidden bg-background py-16 sm:py-24 md:py-32 lg:py-40">
+      <video
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay={prefersReducedMotion === false}
+        muted
+        loop={prefersReducedMotion === false}
+        playsInline
+        preload="metadata"
+        poster="/og-image.png"
+        aria-hidden="true"
+      >
+        <source src="/hero-video.mp4" type="video/mp4" />
+      </video>
+      {/* Readability overlay for hero content */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-purple-600/25 to-background/80" />
       {/* Enhanced animated background elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20"></div>
       <div className="absolute inset-0 mesh-gradient-alt opacity-20"></div>
@@ -81,10 +112,10 @@ export function HeroSection() {
 
           {/* Enhanced Subtitle with Better Readability */}
           <p className="modern-body text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl sm:max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-0 mb-8 sm:mb-10 animate-slide-in-right delay-200 will-change-opacity leading-relaxed">
-            Generate <span className="font-bold bolt-gradient-text">professional resumes</span>, 
-            <span className="font-bold text-purple-600 dark:text-purple-400"> stunning presentations</span>, 
-            <span className="font-bold text-emerald-600 dark:text-emerald-400"> academic CVs</span>, and 
-            <span className="font-bold text-blue-600 dark:text-blue-400"> business letters</span> in seconds with our 
+            Generate <span className="font-bold bolt-gradient-text">professional resumes</span>,
+            <span className="font-bold text-purple-600 dark:text-purple-400"> stunning presentations</span>,
+            <span className="font-bold text-emerald-600 dark:text-emerald-400"> academic CVs</span>, and
+            <span className="font-bold text-blue-600 dark:text-blue-400"> business letters</span> in seconds with our
             <span className="font-bold bolt-gradient-text"> advanced AI technology</span>.
           </p>
 
@@ -118,7 +149,7 @@ export function HeroSection() {
                 className="flex items-center justify-center gap-3 sm:gap-4"
                 tabIndex={0}
                 // 3. Attach the tracker to the primary CTA
-                onClick={() => trackEvent("Landing CTA Clicked")} 
+                onClick={() => trackEvent("Landing CTA Clicked")}
               >
                 <Sparkles
                   className="h-5 w-5 sm:h-6 sm:w-6 group-hover:animate-spin transition-transform"
@@ -152,7 +183,7 @@ export function HeroSection() {
             onClick={() => trackEvent("Watch Demo Clicked")}
           >
     <Star
-  
+
   className="text-yellow-400 h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-700 ease-in-out group-hover:fill-yellow-400 group-hover:rotate-[360deg]"
   aria-hidden="true"
 />
