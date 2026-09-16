@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StatCounter } from "./ui/stat-counter";
 import { TooltipWithShortcut } from "@/components/ui/tooltip";
@@ -9,23 +10,39 @@ import { Sparkles, ArrowRight, Zap, Star, Wand2, Clock, Users, Trophy } from "lu
 import { useTrackEvent } from "@/hooks/useTrackEvent";
 
 export function HeroSection() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean | null>(null);
+
+  // 1. Detect user's reduced-motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const updatePreference = () => {
+      setPrefersReducedMotion(mediaQuery.matches);
+    };
+
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
   // 2. Initialize the tracker
   const { trackEvent } = useTrackEvent();
 
   return (
-    <div className="relative isolate overflow-hidden bg-background py-16 sm:py-24 md:py-32 lg:py-40">
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/og-image.png"
-          aria-hidden="true">
-            <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
-
+        <div className="relative isolate overflow-hidden bg-background py-16 sm:py-24 md:py-32 lg:py-40">
+      <video
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay={prefersReducedMotion === false}
+        muted
+        loop={prefersReducedMotion === false}
+        playsInline
+        preload="metadata"
+        poster="/og-image.png"
+        aria-hidden="true"
+      >
+        <source src="/hero-video.mp4" type="video/mp4" />
+      </video>
       {/* Readability overlay for hero content */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-purple-600/25 to-background/80" />
       {/* Enhanced animated background elements */}
